@@ -26,6 +26,16 @@ The app starts a local VPN that captures only DNS traffic and forwards every que
 - 🚫 **Custom blocklists** — your own domains plus hosts/domain/AdBlock lists by URL (HaGeZi Pro++ and TIF presets)
 - 🔓 **No analytics, no Google Play Services**
 
+## Screenshots
+
+<p align="center">
+  <img src="assets/screenshots/1-your-dns-your-choice.png" width="180" alt="Your DNS, your choice">
+  <img src="assets/screenshots/2-protected.png" width="180" alt="Protected via SkySparkle">
+  <img src="assets/screenshots/3-stay-informed.png" width="180" alt="Stay informed">
+  <img src="assets/screenshots/4-block-your-way.png" width="180" alt="Block your way">
+  <img src="assets/screenshots/5-choose-your-own-route.png" width="180" alt="Choose your own route">
+</p>
+
 ## Installation
 
 <img src="assets/icon-install.png" width="36" align="left">
@@ -50,8 +60,9 @@ sha256sum Sparkledns-vX.X.X.apk
 
 ```
 .
-├── assets/     # Icon images
-├── LICENSE     # GNU GPLv3
+├── assets/              # Icon images
+│   └── screenshots/     # App screenshots
+├── LICENSE              # GNU GPLv3
 └── README.md
 ```
 
