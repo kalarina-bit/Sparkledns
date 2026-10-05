@@ -2,7 +2,7 @@
   <img src="assets/icon-rounded.png" width="128" alt="Sparkledns icon">
 </p>
 
-<h1 align="center">Sparkledns</h1>
+<h1 align="center">SparkleDns</h1>
 
 <p align="center">
   <a href="https://github.com/kalarina-bit/Sparkledns/releases"><img src="assets/get-it-on-gitea.png" height="60" alt="Get it on Gitea"></a>
