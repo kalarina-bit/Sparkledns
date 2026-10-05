@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/icon.jpg" width="128" alt="Sparkledns icon">
+  <img src="assets/icon-rounded.png" width="128" alt="Sparkledns icon">
 </p>
 
 <h1 align="center">Sparkledns</h1>
