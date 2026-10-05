@@ -8,6 +8,10 @@
   <a href="https://github.com/kalarina-bit/Sparkledns/releases"><img src="assets/get-it-on-gitea.png" height="60" alt="Get it on Gitea"></a>
 </p>
 
+<p align="center">
+  <img src="https://img.shields.io/github/downloads/kalarina-bit/Sparkledns/total?label=downloads&color=2e7d32&labelColor=1b1b1b" alt="downloads counter">
+</p>
+
 **Lightweight DNS-over-HTTPS client for Android** (Kotlin, Jetpack Compose).
 
 The app starts a local VPN that captures only DNS traffic and forwards every query to the selected DoH server (RFC 8484) — everything else goes through your normal connection.
@@ -47,7 +51,12 @@ sha256sum Sparkledns-vX.X.X.apk
 ```
 .
 ├── assets/     # Icon images
+├── LICENSE     # GNU GPLv3
 └── README.md
 ```
 
 APK builds are published as assets on the [Releases page](https://github.com/kalarina-bit/Sparkledns/releases), not stored in this repository.
+
+## License
+
+This project is licensed under the **GNU General Public License v3.0** — see the [LICENSE](LICENSE) file for details.
