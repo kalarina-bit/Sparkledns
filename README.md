@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/github/downloads/kalarina-bit/Sparkledns/total?label=downloads&color=2e7d32&labelColor=1b1b1b" alt="downloads counter">
+  <img src="https://img.shields.io/github/downloads/kalarina-bit/Sparkledns/latest/total?label=downloads&color=2e7d32&labelColor=1b1b1b" alt="downloads counter">
 </p>
 
 **Lightweight DNS-over-HTTPS client for Android** (Kotlin, Jetpack Compose).
