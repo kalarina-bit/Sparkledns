@@ -1,0 +1,27 @@
+# Build recipe for the F-Droid main repository.
+# Submit it as metadata/cc.skysparkle.sparkledns.yml in a merge request to https://gitlab.com/fdroid/fdroiddata
+Categories:
+  - Connectivity
+  - Security
+License: GPL-3.0-or-later
+WebSite: https://skysparkle.cc
+SourceCode: https://git.skysparkle.cc/kalarina/Sparkledns
+IssueTracker: https://git.skysparkle.cc/kalarina/Sparkledns/issues
+
+AutoName: SparkleDNS
+
+RepoType: git
+Repo: https://git.skysparkle.cc/kalarina/Sparkledns.git
+
+Builds:
+  - versionName: 1.0.6
+    versionCode: 10006
+    commit: v1.0.6
+    subdir: app
+    gradle:
+      - yes
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags ^v[0-9.]+$
+CurrentVersion: 1.0.6
+CurrentVersionCode: 10006

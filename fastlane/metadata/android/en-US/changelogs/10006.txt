@@ -1,0 +1,8 @@
+• Fixed: IPv6 of all apps was blocked while connected
+• Switching servers no longer leaks DNS for a moment
+• Blocklist downloads run in the background and never block adding domains
+• dnsmasq and unbound blocklist formats
+• Private DNS warning shows only when it really interferes
+• Back returns to Home, text fields stay above the keyboard
+• Quick Settings tile updates instantly
+• Monitor filters fit narrow screens

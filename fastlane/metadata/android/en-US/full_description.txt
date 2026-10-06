@@ -1,0 +1,31 @@
+SparkleDNS encrypts every DNS lookup on your device with DNS-over-HTTPS (RFC 8484) and HTTP/3. It uses Android's VPN API only locally: just DNS requests go into the tunnel, all other traffic takes your normal connection, so speed and battery stay the same.
+
+<b>Servers</b>
+<ul>
+<li>SkySparkle (default) with HTTP/3, run by the developer</li>
+<li>Cloudflare, Google, Quad9, AdGuard, Mullvad</li>
+<li>Any custom DoH server, with optional bootstrap IPs and HTTP/3</li>
+</ul>
+
+<b>Features</b>
+<ul>
+<li>One-tap connect, Quick Settings tile, Always-on VPN support</li>
+<li>Live monitor: every query with its status and latency, filters, search and one-tap blocking</li>
+<li>Per-app rules: apps grouped by category, chosen ones bypass SparkleDNS</li>
+<li>Blocklists: your own domains plus hosts, plain domain, AdBlock and dnsmasq lists by URL, HaGeZi Pro++ and TIF one tap away. Subdomains are blocked too, changes apply instantly</li>
+<li>Local DNS cache that honours TTLs</li>
+<li>Server test showing the protocol (h3 or h2) and latency</li>
+</ul>
+
+<b>Privacy</b>
+No analytics, no ads, no Google Play Services. The query log lives only in memory and never leaves the device. DNS requests go to the server you choose. The default SkySparkle server is run by the developer under this privacy policy: https://skysparkle.cc/privacy?lang=en
+
+<b>Permissions</b>
+<ul>
+<li>VPN: a local tunnel that carries DNS only, nothing is routed to a remote VPN</li>
+<li>Notifications: connection status with a Disconnect button</li>
+<li>Network state: needed by Android's HTTP/3 engine and to detect Private DNS</li>
+<li>Installed apps (launcher entries only): to list apps for per-app rules</li>
+</ul>
+
+HTTP/3 needs Android 14 or newer; older versions use HTTP/2. If Private DNS in Android settings is set to a specific hostname, Android sends DNS there instead; SparkleDNS shows a warning when that happens.

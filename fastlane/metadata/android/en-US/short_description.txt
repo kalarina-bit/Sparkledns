@@ -1,0 +1,1 @@
+Encrypted DNS over HTTPS and HTTP/3 with blocklists and per-app rules

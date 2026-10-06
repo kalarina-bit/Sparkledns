@@ -54,14 +54,28 @@ Compare the SHA-256 checksum of the downloaded APK against the value shown for t
 sha256sum Sparkledns-vX.X.X.apk
 ```
 
+## Building from source
+
+```sh
+./gradlew assembleRelease
+```
+
+Or open the project in Android Studio and run the `app` configuration. Requires Android 8.0 (API 26) or newer; HTTP/3 requires Android 14.
+
+The version lives in `app/build.gradle.kts` (`versionName`, `versionCode = major * 10000 + minor * 100 + patch`). For every release, add `fastlane/metadata/android/<locale>/changelogs/<versionCode>.txt` and tag the commit as `v<versionName>` (for example `v1.0.6`) — F-Droid detects new releases from these tags.
+
 ## Repository structure
 
 <img src="assets/icon-structure.png" width="36" align="left">
 
 ```
 .
-├── assets/              # Icon images
+├── app/                 # Android app source (Kotlin, Jetpack Compose)
+├── assets/              # README images
 │   └── screenshots/     # App screenshots
+├── fastlane/            # F-Droid store listing, screenshots and changelogs
+├── fdroid/              # Build recipe for fdroiddata
+├── gradle/              # Gradle wrapper
 ├── LICENSE              # GNU GPLv3
 └── README.md
 ```
