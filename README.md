@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="assets/icon-rounded.png" width="128" alt="Sparkledns icon">
+  <img src="assets/icon-rounded.png" width="128" alt="SparkleDNS icon">
 </p>
 
-<h1 align="center">SparkleDns</h1>
+<h1 align="center">SparkleDNS</h1>
 
 <p align="center">
   <a href="https://git.skysparkle.cc/kalarina/Sparkledns/releases"><img src="assets/get-it-on-gitea.png" height="60" alt="Get it on Gitea"></a>
@@ -48,11 +48,19 @@ The app starts a local VPN that captures only DNS traffic and forwards every que
 
 <img src="assets/icon-verify.png" width="36" align="left">
 
-Compare the SHA-256 checksum of the downloaded APK against the value shown for that version on the [Releases page](https://github.com/kalarina-bit/Sparkledns/releases):
+Every official APK is signed with the same key. Check the signing certificate before installing:
 
 ```sh
-sha256sum Sparkledns-vX.X.X.apk
+apksigner verify --print-certs SparkleDNS-v1.0.6.apk
 ```
+
+The `Signer #1 certificate SHA-256 digest` must be:
+
+```
+42f630634bd0f87f491785a8848770e445967b36f1028efd16f8f95201273a29
+```
+
+On Android you can check it with [AppVerifier](https://github.com/soupslurpr/AppVerifier) (app ID `cc.skysparkle.sparkledns`).
 
 ## Building from source
 
