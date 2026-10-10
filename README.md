@@ -54,11 +54,13 @@ Every official APK is signed with the same key. Check the signing certificate be
 apksigner verify --print-certs SparkleDNS-v1.0.6.apk
 ```
 
-The `Signer #1 certificate SHA-256 digest` must be:
+The SHA-256 fingerprint of the signing certificate must be:
 
 ```
-42f630634bd0f87f491785a8848770e445967b36f1028efd16f8f95201273a29
+42:F6:30:63:4B:D0:F8:7F:49:17:85:A8:84:87:70:E4:45:96:7B:36:F1:02:8E:FD:16:F8:F9:52:01:27:3A:29
 ```
+
+(`apksigner` prints the same value in lowercase without colons.)
 
 On Android you can check it with [AppVerifier](https://github.com/soupslurpr/AppVerifier) (app ID `cc.skysparkle.sparkledns`).
 
@@ -82,7 +84,6 @@ The version lives in `app/build.gradle.kts` (`versionName`, `versionCode = major
 ├── assets/              # README images
 │   └── screenshots/     # App screenshots
 ├── fastlane/            # F-Droid store listing, screenshots and changelogs
-├── fdroid/              # Build recipe for fdroiddata
 ├── gradle/              # Gradle wrapper
 ├── LICENSE              # GNU GPLv3
 └── README.md
@@ -92,4 +93,4 @@ APK builds are published as assets on the [Releases page](https://github.com/kal
 
 ## License
 
-This project is licensed under the **GNU General Public License v3.0** — see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **GNU General Public License v3.0 or later** (GPL-3.0-or-later) — see the [LICENSE](LICENSE) file for details.
