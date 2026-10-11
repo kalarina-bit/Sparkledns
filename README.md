@@ -4,6 +4,8 @@
 
 <h1 align="center">SparkleDNS</h1>
 
+<p align="center"><b>A lightweight DNS-over-HTTPS client for Android.</b></p>
+
 <p align="center">
   <a href="https://git.skysparkle.cc/kalarina/Sparkledns/releases"><img src="assets/get-it-on-gitea.png" height="60" alt="Get it on Gitea"></a>
 </p>
@@ -11,11 +13,10 @@
 <p align="center">
   <img src="https://img.shields.io/github/downloads/kalarina-bit/Sparkledns/latest/total?label=downloads&color=2e7d32&labelColor=1b1b1b" alt="downloads counter">
   <img src="https://img.shields.io/badge/Android-8.0%2B-2e7d32?logo=android&logoColor=white&labelColor=1b1b1b" alt="Android 8.0+">
+  <img src="https://img.shields.io/badge/License-GPL--3.0--or--later-2e7d32?labelColor=1b1b1b" alt="GPL-3.0-or-later">
 </p>
 
-**Lightweight DNS-over-HTTPS client for Android** (Kotlin, Jetpack Compose).
-
-The app starts a local VPN that captures only DNS traffic and forwards every query to the selected DoH server (RFC 8484) — everything else goes through your normal connection.
+SparkleDNS starts a local VPN that captures only DNS traffic and sends every query to the DoH server you choose (RFC 8484). Everything else goes through your normal connection.
 
 ## Features
 
@@ -41,20 +42,20 @@ The app starts a local VPN that captures only DNS traffic and forwards every que
 
 <img src="assets/icon-install.png" width="36" align="left">
 
-Requires **Android 8.0 (API 26) or newer** (HTTP/3 needs Android 14).
+Requires **Android 8.0 (API 26) or newer**; HTTP/3 needs Android 14.
 
-1. Download the APK for the version you want from the [Releases page](https://github.com/kalarina-bit/Sparkledns/releases).
-2. On your Android device, allow installs from unknown sources for the app you use to open the file (Settings → Apps → Special access → Install unknown apps).
-3. Open the downloaded `.apk` file and confirm the install.
+1. Download the latest APK from the [Releases page](https://git.skysparkle.cc/kalarina/Sparkledns/releases).
+2. Allow installs from unknown sources for the app you open it with (Settings → Apps → Special access → Install unknown apps).
+3. Open the `.apk` file and confirm the install.
 
 ## Verifying a download
 
 <img src="assets/icon-verify.png" width="36" align="left">
 
-Every official APK is signed with the same key. Check the signing certificate before installing:
+Every official APK is signed with the same key. Check it before installing:
 
 ```sh
-apksigner verify --print-certs SparkleDNS-v1.0.6.apk
+apksigner verify --print-certs SparkleDNS-v<version>.apk
 ```
 
 The SHA-256 fingerprint of the signing certificate must be:
@@ -63,37 +64,22 @@ The SHA-256 fingerprint of the signing certificate must be:
 42:F6:30:63:4B:D0:F8:7F:49:17:85:A8:84:87:70:E4:45:96:7B:36:F1:02:8E:FD:16:F8:F9:52:01:27:3A:29
 ```
 
-(`apksigner` prints the same value in lowercase without colons.)
-
-On Android you can check it with [AppVerifier](https://github.com/soupslurpr/AppVerifier) (app ID `cc.skysparkle.sparkledns`).
+`apksigner` prints the same value in lowercase without colons. On Android you can check it with [AppVerifier](https://github.com/soupslurpr/AppVerifier) (app ID `cc.skysparkle.sparkledns`).
 
 ## Building from source
+
+Requires JDK 17+ and Android SDK 36.
 
 ```sh
 ./gradlew assembleRelease
 ```
 
-Or open the project in Android Studio and run the `app` configuration. Requires Android 8.0 (API 26) or newer; HTTP/3 requires Android 14.
+### Releasing
 
-The version lives in `app/build.gradle.kts` (`versionName`, `versionCode = major * 10000 + minor * 100 + patch`). For every release, add `fastlane/metadata/android/<locale>/changelogs/<versionCode>.txt` and tag the commit as `v<versionName>` (for example `v1.0.6`) — F-Droid detects new releases from these tags.
-
-## Repository structure
-
-<img src="assets/icon-structure.png" width="36" align="left">
-
-```
-.
-├── app/                 # Android app source (Kotlin, Jetpack Compose)
-├── assets/              # README images
-│   └── screenshots/     # App screenshots
-├── fastlane/            # F-Droid store listing, screenshots and changelogs
-├── gradle/              # Gradle wrapper
-├── LICENSE              # GNU GPLv3
-└── README.md
-```
-
-APK builds are published as assets on the [Releases page](https://github.com/kalarina-bit/Sparkledns/releases), not stored in this repository.
+1. Bump `versionName` and `versionCode` in `app/build.gradle.kts` (`versionCode = major * 10000 + minor * 100 + patch`).
+2. Add `fastlane/metadata/android/<locale>/changelogs/<versionCode>.txt`.
+3. Tag the commit as `v<versionName>` (for example `v1.0.6`) — F-Droid detects new releases from these tags.
 
 ## License
 
-This project is licensed under the **GNU General Public License v3.0 or later** (GPL-3.0-or-later) — see the [LICENSE](LICENSE) file for details.
+[GNU General Public License v3.0 or later](LICENSE) (GPL-3.0-or-later).
