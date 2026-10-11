@@ -11,7 +11,6 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/github/downloads/kalarina-bit/Sparkledns/latest/total?label=downloads&color=2e7d32&labelColor=1b1b1b" alt="downloads counter">
   <img src="https://img.shields.io/badge/Android-8.0%2B-2e7d32?logo=android&logoColor=white&labelColor=1b1b1b" alt="Android 8.0+">
   <img src="https://img.shields.io/badge/License-GPL--3.0--or--later-2e7d32?labelColor=1b1b1b" alt="GPL-3.0-or-later">
 </p>
@@ -82,7 +81,7 @@ Requires JDK 17+ and Android SDK 36.
 
 ## Contributing
 
-Bug reports, DoH server and blocklist suggestions, translation fixes and pull requests are welcome on [Gitea](https://git.skysparkle.cc/kalarina/Sparkledns/issues) and [GitHub](https://github.com/kalarina-bit/Sparkledns/issues). Please read [CONTRIBUTING.md](CONTRIBUTING.md) first — it explains what fits the project and how to send changes.
+Bug reports, DoH server and blocklist suggestions, translation fixes and pull requests are welcome in the [issue tracker](https://git.skysparkle.cc/kalarina/Sparkledns/issues). Please read [CONTRIBUTING.md](CONTRIBUTING.md) first — it explains what fits the project and how to send changes.
 
 ## License
 

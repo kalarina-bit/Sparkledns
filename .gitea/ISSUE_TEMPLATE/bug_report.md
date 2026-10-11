@@ -19,7 +19,7 @@ title: "[Bug] "
 **Environment**
 
 - App version:
-- Installed from: Gitea / GitHub / F-Droid
+- Installed from: Gitea / F-Droid
 - Device and Android version:
 - DoH server in use:
 - Network: Wi-Fi / mobile data

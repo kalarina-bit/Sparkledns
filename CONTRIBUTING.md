@@ -4,12 +4,7 @@ Thanks for wanting to help! This guide explains where to contribute, what fits t
 
 ## Where to contribute
 
-| Where | What you can do |
-|---|---|
-| [Gitea](https://git.skysparkle.cc/kalarina/Sparkledns) — main repository | Issues and pull requests (needs an account on git.skysparkle.cc) |
-| [GitHub](https://github.com/kalarina-bit/Sparkledns) — copy | Issues and pull requests, if you prefer GitHub |
-
-Pull requests opened on GitHub are reviewed there and then merged into the main repository by the maintainer.
+Issues and pull requests go to the repository on [Gitea](https://git.skysparkle.cc/kalarina/Sparkledns). You need an account on git.skysparkle.cc.
 
 ## Ways to help
 
@@ -67,7 +62,7 @@ If your code adds new strings, add them to `values/strings.xml`. Translations ar
 
 ## Security
 
-Please don't report security issues in public issues. Use [private vulnerability reporting on GitHub](https://github.com/kalarina-bit/Sparkledns/security/advisories/new).
+Please don't post details of security issues publicly. Open a short issue titled "Security contact" without any details, and the maintainer will reach out privately.
 
 ## License
 
