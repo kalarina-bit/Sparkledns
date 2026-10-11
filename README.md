@@ -80,6 +80,10 @@ Requires JDK 17+ and Android SDK 36.
 2. Add `fastlane/metadata/android/<locale>/changelogs/<versionCode>.txt`.
 3. Tag the commit as `v<versionName>` (for example `v1.0.6`) — F-Droid detects new releases from these tags.
 
+## Contributing
+
+Bug reports, DoH server and blocklist suggestions, translation fixes and pull requests are welcome on [Gitea](https://git.skysparkle.cc/kalarina/Sparkledns/issues) and [GitHub](https://github.com/kalarina-bit/Sparkledns/issues). Please read [CONTRIBUTING.md](CONTRIBUTING.md) first — it explains what fits the project and how to send changes.
+
 ## License
 
 [GNU General Public License v3.0 or later](LICENSE) (GPL-3.0-or-later).
