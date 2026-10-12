@@ -41,8 +41,6 @@ SparkleDNS starts a local VPN that captures only DNS traffic and sends every que
 
 <img src="assets/icon-install.png" width="36" align="left">
 
-HTTP/3 needs Android 14.
-
 1. Download the latest APK from the [Releases page](https://git.skysparkle.cc/kalarina/Sparkledns/releases).
 2. Allow installs from unknown sources for the app you open it with (Settings → Apps → Special access → Install unknown apps).
 3. Open the `.apk` file and confirm the install.
