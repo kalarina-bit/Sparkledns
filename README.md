@@ -41,7 +41,7 @@ SparkleDNS starts a local VPN that captures only DNS traffic and sends every que
 
 <img src="assets/icon-install.png" width="36" align="left">
 
-Requires **Android 8.0 (API 26) or newer**; HTTP/3 needs Android 14.
+HTTP/3 needs Android 14.
 
 1. Download the latest APK from the [Releases page](https://git.skysparkle.cc/kalarina/Sparkledns/releases).
 2. Allow installs from unknown sources for the app you open it with (Settings → Apps → Special access → Install unknown apps).
@@ -81,8 +81,8 @@ Requires JDK 17+ and Android SDK 36.
 
 ## Contributing
 
-Bug reports, DoH server and blocklist suggestions, translation fixes and pull requests are welcome in the [issue tracker](https://git.skysparkle.cc/kalarina/Sparkledns/issues). Please read [CONTRIBUTING.md](CONTRIBUTING.md) first — it explains what fits the project and how to send changes.
+Bug reports, DoH server and blocklist suggestions, translation fixes and pull requests are welcome in the [issue tracker](https://git.skysparkle.cc/kalarina/Sparkledns/issues). Please read [CONTRIBUTING.md](CONTRIBUTING.md) first — it explains what fits the project and how to send changes. To open an issue or a pull request, [create an account](https://git.skysparkle.cc/user/sign_up) on this Gitea.
 
 ## License
 
-[GNU General Public License v3.0 or later](LICENSE) (GPL-3.0-or-later).
+[GNU General Public License v3.0 or later](LICENSE).
