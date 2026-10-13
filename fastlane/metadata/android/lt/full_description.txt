@@ -1,0 +1,14 @@
+<p>Apsaugokite savo DNS užklausas šifruotu DNS-over-HTTPS, o likęs interneto srautas tegul eina įprastu ryšiu. SparkleDNS leidžia valdyti DNS, nenukreipiant viso įrenginio per VPN serverį.</p>
+
+<ul>
+<li>Siųskite DNS užklausas pasirinktam DoH serveriui pagal RFC 8484.</li>
+<li>Prieš jungdamiesi patikrinkite serverio protokolą ir delsą.</li>
+<li>Stebėkite užklausas ir statistiką realiuoju laiku, filtruokite veiklą ir blokuokite domenus vienu palietimu.</li>
+<li>Pridėkite savo domenų taisykles arba blokavimo sąrašus pagal URL, įskaitant HaGeZi Pro++ ir TIF šablonus.</li>
+<li>Leiskite pasirinktoms programėlėms apeiti DNS tunelį.</li>
+<li>Prisijunkite ar atsijunkite vienu palietimu arba per sparčiųjų nustatymų plytelę.</li>
+</ul>
+
+<p>SparkleDNS sukuria vietinį VPN tunelį, kuris perima tik DNS srautą. DNS užklausos keliauja į pasirinktą DoH serverį, visa kita naudoja įprastą ryšį. Pakeitus serverį prisijungus, tunelis automatiškai paleidžiamas iš naujo. Jokios analitikos ir jokių Google Play paslaugų.</p>
+
+<p>SparkleDNS – lengvas DNS klientas Android įrenginiams su aiškiu šifruoto DNS ir domenų blokavimo valdymu. Įdiekite SparkleDNS ir perimkite savo DNS užklausų kontrolę.</p>

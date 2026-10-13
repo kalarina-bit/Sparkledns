@@ -1,0 +1,14 @@
+<p>使用加密的 DNS-over-HTTPS 保护你的 DNS 请求，其他网络流量仍走普通连接。SparkleDNS 让你掌控 DNS，而无需让整台设备经过 VPN 服务器。</p>
+
+<ul>
+<li>按照 RFC 8484 将 DNS 查询发送到你选择的 DoH 服务器。</li>
+<li>连接前检查服务器的协议和延迟。</li>
+<li>实时查看查询和统计信息，筛选活动，一键屏蔽域名。</li>
+<li>添加自定义域名规则，或通过 URL 添加屏蔽列表，包括 HaGeZi Pro++ 和 TIF 预设。</li>
+<li>允许指定应用绕过 DNS 隧道。</li>
+<li>一键连接或断开，也可使用快捷设置磁贴。</li>
+</ul>
+
+<p>SparkleDNS 创建本地 VPN 隧道，仅捕获 DNS 流量。DNS 请求发送到你选择的 DoH 服务器，其他流量使用常规连接。连接时切换服务器，隧道会自动重启。不含任何分析服务或 Google Play 服务。</p>
+
+<p>SparkleDNS 是一款轻量的 Android DNS 客户端，让你清晰掌控加密 DNS 与域名屏蔽。安装 SparkleDNS，掌控你的 DNS 请求。</p>

@@ -1,0 +1,14 @@
+<p>Schütze deine DNS-Anfragen mit verschlüsseltem DNS-over-HTTPS, während dein übriger Internetverkehr über die normale Verbindung läuft. SparkleDNS gibt dir die Kontrolle über DNS, ohne dein ganzes Gerät über einen VPN-Server zu leiten.</p>
+
+<ul>
+<li>Sende DNS-Anfragen per RFC 8484 an den DoH-Server deiner Wahl.</li>
+<li>Prüfe Protokoll und Latenz eines Servers, bevor du dich verbindest.</li>
+<li>Sieh Anfragen und Statistiken live, filtere die Aktivität und blockiere Domains mit einem Tippen.</li>
+<li>Füge eigene Domainregeln oder Blocklisten per URL hinzu, inklusive der Vorlagen HaGeZi Pro++ und TIF.</li>
+<li>Lass ausgewählte Apps den DNS-Tunnel umgehen.</li>
+<li>Verbinde oder trenne mit einem Tippen oder über die Kachel in den Schnelleinstellungen.</li>
+</ul>
+
+<p>SparkleDNS erstellt einen lokalen VPN-Tunnel, der nur den DNS-Verkehr erfasst. DNS-Anfragen gehen an den gewählten DoH-Server, alles andere nutzt deine normale Verbindung. Wechselst du den Server während der Verbindung, startet der Tunnel automatisch neu. Keine Analysedienste und keine Google-Play-Dienste.</p>
+
+<p>SparkleDNS ist ein schlanker DNS-Client für Android mit klarer Kontrolle über verschlüsseltes DNS und Domain-Blockierung. Installiere SparkleDNS und behalte deine DNS-Anfragen im Griff.</p>

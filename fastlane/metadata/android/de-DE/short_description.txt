@@ -1,0 +1,1 @@
+DNS-Anfragen verschlüsseln, ohne den gesamten Verkehr über ein VPN zu leiten.
