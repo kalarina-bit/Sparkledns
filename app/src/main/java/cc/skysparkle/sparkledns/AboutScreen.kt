@@ -50,7 +50,6 @@ import androidx.compose.ui.unit.dp
 
 private const val PRIVACY_POLICY = "https://skysparkle.cc/privacy?lang=en"
 private const val SOURCE_CODE = "https://git.skysparkle.cc/kalarina/Sparkledns"
-private const val APP_LICENSE = "GPL-3.0-or-later"
 
 private const val APACHE_2 = "Apache License 2.0"
 private const val APACHE_2_URL = "https://www.apache.org/licenses/LICENSE-2.0"
@@ -149,7 +148,6 @@ private fun AboutContent(modifier: Modifier, onOpenLicenses: () -> Unit) {
                 InfoRow(stringResource(R.string.about_version), BuildConfig.VERSION_NAME)
                 InfoRow(stringResource(R.string.about_protocol), "DNS-over-HTTPS (RFC 8484)")
                 InfoRow("HTTP/3", http3)
-                InfoRow(stringResource(R.string.about_license), APP_LICENSE)
             }
         }
 

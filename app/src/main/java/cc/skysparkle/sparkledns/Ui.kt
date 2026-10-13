@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -112,13 +114,23 @@ fun HintCard(
     @DrawableRes icon: Int = R.drawable.ic_tab_info,
     tint: Color = MaterialTheme.colorScheme.onSurfaceVariant,
     action: (@Composable () -> Unit)? = null,
+    onDismiss: (() -> Unit)? = null,
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = tint.copy(alpha = 0.10f)),
     ) {
         Row(
-            modifier = Modifier.padding(start = 14.dp, end = if (action != null) 6.dp else 14.dp, top = 12.dp, bottom = 12.dp),
+            modifier = Modifier.padding(
+                start = 14.dp,
+                end = when {
+                    onDismiss != null -> 4.dp
+                    action != null -> 6.dp
+                    else -> 14.dp
+                },
+                top = if (onDismiss != null) 6.dp else 12.dp,
+                bottom = if (onDismiss != null) 6.dp else 12.dp,
+            ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(painterResource(icon), contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
@@ -130,6 +142,16 @@ fun HintCard(
                 modifier = Modifier.weight(1f),
             )
             action?.invoke()
+            if (onDismiss != null) {
+                IconButton(onClick = onDismiss, modifier = Modifier.size(40.dp)) {
+                    Icon(
+                        painterResource(R.drawable.ic_close),
+                        contentDescription = stringResource(R.string.dismiss),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+            }
         }
     }
 }

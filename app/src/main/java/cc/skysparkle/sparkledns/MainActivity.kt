@@ -308,19 +308,29 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     text = result.text,
                     icon = if (result.ok) R.drawable.ic_check else R.drawable.ic_alert,
                     tint = if (result.ok) CachedColor else MaterialTheme.colorScheme.error,
+                    onDismiss = { testResult = null },
                 )
             }
         }
 
         val lastHost = remember { arrayOf("") }
         privateDnsHost?.let { lastHost[0] = it }
-        AnimatedVisibility(visible = privateDnsHost != null, enter = Motion.expandIn, exit = Motion.collapseOut) {
+        var dismissedDnsHost by remember { mutableStateOf(prefs.dismissedPrivateDns) }
+        AnimatedVisibility(
+            visible = privateDnsHost != null && privateDnsHost != dismissedDnsHost,
+            enter = Motion.expandIn,
+            exit = Motion.collapseOut,
+        ) {
             HintCard(
                 text = stringResource(R.string.hint, lastHost[0]),
                 icon = R.drawable.ic_alert,
                 tint = WarningColor,
                 action = {
                     TextButton(onClick = { openNetworkSettings(context) }) { Text(stringResource(R.string.open_settings)) }
+                },
+                onDismiss = {
+                    dismissedDnsHost = lastHost[0]
+                    prefs.dismissedPrivateDns = lastHost[0]
                 },
             )
         }

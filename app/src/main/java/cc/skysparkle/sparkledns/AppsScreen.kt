@@ -92,6 +92,9 @@ fun AppsScreen(modifier: Modifier = Modifier) {
     var search by rememberSaveable { mutableStateOf("") }
     var collapsed by remember { mutableStateOf(setOf(AppGroup.SYSTEM)) }
     val pending = active != null && excluded != activeExcluded
+    var showAppsHint by remember { mutableStateOf(!prefs.isHintDismissed(HINT_APPS)) }
+    // Closing the "reconnect" card hides it until the selection changes again
+    var pendingDismissedFor by remember { mutableStateOf<Set<String>?>(null) }
     // Uninstalled apps may still be in the saved set; count only the ones on the device
     val excludedCount = apps?.count { it.packageName in excluded } ?: excluded.size
     val searching = search.isNotBlank()
@@ -122,8 +125,21 @@ fun AppsScreen(modifier: Modifier = Modifier) {
     ) {
         item {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                HintCard(stringResource(R.string.apps_hint), icon = R.drawable.ic_tab_info)
-                AnimatedVisibility(visible = pending, enter = Motion.expandIn, exit = Motion.collapseOut) {
+                AnimatedVisibility(visible = showAppsHint, enter = Motion.expandIn, exit = Motion.collapseOut) {
+                    HintCard(
+                        stringResource(R.string.apps_hint),
+                        icon = R.drawable.ic_tab_info,
+                        onDismiss = {
+                            showAppsHint = false
+                            prefs.dismissHint(HINT_APPS)
+                        },
+                    )
+                }
+                AnimatedVisibility(
+                    visible = pending && excluded != pendingDismissedFor,
+                    enter = Motion.expandIn,
+                    exit = Motion.collapseOut,
+                ) {
                     HintCard(
                         text = stringResource(R.string.apps_pending),
                         icon = R.drawable.ic_refresh,
@@ -133,6 +149,7 @@ fun AppsScreen(modifier: Modifier = Modifier) {
                                 Text(stringResource(R.string.reconnect))
                             }
                         },
+                        onDismiss = { pendingDismissedFor = excluded },
                     )
                 }
             }
@@ -345,3 +362,5 @@ private fun Drawable.toImageBitmap(size: Int): ImageBitmap {
     draw(canvas)
     return bitmap.asImageBitmap()
 }
+
+private const val HINT_APPS = "apps"

@@ -62,6 +62,8 @@ private val Presets = listOf(
 fun BlocklistScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val prefs = remember { Prefs(context) }
+    var showNote by remember { mutableStateOf(!prefs.isHintDismissed(HINT_BLOCKLIST)) }
 
     val enabled by Blocklist.enabled.collectAsState()
     val total by Blocklist.total.collectAsState()
@@ -124,7 +126,16 @@ fun BlocklistScreen(modifier: Modifier = Modifier) {
             }
         }
 
-        HintCard(stringResource(R.string.bl_note), icon = R.drawable.ic_tab_info)
+        AnimatedVisibility(visible = showNote, enter = Motion.expandIn, exit = Motion.collapseOut) {
+            HintCard(
+                stringResource(R.string.bl_note),
+                icon = R.drawable.ic_tab_info,
+                onDismiss = {
+                    showNote = false
+                    prefs.dismissHint(HINT_BLOCKLIST)
+                },
+            )
+        }
 
         SectionHeader(stringResource(R.string.bl_my), icon = R.drawable.ic_tab_block)
 
