@@ -13,8 +13,8 @@ android {
         targetSdk = 36
         // Single source of truth: the About screen reads these through BuildConfig.
         // Kept as plain literals so F-Droid can detect new versions. Code = major * 10000 + minor * 100 + patch.
-        versionCode = 10006
-        versionName = "1.0.6"
+        versionCode = 10007
+        versionName = "1.0.7"
     }
 
     buildTypes {

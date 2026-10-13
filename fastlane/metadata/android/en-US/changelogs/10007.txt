@@ -1,0 +1,3 @@
+• Now in German, Japanese, Lithuanian and Chinese
+• Hints and warnings can be closed with ✕
+• Cleaner About screen
