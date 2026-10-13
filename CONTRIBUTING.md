@@ -17,7 +17,7 @@ Issues and pull requests go to the repository on [Gitea](https://git.skysparkle.
 ## Before you start
 
 - **Small changes** (typos, obvious bugs, translation fixes): send a pull request directly.
-- **Anything bigger** (new features, UI changes, new dependencies, new languages): open an issue first and wait for a go-ahead, so your work isn't wasted.
+- **Anything bigger** (new features, UI changes, new dependencies): open an issue first and wait for a go-ahead, so your work isn't wasted.
 
 ## Ground rules
 
@@ -44,12 +44,12 @@ Include links to the server's documentation or the list's homepage in the reques
 
 ## Translations
 
-SparkleDNS is currently available in English and Russian. Fixes are welcome; for a new language, open an issue first.
+SparkleDNS is available in exactly six languages: English, Russian, German, Japanese, Lithuanian and Chinese. Fixes to these are welcome; new languages are not accepted.
 
 - App strings: `app/src/main/res/values-<lang>/strings.xml` (English is `values/`).
 - Store listing: `fastlane/metadata/android/<locale>/`.
 
-If your code adds new strings, add them to `values/strings.xml`. Translations are welcome but not required — mention missing ones in the pull request.
+If your code adds new strings, add them to `values/strings.xml`. Translations for the other languages are welcome but not required — mention missing ones in the pull request.
 
 ## Pull requests
 
