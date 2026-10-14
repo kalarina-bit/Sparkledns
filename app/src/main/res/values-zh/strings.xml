@@ -67,7 +67,7 @@
     <string name="bl_list_info">%1$s 个域名 · %2$s</string>
     <string name="bl_presets">热门列表</string>
     <string name="bl_download_failed">下载失败：%1$s</string>
-    <string name="about_desc">为整台设备提供通过 HTTPS 和 HTTP/3 加密的 DNS。只有 DNS 经过本地 VPN，其他流量保持不变。</string>
+    <string name="about_desc">加密 DNS 请求，无需让全部流量经过 VPN。</string>
     <string name="about_version">版本</string>
     <string name="about_protocol">协议</string>
     <string name="about_http3_yes">此设备支持</string>

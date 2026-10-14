@@ -67,7 +67,7 @@
     <string name="bl_list_info">%1$s Domains · %2$s</string>
     <string name="bl_presets">Beliebte Listen</string>
     <string name="bl_download_failed">Download fehlgeschlagen: %1$s</string>
-    <string name="about_desc">Verschlüsseltes DNS über HTTPS und HTTP/3 für das ganze Gerät. Nur DNS läuft über das lokale VPN, der übrige Verkehr bleibt unberührt.</string>
+    <string name="about_desc">DNS-Anfragen verschlüsseln, ohne den gesamten Verkehr über ein VPN zu leiten.</string>
     <string name="about_version">Version</string>
     <string name="about_protocol">Protokoll</string>
     <string name="about_http3_yes">Auf diesem Gerät unterstützt</string>

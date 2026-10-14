@@ -67,7 +67,7 @@
     <string name="bl_list_info">%1$s доменов · %2$s</string>
     <string name="bl_presets">Популярные списки</string>
     <string name="bl_download_failed">Ошибка загрузки: %1$s</string>
-    <string name="about_desc">Шифрованный DNS через HTTPS и HTTP/3 для всего устройства. Через локальный VPN идёт только DNS, остальной трафик не затрагивается.</string>
+    <string name="about_desc">Шифруйте DNS-запросы, не пропуская весь трафик через VPN.</string>
     <string name="about_version">Версия</string>
     <string name="about_protocol">Протокол</string>
     <string name="about_http3_yes">Поддерживается на этом устройстве</string>

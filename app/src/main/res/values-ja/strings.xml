@@ -67,7 +67,7 @@
     <string name="bl_list_info">%1$s ドメイン · %2$s</string>
     <string name="bl_presets">人気のリスト</string>
     <string name="bl_download_failed">ダウンロードに失敗しました: %1$s</string>
-    <string name="about_desc">端末全体で DNS over HTTPS と HTTP/3 による暗号化 DNS を利用できます。ローカル VPN を通るのは DNS だけで、その他の通信はそのままです。</string>
+    <string name="about_desc">すべての通信をVPNに通さずに、DNSリクエストを暗号化します。</string>
     <string name="about_version">バージョン</string>
     <string name="about_protocol">プロトコル</string>
     <string name="about_http3_yes">この端末で対応しています</string>

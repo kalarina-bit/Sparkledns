@@ -67,7 +67,7 @@
     <string name="bl_list_info">%1$s domenų · %2$s</string>
     <string name="bl_presets">Populiarūs sąrašai</string>
     <string name="bl_download_failed">Atsisiųsti nepavyko: %1$s</string>
-    <string name="about_desc">Šifruotas DNS per HTTPS ir HTTP/3 visam įrenginiui. Per vietinį VPN eina tik DNS, kitas srautas lieka nepaliestas.</string>
+    <string name="about_desc">Šifruokite DNS užklausas, nenukreipdami viso srauto per VPN.</string>
     <string name="about_version">Versija</string>
     <string name="about_protocol">Protokolas</string>
     <string name="about_http3_yes">Palaikoma šiame įrenginyje</string>

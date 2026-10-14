@@ -68,7 +68,7 @@
     <string name="bl_list_info">%1$s domains · %2$s</string>
     <string name="bl_presets">Popular lists</string>
     <string name="bl_download_failed">Download failed: %1$s</string>
-    <string name="about_desc">Encrypted DNS over HTTPS and HTTP/3 for the whole device. Only DNS goes through the local VPN, all other traffic is untouched.</string>
+    <string name="about_desc">Encrypt DNS requests without routing all your traffic through a VPN.</string>
     <string name="about_version">Version</string>
     <string name="about_protocol">Protocol</string>
     <string name="about_http3_yes">Supported on this device</string>

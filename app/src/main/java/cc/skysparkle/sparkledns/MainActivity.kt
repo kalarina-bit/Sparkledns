@@ -608,7 +608,7 @@ private fun ProviderRow(
         if (onPolicy != null) {
             IconButton(onClick = onPolicy, modifier = Modifier.size(40.dp)) {
                 Icon(
-                    painterResource(R.drawable.ic_privacy),
+                    painterResource(R.drawable.ic_policy),
                     contentDescription = stringResource(R.string.about_privacy_policy),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(18.dp),
