@@ -1,3 +1,5 @@
 • Dabar ir vokiečių, japonų, lietuvių bei kinų kalbomis
+• Nepriklausomi serveriai: Digitale Gesellschaft, UncensoredDNS, Freifunk München. Cloudflare, Google, AdGuard ir Mullvad pašalinti
+• Serverių sąrašą galima atnaujinti iš projekto saugyklos, prie kiekvieno serverio – nuoroda į privatumo politiką
 • Patarimus ir įspėjimus galima uždaryti ✕
 • Tvarkingesnis ekranas „Apie“

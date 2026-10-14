@@ -1,3 +1,5 @@
 • 新增德语、日语、立陶宛语和中文
+• 独立服务器：Digitale Gesellschaft、UncensoredDNS、Freifunk München；移除 Cloudflare、Google、AdGuard 和 Mullvad
+• 可从项目仓库更新服务器列表，每个服务器都附有隐私政策链接
 • 提示和警告可点 ✕ 关闭
 • “关于”页面更简洁

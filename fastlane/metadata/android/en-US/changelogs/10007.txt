@@ -1,3 +1,5 @@
 • Now in German, Japanese, Lithuanian and Chinese
+• Independent servers: Digitale Gesellschaft, UncensoredDNS, Freifunk München. Cloudflare, Google, AdGuard and Mullvad removed
+• Update the server list from the project repository; each server links to its privacy policy
 • Hints and warnings can be closed with ✕
 • Cleaner About screen

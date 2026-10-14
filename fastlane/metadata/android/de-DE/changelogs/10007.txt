@@ -1,3 +1,5 @@
 • Jetzt auch auf Deutsch, Japanisch, Litauisch und Chinesisch
+• Unabhängige Server: Digitale Gesellschaft, UncensoredDNS, Freifunk München. Cloudflare, Google, AdGuard und Mullvad entfernt
+• Serverliste lässt sich aus dem Projekt-Repository aktualisieren, jeder Server verlinkt seine Datenschutzerklärung
 • Hinweise und Warnungen lassen sich mit ✕ schließen
 • Aufgeräumter Info-Bildschirm

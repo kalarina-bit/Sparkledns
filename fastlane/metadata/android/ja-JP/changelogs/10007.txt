@@ -1,3 +1,5 @@
 • ドイツ語・日本語・リトアニア語・中国語に対応
+• 独立系サーバー：Digitale Gesellschaft、UncensoredDNS、Freifunk München。Cloudflare、Google、AdGuard、Mullvad を削除
+• サーバーリストをプロジェクトのリポジトリから更新できるように。各サーバーにプライバシーポリシーのリンク
 • ヒントと警告を ✕ で閉じられるように
 • 「情報」画面を整理
