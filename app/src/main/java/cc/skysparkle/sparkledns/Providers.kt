@@ -21,6 +21,7 @@ data class DohProvider(
 
 object Providers {
     const val CUSTOM_ID = "custom"
+    const val DEFAULT_ID = "skysparkle"
 
     // Shipped with the app and used until the list from the repository is downloaded
     val builtIn = listOf(
@@ -50,7 +51,8 @@ object Providers {
 
     val list: List<DohProvider> get() = ServerList.servers.value
 
-    val default: DohProvider get() = list.first()
+    // The project's own server stays the default whatever order the list uses
+    val default: DohProvider get() = list.firstOrNull { it.id == DEFAULT_ID } ?: list.first()
 
     fun byId(id: String): DohProvider = list.firstOrNull { it.id == id } ?: default
 }
@@ -61,7 +63,6 @@ object ServerList {
     private const val FILE = "servers.txt"
     private const val MAX_BYTES = 64 * 1024
     private const val MAX_SERVERS = 50
-    private val ID = Regex("[a-z0-9][a-z0-9_-]{0,31}")
 
     private val _servers = MutableStateFlow(Providers.builtIn)
     val servers: StateFlow<List<DohProvider>> = _servers
@@ -110,9 +111,9 @@ object ServerList {
         return parsed.size
     }
 
-    // Format per line: id | name | DoH URL | bootstrap IPs | h3 | privacy policy URL
+    // Format per line: Name | DoH URL | privacy policy URL | h3 (optional). See CONTRIBUTING.md.
     fun parse(text: String): List<DohProvider> {
-        val builtInById = Providers.builtIn.associateBy { it.id }
+        val builtInByHost = Providers.builtIn.associateBy { it.url.toHttpUrlOrNull()?.host }
         val seen = HashSet<String>()
         val result = ArrayList<DohProvider>()
         for (raw in text.lineSequence()) {
@@ -120,31 +121,21 @@ object ServerList {
             if (line.isEmpty() || line.startsWith("#")) continue
             val cols = line.split('|').map { it.trim() }
             if (cols.size < 3) continue
-            val id = cols[0].lowercase()
-            if (!ID.matches(id) || id == Providers.CUSTOM_ID || !seen.add(id)) continue
-            // Shipped servers keep their address, so an edited list cannot redirect them
-            val pinned = builtInById[id]
-            if (pinned != null) {
-                result += pinned
-            } else {
-                val name = cols[1].take(40)
-                val url = cols[2]
-                if (name.isEmpty() || url.toHttpUrlOrNull()?.isHttps != true) continue
-                val bootstrap = parseIps(cols.getOrElse(3) { "" }).filter(::isIpLiteral)
-                val http3 = cols.getOrElse(4) { "" }.equals("h3", ignoreCase = true)
-                val policy = cols.getOrElse(5) { "" }.takeIf { it.toHttpUrlOrNull()?.isHttps == true }
-                result += DohProvider(id, name, url, bootstrap, http3, policy)
-            }
+            val name = cols[0].take(40)
+            val url = cols[1].toHttpUrlOrNull()
+            val policy = cols[2].takeIf { it.toHttpUrlOrNull()?.isHttps == true }
+            if (name.isEmpty() || url == null || !url.isHttps) continue
+            // Shipped servers keep their address and id, so an edited list cannot redirect them
+            val pinned = builtInByHost[url.host]
+            val server = pinned
+                ?: if (policy == null) continue
+                else DohProvider(url.host, name, cols[1], http3 = cols.getOrElse(3) { "" }.equals("h3", ignoreCase = true), policy = policy)
+            if (!seen.add(server.id)) continue
+            result += server
             if (result.size >= MAX_SERVERS) break
         }
         return result
     }
-
-    private val IPV4 = Regex("\\d{1,3}(\\.\\d{1,3}){3}")
-    private val IPV6 = Regex("[0-9a-fA-F:.]+")
-
-    private fun isIpLiteral(value: String): Boolean =
-        IPV4.matches(value) || (value.contains(':') && IPV6.matches(value))
 }
 
 private fun java.io.InputStream.readNBytesCompat(limit: Int): ByteArray {
