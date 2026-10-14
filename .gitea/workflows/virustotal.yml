@@ -18,7 +18,7 @@ jobs:
     steps:
       - name: Scan release APKs
         env:
-          VT_API_KEY: ${{ 451d1ed95c835bf93365bbb609f4be3d877ec23c1935a72b2f346a531cee9758 }}
+          VT_API_KEY: ${{ secrets.VT_API_KEY }}
           GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
           SERVER: ${{ github.server_url }}
           REPO: ${{ github.repository }}
