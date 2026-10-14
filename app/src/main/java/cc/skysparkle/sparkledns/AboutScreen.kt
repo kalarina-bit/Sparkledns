@@ -263,7 +263,7 @@ private fun InfoRow(label: String, value: String) {
     }
 }
 
-private fun openUrl(context: Context, url: String) {
+internal fun openUrl(context: Context, url: String) {
     runCatching {
         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     }

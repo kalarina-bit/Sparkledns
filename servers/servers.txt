@@ -1,0 +1,16 @@
+# SparkleDNS server list
+# The app downloads this file when you tap "Update server list".
+#
+# Format: id | name | DoH URL | bootstrap IPs | h3 | privacy policy URL
+# - id: lowercase letters, digits, - or _. Never change it: the app remembers the chosen server by id.
+# - DoH URL and privacy policy must use https://
+# - bootstrap IPs: optional, comma-separated
+# - h3: write h3 only if the server supports HTTP/3
+# Servers that ship with the app (skysparkle, quad9, digitale-gesellschaft, uncensoreddns, ffmuc)
+# always keep their built-in address, so editing their URL here has no effect.
+
+skysparkle            | SkySparkle            | https://blog.skysparkle.cc/dns-query            |                                | h3 | https://skysparkle.cc/privacy?lang=en
+quad9                 | Quad9                 | https://dns.quad9.net/dns-query                 | 9.9.9.9, 149.112.112.112       |    | https://quad9.net/service/privacy/
+digitale-gesellschaft | Digitale Gesellschaft | https://dns.digitale-gesellschaft.ch/dns-query  | 185.95.218.42, 185.95.218.43   | h3 | https://www.digitale-gesellschaft.ch/dns/
+uncensoreddns         | UncensoredDNS         | https://anycast.uncensoreddns.org/dns-query     | 91.239.100.100                 |    | https://blog.uncensoreddns.org/faq/
+ffmuc                 | Freifunk München      | https://doh.ffmuc.net/dns-query                 | 5.1.66.255, 185.150.99.255     | h3 | https://ffmuc.net/dns-privacy/

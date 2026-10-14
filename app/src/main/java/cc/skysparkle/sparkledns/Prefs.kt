@@ -5,6 +5,10 @@ import android.content.Context
 class Prefs(context: Context) {
     private val sp = context.applicationContext.getSharedPreferences("doh", Context.MODE_PRIVATE)
 
+    init {
+        ServerList.ensureLoaded(context.applicationContext)
+    }
+
     var providerId: String
         get() = sp.getString(KEY_PROVIDER, null) ?: Providers.default.id
         set(value) = sp.edit().putString(KEY_PROVIDER, value).apply()
