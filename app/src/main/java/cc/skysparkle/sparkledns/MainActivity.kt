@@ -288,7 +288,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     ProviderRow(
                         title = p.name,
                         subtitle = hostOf(p.url),
-                        http3 = p.http3,
                         selected = selected == p.id,
                         onPolicy = p.policy?.let { url -> { openUrl(context, url) } },
                     ) { select(p.id) }
@@ -297,7 +296,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 ProviderRow(
                     title = stringResource(R.string.custom),
                     subtitle = hostOf(customUrl),
-                    http3 = customHttp3,
                     selected = isCustom,
                 ) { select(Providers.CUSTOM_ID) }
             }
@@ -571,7 +569,6 @@ private fun CrashCard(report: String, onCopy: () -> Unit, onDismiss: () -> Unit)
 private fun ProviderRow(
     title: String,
     subtitle: String,
-    http3: Boolean,
     selected: Boolean,
     onPolicy: (() -> Unit)? = null,
     onClick: () -> Unit,
@@ -600,10 +597,6 @@ private fun ProviderRow(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-        }
-        if (http3) {
-            Spacer(Modifier.width(8.dp))
-            Pill("HTTP/3", MaterialTheme.colorScheme.primary)
         }
         if (onPolicy != null) {
             IconButton(onClick = onPolicy, modifier = Modifier.size(40.dp)) {
