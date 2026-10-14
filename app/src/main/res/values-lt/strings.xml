@@ -94,4 +94,7 @@
     <string name="open_settings">Nustatymai</string>
     <string name="mon_no_match">Filtro neatitinka niekas</string>
     <string name="bl_title">Blokavimas</string>
+    <string name="servers_update">Atnaujinti serverių sąrašą</string>
+    <string name="servers_updated">Serverių sąrašas atnaujintas</string>
+    <string name="servers_update_failed">Nepavyko atnaujinti serverių sąrašo: %1$s</string>
 </resources>

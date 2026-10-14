@@ -94,4 +94,7 @@
     <string name="open_settings">Einstellungen</string>
     <string name="mon_no_match">Nichts passt zum Filter</string>
     <string name="bl_title">Blockierung</string>
+    <string name="servers_update">Serverliste aktualisieren</string>
+    <string name="servers_updated">Serverliste aktualisiert</string>
+    <string name="servers_update_failed">Serverliste konnte nicht aktualisiert werden: %1$s</string>
 </resources>

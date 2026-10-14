@@ -94,4 +94,7 @@
     <string name="open_settings">设置</string>
     <string name="mon_no_match">没有符合筛选条件的内容</string>
     <string name="bl_title">屏蔽</string>
+    <string name="servers_update">更新服务器列表</string>
+    <string name="servers_updated">服务器列表已更新</string>
+    <string name="servers_update_failed">无法更新服务器列表：%1$s</string>
 </resources>

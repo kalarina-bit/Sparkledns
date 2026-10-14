@@ -53,7 +53,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -63,6 +65,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -121,6 +124,10 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     val stats = rememberLiveStats()
 
     var selected by remember { mutableStateOf(prefs.providerId) }
+    val servers by ServerList.servers.collectAsState()
+    var syncing by remember { mutableStateOf(false) }
+    var syncResult by remember { mutableStateOf<TestResult?>(null) }
+    var shownSync by remember { mutableStateOf<TestResult?>(null) }
     var customUrl by remember { mutableStateOf(prefs.customUrl) }
     var customBootstrap by remember { mutableStateOf(prefs.customBootstrap) }
     var customHttp3 by remember { mutableStateOf(prefs.customHttp3) }
@@ -140,7 +147,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     val isCustom = selected == Providers.CUSTOM_ID
     val customValid = customUrl.trim().toHttpUrlOrNull()?.isHttps == true
     val canConnect = !isCustom || customValid
-    val selectedProvider = remember(selected, customUrl, customBootstrap, customHttp3) { prefs.resolve() }
+    val selectedProvider = remember(selected, customUrl, customBootstrap, customHttp3, servers) { prefs.resolve() }
     val customName = stringResource(R.string.custom)
     fun nameOf(p: DohProvider) = if (p.id == Providers.CUSTOM_ID) customName else p.name
     val shownProvider = active ?: selectedProvider
@@ -179,6 +186,30 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         selected = id
         prefs.providerId = id
         testResult = null
+    }
+
+    // A server removed from the list falls back to the default one
+    LaunchedEffect(servers) {
+        if (selected != Providers.CUSTOM_ID && servers.none { it.id == selected }) select(Providers.default.id)
+    }
+
+    val syncOk = stringResource(R.string.servers_updated)
+    val syncFail = stringResource(R.string.servers_update_failed)
+    fun syncServers() {
+        syncing = true
+        syncResult = null
+        scope.launch {
+            val result = withContext(Dispatchers.IO) {
+                runCatching { ServerList.sync(context) }
+                    .fold(
+                        onSuccess = { TestResult(true, syncOk) },
+                        onFailure = { TestResult(false, syncFail.format(it.message ?: it.javaClass.simpleName)) },
+                    )
+            }
+            shownSync = result
+            syncResult = result
+            syncing = false
+        }
     }
 
     fun runTest() {
@@ -223,13 +254,44 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             onSwitch = { sendAction(context, DohVpnService.ACTION_START) },
         )
 
-        SectionHeader(stringResource(R.string.servers))
+        SectionHeader(stringResource(R.string.servers)) {
+            if (syncing) {
+                Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                }
+            } else {
+                IconButton(onClick = ::syncServers) {
+                    Icon(
+                        painterResource(R.drawable.ic_refresh),
+                        contentDescription = stringResource(R.string.servers_update),
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
+        }
+
+        AnimatedVisibility(visible = syncResult != null, enter = Motion.expandIn, exit = Motion.collapseOut) {
+            shownSync?.let { result ->
+                HintCard(
+                    text = result.text,
+                    icon = if (result.ok) R.drawable.ic_check else R.drawable.ic_alert,
+                    tint = if (result.ok) CachedColor else MaterialTheme.colorScheme.error,
+                    onDismiss = { syncResult = null },
+                )
+            }
+        }
 
         Card(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(vertical = 6.dp)) {
-                Providers.list.forEachIndexed { index, p ->
+                servers.forEachIndexed { index, p ->
                     if (index > 0) RowDivider()
-                    ProviderRow(p.name, hostOf(p.url), p.http3, selected == p.id) { select(p.id) }
+                    ProviderRow(
+                        title = p.name,
+                        subtitle = hostOf(p.url),
+                        http3 = p.http3,
+                        selected = selected == p.id,
+                        onPolicy = p.policy?.let { url -> { openUrl(context, url) } },
+                    ) { select(p.id) }
                 }
                 RowDivider()
                 ProviderRow(
@@ -506,7 +568,14 @@ private fun CrashCard(report: String, onCopy: () -> Unit, onDismiss: () -> Unit)
 }
 
 @Composable
-private fun ProviderRow(title: String, subtitle: String, http3: Boolean, selected: Boolean, onClick: () -> Unit) {
+private fun ProviderRow(
+    title: String,
+    subtitle: String,
+    http3: Boolean,
+    selected: Boolean,
+    onPolicy: (() -> Unit)? = null,
+    onClick: () -> Unit,
+) {
     val highlight by animateColorAsState(
         if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.08f) else Color.Transparent,
         animationSpec = Motion.color,
@@ -535,6 +604,16 @@ private fun ProviderRow(title: String, subtitle: String, http3: Boolean, selecte
         if (http3) {
             Spacer(Modifier.width(8.dp))
             Pill("HTTP/3", MaterialTheme.colorScheme.primary)
+        }
+        if (onPolicy != null) {
+            IconButton(onClick = onPolicy, modifier = Modifier.size(40.dp)) {
+                Icon(
+                    painterResource(R.drawable.ic_privacy),
+                    contentDescription = stringResource(R.string.about_privacy_policy),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
         }
     }
 }

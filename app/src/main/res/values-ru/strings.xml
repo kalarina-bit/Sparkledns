@@ -94,4 +94,7 @@
     <string name="open_settings">Настройки</string>
     <string name="mon_no_match">Ничего не найдено</string>
     <string name="bl_title">Блокировка</string>
+    <string name="servers_update">Обновить список серверов</string>
+    <string name="servers_updated">Список серверов обновлён</string>
+    <string name="servers_update_failed">Не удалось обновить список серверов: %1$s</string>
 </resources>

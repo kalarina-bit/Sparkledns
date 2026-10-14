@@ -94,4 +94,7 @@
     <string name="open_settings">設定</string>
     <string name="mon_no_match">フィルターに一致するものはありません</string>
     <string name="bl_title">ブロック</string>
+    <string name="servers_update">サーバーリストを更新</string>
+    <string name="servers_updated">サーバーリストを更新しました</string>
+    <string name="servers_update_failed">サーバーリストを更新できませんでした: %1$s</string>
 </resources>

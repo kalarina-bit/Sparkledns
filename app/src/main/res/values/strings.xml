@@ -95,4 +95,7 @@
     <string name="open_settings">Settings</string>
     <string name="mon_no_match">Nothing matches the filter</string>
     <string name="bl_title">Blocking</string>
+    <string name="servers_update">Update server list</string>
+    <string name="servers_updated">Server list updated</string>
+    <string name="servers_update_failed">Couldn\'t update the server list: %1$s</string>
 </resources>
