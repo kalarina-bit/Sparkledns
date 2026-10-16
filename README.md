@@ -1,23 +1,34 @@
 <p align="center">
-  <img src="assets/icon-rounded.png" width="128" alt="SparkleDNS icon">
+  <img src="assets/icon-rounded.png" width="112" alt="SparkleDNS icon">
 </p>
 
 <h1 align="center">SparkleDNS</h1>
 
-<p align="center"><b>A lightweight DNS-over-HTTPS client for Android.</b></p>
-
 <p align="center">
-  <a href="https://git.skysparkle.cc/kalarina/Sparkledns/releases"><img src="assets/get-it-on-gitea.png" height="60" alt="Get it on Gitea"></a>
+  <b>A lightweight DNS-over-HTTPS client for Android.</b><br>
+  A local VPN that captures only DNS traffic and sends every query to the DoH server you choose (RFC 8484). Everything else goes through your normal connection.
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Android-8.0%2B-2e7d32?logo=android&logoColor=white&labelColor=1b1b1b" alt="Android 8.0+">
-  <img src="https://img.shields.io/badge/License-GPL--3.0--or--later-2e7d32?labelColor=1b1b1b" alt="GPL-3.0-or-later">
+  <a href="https://github.com/kalarina-bit/Sparkledns/releases/latest"><img src="https://img.shields.io/github/v/release/kalarina-bit/Sparkledns?style=for-the-badge&label=release&labelColor=1b1b1b&color=2e7d32" alt="Latest release"></a>
 </p>
 
-SparkleDNS starts a local VPN that captures only DNS traffic and sends every query to the DoH server you choose (RFC 8484). Everything else goes through your normal connection.
+<p align="center">
+  <a href="https://f-droid.org/packages/cc.skysparkle.sparkledns/"><img src="assets/get-it-on%20(1).png" height="56" alt="Get it on F-Droid"></a>
+  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/kalarina-bit/Sparkledns"><img src="assets/badge_obtainium.png" height="56" alt="Get it on Obtainium"></a>
+  <a href="https://github.com/kalarina-bit/Sparkledns/releases/latest"><img src="assets/get-it-on-github.png" height="56" alt="Get it on GitHub"></a>
+  <a href="https://git.skysparkle.cc/kalarina/Sparkledns/releases"><img src="assets/get-it-on-gitea.png" height="56" alt="Get it on Gitea"></a>
+</p>
 
-## Features
+<p align="center">
+  <img src="assets/screenshots/1-your-dns-your-choice.png" width="160" alt="Your DNS, your choice">
+  <img src="assets/screenshots/2-protected.png" width="160" alt="Protected via SkySparkle">
+  <img src="assets/screenshots/3-stay-informed.png" width="160" alt="Stay informed">
+  <img src="assets/screenshots/4-block-your-way.png" width="160" alt="Block your way">
+  <img src="assets/screenshots/5-choose-your-own-route.png" width="160" alt="Choose your own route">
+</p>
+
+## ✨ Features
 
 - 🔌 **One-tap connect/disconnect**, with a Quick Settings tile
 - 🔄 **Switch servers on the fly** — the tunnel restarts automatically
@@ -27,27 +38,13 @@ SparkleDNS starts a local VPN that captures only DNS traffic and sends every que
 - 🚫 **Custom blocklists** — your own domains plus hosts/domain/AdBlock lists by URL (HaGeZi Pro++ and TIF presets)
 - 🔓 **No analytics, no Google Play Services**
 
-## Screenshots
+## <img src="assets/icon-install.png" width="32" alt=""> Installation
 
-<p align="center">
-  <img src="assets/screenshots/1-your-dns-your-choice.png" width="200" alt="Your DNS, your choice">
-  <img src="assets/screenshots/2-protected.png" width="200" alt="Protected via SkySparkle">
-  <img src="assets/screenshots/3-stay-informed.png" width="200" alt="Stay informed">
-  <img src="assets/screenshots/4-block-your-way.png" width="200" alt="Block your way">
-  <img src="assets/screenshots/5-choose-your-own-route.png" width="200" alt="Choose your own route">
-</p>
+- **[F-Droid](https://f-droid.org/packages/cc.skysparkle.sparkledns/)** — install and update through the F-Droid client.
+- **[Obtainium](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/kalarina-bit/Sparkledns)** — installs the APK straight from GitHub releases and keeps it up to date.
+- **Manually** — download the latest APK from [GitHub](https://github.com/kalarina-bit/Sparkledns/releases/latest) or [Gitea](https://git.skysparkle.cc/kalarina/Sparkledns/releases), allow installs from unknown sources for the app you open it with (Settings → Apps → Special access → Install unknown apps), then open the `.apk` and confirm.
 
-## Installation
-
-<img src="assets/icon-install.png" width="36" align="left">
-
-1. Download the latest APK from the [Releases page](https://git.skysparkle.cc/kalarina/Sparkledns/releases).
-2. Allow installs from unknown sources for the app you open it with (Settings → Apps → Special access → Install unknown apps).
-3. Open the `.apk` file and confirm the install.
-
-## Verifying a download
-
-<img src="assets/icon-verify.png" width="36" align="left">
+## <img src="assets/icon-verify.png" width="32" alt=""> Verifying a download
 
 Every official APK is signed with the same key. Check it before installing:
 
@@ -63,7 +60,7 @@ The SHA-256 fingerprint of the signing certificate must be:
 
 `apksigner` prints the same value in lowercase without colons. On Android you can check it with [AppVerifier](https://github.com/soupslurpr/AppVerifier) (app ID `cc.skysparkle.sparkledns`).
 
-## Building from source
+## <img src="assets/icon-structure.png" width="32" alt=""> Building from source
 
 Requires JDK 17+ and Android SDK 36.
 
@@ -75,12 +72,12 @@ Requires JDK 17+ and Android SDK 36.
 
 1. Bump `versionName` and `versionCode` in `app/build.gradle.kts` (`versionCode = major * 10000 + minor * 100 + patch`).
 2. Add `fastlane/metadata/android/<locale>/changelogs/<versionCode>.txt`.
-3. Tag the commit as `v<versionName>` (for example `v1.0.6`) — F-Droid detects new releases from these tags.
+3. Tag the commit as `v<versionName>` (for example `v1.0.9`) — F-Droid detects new releases from these tags, so upload the signed APK to the release right away.
 
-## Contributing
+## 🤝 Contributing
 
 Bug reports, DoH server and blocklist suggestions, translation fixes and pull requests are welcome in the [issue tracker](https://git.skysparkle.cc/kalarina/Sparkledns/issues). Please read [CONTRIBUTING.md](CONTRIBUTING.md) first — it explains what fits the project and how to send changes. To open an issue or a pull request, [create an account](https://git.skysparkle.cc/user/sign_up) on this Gitea.
 
-## License
+## 📄 License
 
 [GNU General Public License v3.0 or later](LICENSE).
