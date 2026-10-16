@@ -85,6 +85,7 @@
     <string name="group_system">System</string>
     <string name="group_count">%1$d of %2$d via DNS</string>
     <string name="about_privacy_policy">Privacy policy</string>
+    <string name="donate">Donate</string>
     <string name="licenses_title">Open-source licenses</string>
     <string name="licenses_hint">SparkleDNS is built with these open-source projects. Tap a project to open its page.</string>
     <string name="licenses_data">Blocklist data (downloaded on demand, not bundled)</string>

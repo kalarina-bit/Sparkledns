@@ -1,8 +1,8 @@
 # SparkleDNS server list. How to add a server: see CONTRIBUTING.md
-# Name | DoH URL | Privacy policy | h3 (optional)
+# Name | DoH URL | Privacy policy | h3 (optional) | Donation page (optional)
 
 SkySparkle            | https://blog.skysparkle.cc/dns-query           | https://skysparkle.cc/privacy?lang=en     | h3
-Quad9                 | https://dns.quad9.net/dns-query                | https://quad9.net/service/privacy/
-Digitale Gesellschaft | https://dns.digitale-gesellschaft.ch/dns-query | https://www.digitale-gesellschaft.ch/dns/ | h3
+Quad9                 | https://dns.quad9.net/dns-query                | https://quad9.net/service/privacy/        | https://quad9.net/donate/
+Digitale Gesellschaft | https://dns.digitale-gesellschaft.ch/dns-query | https://www.digitale-gesellschaft.ch/dns/ | h3 | https://www.digitale-gesellschaft.ch/uber-uns/unterstuetzer-werden/
 UncensoredDNS         | https://anycast.uncensoreddns.org/dns-query    | https://blog.uncensoreddns.org/faq/
-Freifunk München      | https://doh.ffmuc.net/dns-query                | https://ffmuc.net/dns-privacy/            | h3
+Freifunk München      | https://doh.ffmuc.net/dns-query                | https://ffmuc.net/dns-privacy/            | h3 | https://spende.ffmuc.net/

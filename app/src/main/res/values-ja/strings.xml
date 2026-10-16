@@ -84,6 +84,7 @@
     <string name="group_system">システム</string>
     <string name="group_count">%2$d 件中 %1$d 件が DNS 経由</string>
     <string name="about_privacy_policy">プライバシーポリシー</string>
+    <string name="donate">寄付する</string>
     <string name="licenses_title">オープンソースライセンス</string>
     <string name="licenses_hint">SparkleDNS は以下のオープンソースプロジェクトで作られています。タップするとプロジェクトのページを開きます。</string>
     <string name="licenses_data">ブロックリストのデータ（必要なときにダウンロード、同梱なし）</string>

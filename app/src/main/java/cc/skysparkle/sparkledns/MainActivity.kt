@@ -290,6 +290,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                         subtitle = hostOf(p.url),
                         selected = selected == p.id,
                         onPolicy = p.policy?.let { url -> { openUrl(context, url) } },
+                        onDonate = p.donate?.let { url -> { openUrl(context, url) } },
                     ) { select(p.id) }
                 }
                 RowDivider()
@@ -571,6 +572,7 @@ private fun ProviderRow(
     subtitle: String,
     selected: Boolean,
     onPolicy: (() -> Unit)? = null,
+    onDonate: (() -> Unit)? = null,
     onClick: () -> Unit,
 ) {
     val highlight by animateColorAsState(
@@ -597,6 +599,16 @@ private fun ProviderRow(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
+        }
+        if (onDonate != null) {
+            IconButton(onClick = onDonate, modifier = Modifier.size(40.dp)) {
+                Icon(
+                    painterResource(R.drawable.ic_donate),
+                    contentDescription = stringResource(R.string.donate),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
         }
         if (onPolicy != null) {
             IconButton(onClick = onPolicy, modifier = Modifier.size(40.dp)) {

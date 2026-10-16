@@ -84,6 +84,7 @@
     <string name="group_system">Sistema</string>
     <string name="group_count">%1$d iš %2$d per DNS</string>
     <string name="about_privacy_policy">Privatumo politika</string>
+    <string name="donate">Paaukoti</string>
     <string name="licenses_title">Atvirojo kodo licencijos</string>
     <string name="licenses_hint">SparkleDNS sukurta naudojant šiuos atvirojo kodo projektus. Palieskite projektą, kad atidarytumėte jo puslapį.</string>
     <string name="licenses_data">Blokavimo sąrašų duomenys (atsisiunčiami pagal poreikį, neįtraukti)</string>

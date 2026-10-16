@@ -9,6 +9,7 @@ title: "[Preset] "
 - URL:
 - Homepage or documentation:
 - Privacy policy (DoH servers) or license (blocklists):
+- Donation page (DoH servers, optional):
 
 - [ ] DoH server: public and supports RFC 8484
 - [ ] Blocklist: public and actively maintained

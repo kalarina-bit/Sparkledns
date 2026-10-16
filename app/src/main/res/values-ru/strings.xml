@@ -84,6 +84,7 @@
     <string name="group_system">Системные</string>
     <string name="group_count">%1$d из %2$d через DNS</string>
     <string name="about_privacy_policy">Политика конфиденциальности</string>
+    <string name="donate">Пожертвовать</string>
     <string name="licenses_title">Лицензии открытого ПО</string>
     <string name="licenses_hint">SparkleDNS построен на этих проектах с открытым кодом. Нажмите на проект, чтобы открыть его страницу.</string>
     <string name="licenses_data">Данные блоклистов (загружаются по запросу, не входят в приложение)</string>

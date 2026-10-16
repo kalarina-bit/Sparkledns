@@ -43,18 +43,21 @@ The server list lives in [`servers/servers.txt`](servers/servers.txt). The app d
 To add a server, open the file on Gitea, click **Edit**, add one line at the end and send it as a pull request:
 
 ```
-Name | DoH URL | Privacy policy | h3
+Name | DoH URL | Privacy policy | h3 | Donation page
 ```
 
 - **Name** — how the server appears in the app, up to 40 characters.
 - **DoH URL** — the full `https://` address of the DoH endpoint.
 - **Privacy policy** — an `https://` link to the operator's privacy policy. Lines without one are ignored.
 - **h3** — optional. Add it only if the server supports HTTP/3.
+- **Donation page** — optional. An `https://` link to the operator's own page for donations or support. The app shows it as a coin button next to the privacy policy. Only link to a page the operator runs or names on its website — no affiliate or third-party fundraising links.
 
-Example:
+Leave out any optional column you don't need; the app recognises them by their content. Examples:
 
 ```
-Example DNS | https://dns.example.org/dns-query | https://example.org/privacy | h3
+Example DNS | https://dns.example.org/dns-query | https://example.org/privacy | h3 | https://example.org/donate
+Example DNS | https://dns.example.org/dns-query | https://example.org/privacy | https://example.org/donate
+Example DNS | https://dns.example.org/dns-query | https://example.org/privacy
 ```
 
 The server must:
@@ -66,7 +69,7 @@ The server must:
 
 Before sending, check that it works: in the app choose **Custom server**, enter the URL and tap **Test server**.
 
-Please don't change the lines of the servers that ship with the app (SkySparkle, Quad9, Digitale Gesellschaft, UncensoredDNS, Freifunk München): the app always keeps their built-in addresses. If you are unsure whether a server fits, open an issue with the *DoH server or blocklist* template instead.
+Please don't change the lines of the servers that ship with the app (SkySparkle, Quad9, Digitale Gesellschaft, UncensoredDNS, Freifunk München): the app always keeps their built-in addresses and links. To fix one of their links, open an issue instead. If you are unsure whether a server fits, open an issue with the *DoH server or blocklist* template instead.
 
 ## Blocklists
 

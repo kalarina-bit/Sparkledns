@@ -17,6 +17,7 @@ data class DohProvider(
     val bootstrap: List<String> = emptyList(),
     val http3: Boolean = false,
     val policy: String? = null,
+    val donate: String? = null,
 )
 
 object Providers {
@@ -32,11 +33,13 @@ object Providers {
         DohProvider(
             "quad9", "Quad9", "https://dns.quad9.net/dns-query", listOf("9.9.9.9", "149.112.112.112"),
             policy = "https://quad9.net/service/privacy/",
+            donate = "https://quad9.net/donate/",
         ),
         DohProvider(
             "digitale-gesellschaft", "Digitale Gesellschaft", "https://dns.digitale-gesellschaft.ch/dns-query",
             listOf("185.95.218.42", "185.95.218.43"), http3 = true,
             policy = "https://www.digitale-gesellschaft.ch/dns/",
+            donate = "https://www.digitale-gesellschaft.ch/uber-uns/unterstuetzer-werden/",
         ),
         DohProvider(
             "uncensoreddns", "UncensoredDNS", "https://anycast.uncensoreddns.org/dns-query", listOf("91.239.100.100"),
@@ -46,6 +49,7 @@ object Providers {
             "ffmuc", "Freifunk München", "https://doh.ffmuc.net/dns-query",
             listOf("5.1.66.255", "185.150.99.255"), http3 = true,
             policy = "https://ffmuc.net/dns-privacy/",
+            donate = "https://spende.ffmuc.net/",
         ),
     )
 
@@ -111,7 +115,8 @@ object ServerList {
         return parsed.size
     }
 
-    // Format per line: Name | DoH URL | privacy policy URL | h3 (optional). See CONTRIBUTING.md.
+    // Format per line: Name | DoH URL | privacy policy URL | h3 (optional) | donation URL (optional).
+    // The optional columns are recognised by content, so either can be left out. See CONTRIBUTING.md.
     fun parse(text: String): List<DohProvider> {
         val builtInByHost = Providers.builtIn.associateBy { it.url.toHttpUrlOrNull()?.host }
         val seen = HashSet<String>()
@@ -125,11 +130,14 @@ object ServerList {
             val url = cols[1].toHttpUrlOrNull()
             val policy = cols[2].takeIf { it.toHttpUrlOrNull()?.isHttps == true }
             if (name.isEmpty() || url == null || !url.isHttps) continue
-            // Shipped servers keep their address and id, so an edited list cannot redirect them
+            val extras = cols.drop(3)
+            val http3 = extras.any { it.equals("h3", ignoreCase = true) }
+            val donate = extras.firstOrNull { it.toHttpUrlOrNull()?.isHttps == true }
+            // Shipped servers keep their address, id and links, so an edited list cannot redirect them
             val pinned = builtInByHost[url.host]
             val server = pinned
                 ?: if (policy == null) continue
-                else DohProvider(url.host, name, cols[1], http3 = cols.getOrElse(3) { "" }.equals("h3", ignoreCase = true), policy = policy)
+                else DohProvider(url.host, name, cols[1], http3 = http3, policy = policy, donate = donate)
             if (!seen.add(server.id)) continue
             result += server
             if (result.size >= MAX_SERVERS) break

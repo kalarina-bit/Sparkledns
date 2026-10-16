@@ -84,6 +84,7 @@
     <string name="group_system">系统</string>
     <string name="group_count">%2$d 个中有 %1$d 个经过 DNS</string>
     <string name="about_privacy_policy">隐私政策</string>
+    <string name="donate">捐赠</string>
     <string name="licenses_title">开源许可</string>
     <string name="licenses_hint">SparkleDNS 使用了以下开源项目。点按项目可打开其页面。</string>
     <string name="licenses_data">屏蔽列表数据（按需下载，未内置）</string>
