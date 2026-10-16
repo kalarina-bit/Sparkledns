@@ -1,3 +1,4 @@
+• Donation links next to the privacy policy for servers that accept donations
 • Simpler server list
 • New privacy policy icon on servers
 • HTTP/3 badge removed from the server list

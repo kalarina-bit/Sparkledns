@@ -1,0 +1,5 @@
+• Prie serverių, kurie priima aukas, šalia privatumo politikos – nuoroda aukoti
+• Paprastesnis serverių sąrašas
+• Nauja privatumo politikos piktograma prie serverių
+• HTTP/3 žymė pašalinta iš serverių sąrašo
+• Trumpesnis aprašymas skiltyje „Apie“

@@ -1,0 +1,5 @@
+• Spendenlinks neben der Datenschutzerklärung bei Servern, die Spenden annehmen
+• Einfachere Serverliste
+• Neues Symbol für die Datenschutzerklärung bei den Servern
+• HTTP/3-Kennzeichnung aus der Serverliste entfernt
+• Kürzere Beschreibung unter „Info“
