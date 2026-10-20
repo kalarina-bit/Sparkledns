@@ -28,6 +28,9 @@
   <img src="assets/screenshots/5-choose-your-own-route.png" width="160" alt="Choose your own route">
 </p>
 
+> [!TIP]
+> If you find SparkleDNS useful, please consider giving it a ⭐ on [Gitea](https://git.skysparkle.cc/kalarina/Sparkledns) — it helps others discover the project.
+
 ## ✨ Features
 
 - 🔌 **One-tap connect/disconnect**, with a Quick Settings tile
