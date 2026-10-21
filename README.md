@@ -83,4 +83,4 @@ Bug reports, DoH server and blocklist suggestions, translation fixes and pull re
 
 ## 📄 License
 
-[GNU General Public License v3.0 or later](LICENSE).
+[GNU General Public License v3.0 only](LICENSE).
