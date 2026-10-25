@@ -1,6 +1,8 @@
 package cc.skysparkle.sparkledns
 
+import android.content.Context
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.horizontalScroll
@@ -47,9 +49,11 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.IOException
 import java.text.DateFormat
 import java.util.Date
 
@@ -83,9 +87,11 @@ fun BlocklistScreen(modifier: Modifier = Modifier) {
         val input = domainInput
         if (input.isBlank()) return
         scope.launch {
-            val ok = withContext(Dispatchers.IO) { Blocklist.addCustom(context, input) }
-            domainError = !ok
-            if (ok) domainInput = ""
+            val result = withContext(Dispatchers.IO) { tryEdit { Blocklist.addCustom(context, input) } }
+            result.onSuccess { ok ->
+                domainError = !ok
+                if (ok) domainInput = ""
+            }.onFailure { showEditError(context, it) }
         }
     }
 
@@ -189,7 +195,7 @@ fun BlocklistScreen(modifier: Modifier = Modifier) {
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(domain, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        IconButton(onClick = { scope.launch(Dispatchers.IO) { Blocklist.removeCustom(context, domain) } }) {
+                        IconButton(onClick = { scope.editBlocklist(context) { Blocklist.removeCustom(context, domain) } }) {
                             Icon(painterResource(R.drawable.ic_delete), stringResource(R.string.delete), Modifier.size(20.dp))
                         }
                     }
@@ -225,7 +231,7 @@ fun BlocklistScreen(modifier: Modifier = Modifier) {
                         updating = busy == list.url || busy == Blocklist.ALL_LISTS,
                         actionsEnabled = busy == null,
                         onRefresh = { Blocklist.download(context, list.url) },
-                        onDelete = { scope.launch(Dispatchers.IO) { Blocklist.removeList(context, list.url) } },
+                        onDelete = { scope.editBlocklist(context) { Blocklist.removeList(context, list.url) } },
                     )
                 }
                 if (lists.isNotEmpty()) InsetDivider(16)
@@ -356,6 +362,23 @@ private fun ListRow(
             )
         }
     }
+}
+
+// Blocklist edits write to storage, which can fail (a full disk, for one)
+internal inline fun <T> tryEdit(action: () -> T): Result<T> =
+    try {
+        Result.success(action())
+    } catch (e: IOException) {
+        Result.failure(e)
+    }
+
+internal fun CoroutineScope.editBlocklist(context: Context, action: () -> Unit) = launch {
+    withContext(Dispatchers.IO) { tryEdit(action) }.onFailure { showEditError(context, it) }
+}
+
+internal fun showEditError(context: Context, error: Throwable) {
+    val reason = error.message ?: error.javaClass.simpleName
+    Toast.makeText(context, context.getString(R.string.test_fail, reason), Toast.LENGTH_LONG).show()
 }
 
 private const val HINT_BLOCKLIST = "blocklist"

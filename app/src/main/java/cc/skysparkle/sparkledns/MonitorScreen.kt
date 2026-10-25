@@ -90,13 +90,19 @@ fun MonitorScreen(modifier: Modifier = Modifier) {
 
     fun toggleBlock(domain: String, unblock: Boolean) {
         scope.launch {
-            val ok = withContext(Dispatchers.IO) {
-                if (unblock) {
-                    Blocklist.removeCustom(context, domain)
-                    true
-                } else {
-                    Blocklist.addCustom(context, domain)
+            val result = withContext(Dispatchers.IO) {
+                tryEdit {
+                    if (unblock) {
+                        Blocklist.removeCustom(context, domain)
+                        true
+                    } else {
+                        Blocklist.addCustom(context, domain)
+                    }
                 }
+            }
+            val ok = result.getOrElse {
+                showEditError(context, it)
+                return@launch
             }
             val message = when {
                 !ok -> context.getString(R.string.bl_invalid)

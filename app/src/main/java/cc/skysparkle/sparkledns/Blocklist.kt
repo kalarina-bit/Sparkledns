@@ -1,6 +1,8 @@
 package cc.skysparkle.sparkledns
 
 import android.content.Context
+import android.util.Log
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -28,7 +30,9 @@ data class RemoteList(val url: String, val count: Int, val updated: Long)
 object Blocklist {
     const val ALL_LISTS = "*"
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val scope = CoroutineScope(
+        SupervisorJob() + Dispatchers.IO + CoroutineExceptionHandler { _, e -> Log.e("SparkleDNS", "Blocklist task failed", e) }
+    )
     private val lock = Any()
 
     private val _enabled = MutableStateFlow(true)
@@ -143,6 +147,8 @@ object Blocklist {
                     }
                 }
                 commit(store, fresh)
+            } catch (e: IOException) {
+                _error.value = e.message ?: e.javaClass.simpleName
             } finally {
                 _busy.value = null
             }
