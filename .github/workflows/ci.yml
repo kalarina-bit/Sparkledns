@@ -47,5 +47,7 @@ jobs:
         if: always()
         with:
           name: apk
-          path: app/build/outputs/apk/**/*.apk
+          path: |
+            app/build/outputs/apk/**/*.apk
+            app/build/outputs/mapping/release/mapping.txt
           if-no-files-found: ignore
