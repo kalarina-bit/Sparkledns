@@ -36,6 +36,8 @@ jobs:
         run: |
           apk=$(ls app/build/outputs/apk/release/*.apk | head -n 1)
           echo "::notice title=Release APK::$(stat -c %s "$apk") bytes ($(basename "$apk"))"
+          prof=$(unzip -l "$apk" assets/dexopt/baseline.prof | awk '/baseline.prof/ {print $1}')
+          echo "::notice title=Baseline profile in APK::${prof:-missing} bytes"
           deps=$(./gradlew -q :app:dependencies --configuration releaseRuntimeClasspath \
             | grep -oE '(androidx\.lifecycle:lifecycle-runtime-compose|androidx\.profileinstaller:profileinstaller|com\.squareup\.okhttp3:okhttp):[^ ]+( -> [^ ]+)?' \
             | sort -u | paste -sd ';' -)
