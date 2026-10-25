@@ -36,6 +36,10 @@ private const val CHANNEL_ID = "vpn_status"
 private const val NOTIFICATION_ID = 1
 private const val MAX_BAD_PACKETS = 100
 
+// Closing TLS connections writes to the network, so sessions release their DoH client here
+// rather than on the main thread, where the service stops them
+private val closer = Executors.newSingleThreadExecutor { r -> Thread(r, "doh-close").apply { isDaemon = true } }
+
 // Local VPN that routes only the fake DNS address into the tunnel; all other traffic is untouched
 class DohVpnService : VpnService() {
 
@@ -205,8 +209,14 @@ private class Session(
     fun stop() {
         if (!alive.getAndSet(false)) return
         pool.shutdownNow()
-        doh.shutdown()
         runCatching { tun.close() }
+        closer.execute {
+            try {
+                doh.shutdown()
+            } catch (e: Exception) {
+                Log.w(TAG, "DoH client shutdown failed", e)
+            }
+        }
     }
 
     private fun readLoop() {
