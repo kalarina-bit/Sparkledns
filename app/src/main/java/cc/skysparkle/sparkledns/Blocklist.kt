@@ -1,6 +1,7 @@
 package cc.skysparkle.sparkledns
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.util.Log
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -110,9 +111,10 @@ object Blocklist {
         if (target.isEmpty() || !_busy.compareAndSet(null, target)) return false
         _error.value = null
         val store = BlocklistStore(context.applicationContext)
+        val previous = _lists.value.firstOrNull { it.url == target }
         scope.launch {
             try {
-                val list = store.download(target)
+                val list = store.download(target, previous)
                 commit(store, listOf(list))
             } catch (e: Exception) {
                 _error.value = e.message ?: e.javaClass.simpleName
@@ -127,12 +129,12 @@ object Blocklist {
         if (_lists.value.isEmpty() || !_busy.compareAndSet(null, ALL_LISTS)) return false
         _error.value = null
         val store = BlocklistStore(context.applicationContext)
-        val urls = _lists.value.map { it.url }
+        val current = _lists.value
         scope.launch {
             try {
-                val fresh = urls.mapNotNull { url ->
+                val fresh = current.mapNotNull { list ->
                     try {
-                        store.download(url)
+                        store.download(list.url, list)
                     } catch (e: Exception) {
                         if (_error.value == null) _error.value = e.message ?: e.javaClass.simpleName
                         null
@@ -329,13 +331,20 @@ private class BlocklistStore(context: Context) {
     fun deleteListFile(url: String) {
         binFile(url).delete()
         textFile(url).delete()
+        sp.edit().remove(etagKey(url)).remove(modifiedKey(url)).apply()
     }
 
-    fun download(url: String): RemoteList {
-        val request = runCatching { Request.Builder().url(url).build() }
-            .getOrElse { throw IOException("Invalid URL") }
+    // With the list already on disk the server is asked for a changed one only, so updating
+    // a list that did not change costs a few hundred bytes instead of megabytes
+    fun download(url: String, previous: RemoteList? = null): RemoteList {
+        val builder = runCatching { Request.Builder().url(url) }.getOrElse { throw IOException("Invalid URL") }
+        if (previous != null && binFile(url).exists()) {
+            sp.getString(etagKey(url), null)?.let { builder.header("If-None-Match", it) }
+            sp.getString(modifiedKey(url), null)?.let { builder.header("If-Modified-Since", it) }
+        }
 
-        client.newCall(request).execute().use { response ->
+        client.newCall(builder.build()).execute().use { response ->
+            if (response.code == 304 && previous != null) return previous.copy(updated = System.currentTimeMillis())
             if (!response.isSuccessful) throw IOException("HTTP ${response.code}")
             val body = response.body ?: throw IOException("Empty response")
             val parsed = LongList()
@@ -350,6 +359,10 @@ private class BlocklistStore(context: Context) {
             val result = parsed.toArray().sortUnique()
             if (result.isEmpty()) throw IOException("No domains found")
             write(url, result)
+            sp.edit()
+                .putOrRemove(etagKey(url), response.header("ETag"))
+                .putOrRemove(modifiedKey(url), response.header("Last-Modified"))
+                .apply()
             return RemoteList(url, result.size, System.currentTimeMillis())
         }
     }
@@ -375,6 +388,12 @@ private class BlocklistStore(context: Context) {
         text.delete()
         return result
     }
+
+    private fun etagKey(url: String) = "etag_${hash(url)}"
+    private fun modifiedKey(url: String) = "modified_${hash(url)}"
+
+    private fun SharedPreferences.Editor.putOrRemove(key: String, value: String?) =
+        if (value == null) remove(key) else putString(key, value)
 
     private fun binFile(url: String) = File(dir, "list_${hash(url)}.bin")
     private fun textFile(url: String) = File(dir, "list_${hash(url)}.txt")
