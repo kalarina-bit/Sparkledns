@@ -5,9 +5,11 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,12 +17,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.ZeroCornerSize
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -40,6 +45,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -100,56 +106,66 @@ fun BlocklistScreen(modifier: Modifier = Modifier) {
         if (url.isNotEmpty() && Blocklist.download(context, url)) urlInput = ""
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+    // Own domains are lazy rows, so hundreds of them are not all composed when the tab opens.
+    // Together they look like the card they used to be in: same color and shape, split per row.
+    val cardColor = CardDefaults.cardColors().containerColor
+    val cardShape = MaterialTheme.shapes.medium
+    val cardTop = cardShape.copy(bottomStart = ZeroCornerSize, bottomEnd = ZeroCornerSize)
+    val cardBottom = cardShape.copy(topStart = ZeroCornerSize, topEnd = ZeroCornerSize)
+
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
     ) {
-        Card(Modifier.fillMaxWidth()) {
-            Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                IconBadge(
-                    R.drawable.ic_tab_block,
-                    tint = if (enabled) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline,
-                    size = 52.dp,
-                )
-                Spacer(Modifier.width(16.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(R.string.bl_title), style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        formatCount(total.toLong()),
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Text(
-                        stringResource(R.string.bl_total_label),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        item(key = "summary") {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Card(Modifier.fillMaxWidth()) {
+                    Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        IconBadge(
+                            R.drawable.ic_tab_block,
+                            tint = if (enabled) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline,
+                            size = 52.dp,
+                        )
+                        Spacer(Modifier.width(16.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(stringResource(R.string.bl_title), style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                formatCount(total.toLong()),
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            Text(
+                                stringResource(R.string.bl_total_label),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Switch(checked = enabled, onCheckedChange = { Blocklist.setEnabled(context, it) })
+                    }
+                }
+
+                AnimatedVisibility(visible = showNote, enter = Motion.expandIn, exit = Motion.collapseOut) {
+                    HintCard(
+                        stringResource(R.string.bl_note),
+                        icon = R.drawable.ic_tab_info,
+                        onDismiss = {
+                            showNote = false
+                            prefs.dismissHint(HINT_BLOCKLIST)
+                        },
                     )
                 }
-                Switch(checked = enabled, onCheckedChange = { Blocklist.setEnabled(context, it) })
+
+                SectionHeader(stringResource(R.string.bl_my), icon = R.drawable.ic_tab_block)
             }
         }
 
-        AnimatedVisibility(visible = showNote, enter = Motion.expandIn, exit = Motion.collapseOut) {
-            HintCard(
-                stringResource(R.string.bl_note),
-                icon = R.drawable.ic_tab_info,
-                onDismiss = {
-                    showNote = false
-                    prefs.dismissHint(HINT_BLOCKLIST)
-                },
-            )
-        }
-
-        SectionHeader(stringResource(R.string.bl_my), icon = R.drawable.ic_tab_block)
-
-        Card(Modifier.fillMaxWidth()) {
+        item(key = "custom") {
             Column(
                 Modifier
-                    .animateContentSize(Motion.size)
-                    .padding(vertical = 8.dp)
+                    .padding(top = 12.dp)
+                    .fillMaxWidth()
+                    .background(cardColor, if (custom.isEmpty()) cardShape else cardTop)
+                    .padding(top = 8.dp, bottom = if (custom.isEmpty()) 8.dp else 0.dp)
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
@@ -188,116 +204,130 @@ fun BlocklistScreen(modifier: Modifier = Modifier) {
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                     )
                 }
-                custom.forEach { domain ->
-                    InsetDivider(16)
-                    Row(
-                        modifier = Modifier.padding(start = 16.dp, end = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
+            }
+        }
+
+        itemsIndexed(custom, key = { _, domain -> "domain:$domain" }, contentType = { _, _ -> "domain" }) { index, domain ->
+            val last = index == custom.lastIndex
+            Column(
+                Modifier
+                    .animateItem()
+                    .fillMaxWidth()
+                    .background(cardColor, if (last) cardBottom else RectangleShape)
+                    .padding(bottom = if (last) 8.dp else 0.dp)
+            ) {
+                InsetDivider(16)
+                Row(
+                    modifier = Modifier.padding(start = 16.dp, end = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(domain, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    IconButton(onClick = { scope.editBlocklist(context) { Blocklist.removeCustom(context, domain) } }) {
+                        Icon(painterResource(R.drawable.ic_delete), stringResource(R.string.delete), Modifier.size(20.dp))
+                    }
+                }
+            }
+        }
+
+        item(key = "lists") {
+            Column(Modifier.padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                SectionHeader(
+                    stringResource(R.string.bl_lists),
+                    icon = R.drawable.ic_list,
+                    action = {
+                        TextButton(
+                            onClick = { Blocklist.updateAll(context) },
+                            enabled = lists.isNotEmpty() && busy == null,
+                        ) {
+                            Icon(painterResource(R.drawable.ic_refresh), contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text(stringResource(if (busy == Blocklist.ALL_LISTS) R.string.bl_updating else R.string.bl_update_all))
+                        }
+                    },
+                )
+
+                Card(Modifier.fillMaxWidth()) {
+                    Column(
+                        Modifier
+                            .animateContentSize(Motion.size)
+                            .padding(vertical = 8.dp)
                     ) {
-                        Text(domain, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        IconButton(onClick = { scope.editBlocklist(context) { Blocklist.removeCustom(context, domain) } }) {
-                            Icon(painterResource(R.drawable.ic_delete), stringResource(R.string.delete), Modifier.size(20.dp))
+                        lists.forEachIndexed { index, list ->
+                            if (index > 0) InsetDivider(68)
+                            ListRow(
+                                list = list,
+                                updating = busy == list.url || busy == Blocklist.ALL_LISTS,
+                                actionsEnabled = busy == null,
+                                onRefresh = { Blocklist.download(context, list.url) },
+                                onDelete = { scope.editBlocklist(context) { Blocklist.removeList(context, list.url) } },
+                            )
+                        }
+                        if (lists.isNotEmpty()) InsetDivider(16)
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            OutlinedTextField(
+                                value = urlInput,
+                                onValueChange = { urlInput = it },
+                                placeholder = { Text(stringResource(R.string.bl_list_url), maxLines = 1) },
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done),
+                                keyboardActions = KeyboardActions(onDone = { if (busy == null) addList() }),
+                                modifier = Modifier.weight(1f),
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            FilledTonalButton(
+                                onClick = ::addList,
+                                enabled = urlInput.isNotBlank() && busy == null,
+                            ) {
+                                Icon(painterResource(R.drawable.ic_add), contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(6.dp))
+                                Text(stringResource(R.string.add))
+                            }
+                        }
+                        // A new list being added has no row yet, so its progress shows under the input
+                        val addingNew = busy != null && busy != Blocklist.ALL_LISTS && lists.none { it.url == busy }
+                        AnimatedVisibility(visible = addingNew, enter = Motion.expandIn, exit = Motion.collapseOut) {
+                            LinearProgressIndicator(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                            )
                         }
                     }
                 }
-            }
-        }
 
-        SectionHeader(
-            stringResource(R.string.bl_lists),
-            icon = R.drawable.ic_list,
-            action = {
-                TextButton(
-                    onClick = { Blocklist.updateAll(context) },
-                    enabled = lists.isNotEmpty() && busy == null,
-                ) {
-                    Icon(painterResource(R.drawable.ic_refresh), contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(6.dp))
-                    Text(stringResource(if (busy == Blocklist.ALL_LISTS) R.string.bl_updating else R.string.bl_update_all))
-                }
-            },
-        )
-
-        Card(Modifier.fillMaxWidth()) {
-            Column(
-                Modifier
-                    .animateContentSize(Motion.size)
-                    .padding(vertical = 8.dp)
-            ) {
-                lists.forEachIndexed { index, list ->
-                    if (index > 0) InsetDivider(68)
-                    ListRow(
-                        list = list,
-                        updating = busy == list.url || busy == Blocklist.ALL_LISTS,
-                        actionsEnabled = busy == null,
-                        onRefresh = { Blocklist.download(context, list.url) },
-                        onDelete = { scope.editBlocklist(context) { Blocklist.removeList(context, list.url) } },
-                    )
-                }
-                if (lists.isNotEmpty()) InsetDivider(16)
-                Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    OutlinedTextField(
-                        value = urlInput,
-                        onValueChange = { urlInput = it },
-                        placeholder = { Text(stringResource(R.string.bl_list_url), maxLines = 1) },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done),
-                        keyboardActions = KeyboardActions(onDone = { if (busy == null) addList() }),
-                        modifier = Modifier.weight(1f),
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    FilledTonalButton(
-                        onClick = ::addList,
-                        enabled = urlInput.isNotBlank() && busy == null,
-                    ) {
-                        Icon(painterResource(R.drawable.ic_add), contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text(stringResource(R.string.add))
+                val missingPresets = Presets.filter { (_, url) -> lists.none { it.url == url } }
+                AnimatedVisibility(visible = missingPresets.isNotEmpty(), enter = Motion.expandIn, exit = Motion.collapseOut) {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        SectionHeader(stringResource(R.string.bl_presets))
+                        Row(
+                            modifier = Modifier.horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            missingPresets.forEach { (name, url) ->
+                                AssistChip(
+                                    onClick = { Blocklist.download(context, url) },
+                                    enabled = busy == null,
+                                    leadingIcon = {
+                                        Icon(painterResource(R.drawable.ic_add), contentDescription = null, modifier = Modifier.size(18.dp))
+                                    },
+                                    label = { Text(if (busy == url) stringResource(R.string.bl_updating) else name) },
+                                )
+                            }
+                        }
                     }
                 }
-                // A new list being added has no row yet, so its progress shows under the input
-                val addingNew = busy != null && busy != Blocklist.ALL_LISTS && lists.none { it.url == busy }
-                AnimatedVisibility(visible = addingNew, enter = Motion.expandIn, exit = Motion.collapseOut) {
-                    LinearProgressIndicator(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 4.dp),
+
+                AnimatedVisibility(visible = error != null, enter = Motion.expandIn, exit = Motion.collapseOut) {
+                    HintCard(
+                        stringResource(R.string.bl_download_failed, lastError[0]),
+                        icon = R.drawable.ic_alert,
+                        tint = MaterialTheme.colorScheme.error,
                     )
                 }
             }
-        }
-
-        val missingPresets = Presets.filter { (_, url) -> lists.none { it.url == url } }
-        AnimatedVisibility(visible = missingPresets.isNotEmpty(), enter = Motion.expandIn, exit = Motion.collapseOut) {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                SectionHeader(stringResource(R.string.bl_presets))
-                Row(
-                    modifier = Modifier.horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    missingPresets.forEach { (name, url) ->
-                        AssistChip(
-                            onClick = { Blocklist.download(context, url) },
-                            enabled = busy == null,
-                            leadingIcon = {
-                                Icon(painterResource(R.drawable.ic_add), contentDescription = null, modifier = Modifier.size(18.dp))
-                            },
-                            label = { Text(if (busy == url) stringResource(R.string.bl_updating) else name) },
-                        )
-                    }
-                }
-            }
-        }
-
-        AnimatedVisibility(visible = error != null, enter = Motion.expandIn, exit = Motion.collapseOut) {
-            HintCard(
-                stringResource(R.string.bl_download_failed, lastError[0]),
-                icon = R.drawable.ic_alert,
-                tint = MaterialTheme.colorScheme.error,
-            )
         }
     }
 }
