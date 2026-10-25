@@ -80,6 +80,10 @@ private class AppItem(val label: String, val packageName: String, val group: App
 // Decoded icons survive scrolling and tab switches instead of being rendered again every time
 private val IconCache = LruCache<String, ImageBitmap>(256)
 
+// Shown right away when the tab opens again, while the list is read anew in the background.
+// Only touched on the main thread.
+private var lastAppList: List<AppItem>? = null
+
 @Composable
 fun AppsScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -87,7 +91,7 @@ fun AppsScreen(modifier: Modifier = Modifier) {
     val active by DohVpnService.active.collectAsStateWithLifecycle()
     val activeExcluded by DohVpnService.activeExcluded.collectAsStateWithLifecycle()
 
-    var apps by remember { mutableStateOf<List<AppItem>?>(null) }
+    var apps by remember { mutableStateOf(lastAppList) }
     var excluded by remember { mutableStateOf(prefs.excludedApps) }
     var search by rememberSaveable { mutableStateOf("") }
     var collapsed by remember { mutableStateOf(setOf(AppGroup.SYSTEM)) }
@@ -100,7 +104,7 @@ fun AppsScreen(modifier: Modifier = Modifier) {
     val searching = search.isNotBlank()
 
     LaunchedEffect(Unit) {
-        apps = withContext(Dispatchers.IO) { loadApps(context) }
+        apps = withContext(Dispatchers.IO) { loadApps(context) }.also { lastAppList = it }
     }
 
     val groups = remember(apps, search) {
