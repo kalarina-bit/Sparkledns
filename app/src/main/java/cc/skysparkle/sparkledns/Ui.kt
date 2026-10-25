@@ -30,6 +30,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,7 +43,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import java.text.NumberFormat
 
 val CachedColor = Color(0xFF7FD1AE)
@@ -191,16 +194,23 @@ fun StatDivider() {
     )
 }
 
-// Polls the in-memory query log once a second while the screen is visible
+// Runs [onChange] when the query log changes, at most once a second and only while the screen
+// is started: nothing runs while the app sits in the background
+@Composable
+fun OnQueryLogChange(onChange: () -> Unit) {
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val current by rememberUpdatedState(onChange)
+    LaunchedEffect(lifecycle) {
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            QueryLog.changes().collect { current() }
+        }
+    }
+}
+
 @Composable
 fun rememberLiveStats(): QueryStats {
     var stats by remember { mutableStateOf(QueryLog.stats()) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            stats = QueryLog.stats()
-            delay(1000)
-        }
-    }
+    OnQueryLogChange { stats = QueryLog.stats() }
     return stats
 }
 

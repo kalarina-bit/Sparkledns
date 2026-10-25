@@ -32,7 +32,6 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,6 +48,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -69,17 +69,17 @@ fun BlocklistScreen(modifier: Modifier = Modifier) {
     val prefs = remember { Prefs(context) }
     var showNote by remember { mutableStateOf(!prefs.isHintDismissed(HINT_BLOCKLIST)) }
 
-    val enabled by Blocklist.enabled.collectAsState()
-    val total by Blocklist.total.collectAsState()
-    val custom by Blocklist.custom.collectAsState()
-    val lists by Blocklist.lists.collectAsState()
+    val enabled by Blocklist.enabled.collectAsStateWithLifecycle()
+    val total by Blocklist.total.collectAsStateWithLifecycle()
+    val custom by Blocklist.custom.collectAsStateWithLifecycle()
+    val lists by Blocklist.lists.collectAsStateWithLifecycle()
 
     var domainInput by rememberSaveable { mutableStateOf("") }
     var domainError by remember { mutableStateOf(false) }
     var urlInput by rememberSaveable { mutableStateOf("") }
     // Downloads live in Blocklist, so they keep running and stay visible across tab switches
-    val busy by Blocklist.busy.collectAsState()
-    val error by Blocklist.error.collectAsState()
+    val busy by Blocklist.busy.collectAsStateWithLifecycle()
+    val error by Blocklist.error.collectAsStateWithLifecycle()
     val lastError = remember { arrayOf("") } // kept while the card animates out
     error?.let { lastError[0] = it }
 

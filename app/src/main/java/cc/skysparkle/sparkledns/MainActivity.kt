@@ -8,6 +8,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
+import android.net.LinkProperties
+import android.net.Network
 import android.net.Uri
 import android.net.VpnService
 import android.os.Build
@@ -66,10 +68,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -87,8 +87,13 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -118,13 +123,13 @@ private class TestResult(val ok: Boolean, val text: String)
 fun HomeScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val prefs = remember { Prefs(context) }
-    val active by DohVpnService.active.collectAsState()
+    val active by DohVpnService.active.collectAsStateWithLifecycle()
     val running = active != null
     val scope = rememberCoroutineScope()
     val stats = rememberLiveStats()
 
     var selected by remember { mutableStateOf(prefs.providerId) }
-    val servers by ServerList.servers.collectAsState()
+    val servers by ServerList.servers.collectAsStateWithLifecycle()
     var syncing by remember { mutableStateOf(false) }
     var syncResult by remember { mutableStateOf<TestResult?>(null) }
     var shownSync by remember { mutableStateOf<TestResult?>(null) }
@@ -135,13 +140,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     var shownResult by remember { mutableStateOf<TestResult?>(null) } // kept while the card animates out
     var testing by remember { mutableStateOf(false) }
     val crashReport = remember { CrashLog.read(context) }
-    // Strict Private DNS makes Android ignore the VPN's DNS server; re-checked while Home is open
-    val privateDnsHost by produceState<String?>(null) {
-        while (true) {
-            value = readPrivateDnsHost(context)
-            delay(3000)
-        }
-    }
+    // Strict Private DNS makes Android ignore the VPN's DNS server; followed while Home is visible
+    val privateDnsHost by remember { privateDnsHosts(context) }.collectAsStateWithLifecycle(initialValue = null)
     var crashVisible by remember { mutableStateOf(crashReport != null) }
 
     val isCustom = selected == Providers.CUSTOM_ID
@@ -631,11 +631,24 @@ private fun RowDivider() {
     )
 }
 
-// Hostname of strict Private DNS (DNS-over-TLS) on the current network, null when it is Automatic or Off
-private fun readPrivateDnsHost(context: Context): String? {
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return null
-    val cm = context.getSystemService(ConnectivityManager::class.java) ?: return null
-    return runCatching { cm.getLinkProperties(cm.activeNetwork)?.privateDnsServerName }.getOrNull()
+// Hostname of strict Private DNS (DNS-over-TLS) on the current network, null when it is Automatic or Off.
+// Android reports the current state on registration and every change after it.
+private fun privateDnsHosts(context: Context): Flow<String?> {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return flowOf(null)
+    val cm = context.applicationContext.getSystemService(ConnectivityManager::class.java) ?: return flowOf(null)
+    return callbackFlow {
+        val callback = object : ConnectivityManager.NetworkCallback() {
+            override fun onLinkPropertiesChanged(network: Network, linkProperties: LinkProperties) {
+                trySend(linkProperties.privateDnsServerName)
+            }
+
+            override fun onLost(network: Network) {
+                trySend(null)
+            }
+        }
+        val registered = runCatching { cm.registerDefaultNetworkCallback(callback) }.isSuccess
+        awaitClose { if (registered) runCatching { cm.unregisterNetworkCallback(callback) } }
+    }.distinctUntilChanged()
 }
 
 private fun openNetworkSettings(context: Context) {

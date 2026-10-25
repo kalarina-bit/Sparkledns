@@ -28,8 +28,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,8 +43,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
@@ -61,19 +59,16 @@ private val TimeFormat = SimpleDateFormat("HH:mm:ss", Locale.ROOT)
 fun MonitorScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val custom by Blocklist.custom.collectAsState()
+    val custom by Blocklist.custom.collectAsStateWithLifecycle()
 
     var entries by remember { mutableStateOf(QueryLog.snapshot()) }
     var stats by remember { mutableStateOf(QueryLog.stats()) }
     var filter by rememberSaveable { mutableStateOf(MonitorFilter.ALL) }
     var search by rememberSaveable { mutableStateOf("") }
 
-    LaunchedEffect(Unit) {
-        while (true) {
-            entries = QueryLog.snapshot()
-            stats = QueryLog.stats()
-            delay(1000)
-        }
+    OnQueryLogChange {
+        entries = QueryLog.snapshot()
+        stats = QueryLog.stats()
     }
 
     val visible = remember(entries, filter, search) {

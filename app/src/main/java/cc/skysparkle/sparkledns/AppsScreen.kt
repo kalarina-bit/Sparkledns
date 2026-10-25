@@ -39,7 +39,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TriStateCheckbox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -59,6 +58,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -84,8 +84,8 @@ private val IconCache = LruCache<String, ImageBitmap>(256)
 fun AppsScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val prefs = remember { Prefs(context) }
-    val active by DohVpnService.active.collectAsState()
-    val activeExcluded by DohVpnService.activeExcluded.collectAsState()
+    val active by DohVpnService.active.collectAsStateWithLifecycle()
+    val activeExcluded by DohVpnService.activeExcluded.collectAsStateWithLifecycle()
 
     var apps by remember { mutableStateOf<List<AppItem>?>(null) }
     var excluded by remember { mutableStateOf(prefs.excludedApps) }
