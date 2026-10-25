@@ -145,7 +145,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     var crashVisible by remember { mutableStateOf(crashReport != null) }
 
     val isCustom = selected == Providers.CUSTOM_ID
-    val customValid = customUrl.trim().toHttpUrlOrNull()?.isHttps == true
+    val customValid = remember(customUrl) { customUrl.trim().toHttpUrlOrNull()?.isHttps == true }
     val canConnect = !isCustom || customValid
     val selectedProvider = remember(selected, customUrl, customBootstrap, customHttp3, servers) { prefs.resolve() }
     val customName = stringResource(R.string.custom)

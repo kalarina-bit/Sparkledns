@@ -60,6 +60,7 @@ fun MonitorScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val custom by Blocklist.custom.collectAsStateWithLifecycle()
+    val customSet = remember(custom) { custom.toHashSet() }
 
     var entries by remember { mutableStateOf(QueryLog.snapshot()) }
     var stats by remember { mutableStateOf(QueryLog.stats()) }
@@ -197,8 +198,8 @@ fun MonitorScreen(modifier: Modifier = Modifier) {
             }
         }
 
-        itemsIndexed(visible, key = { _, e -> e.id }) { index, entry ->
-            val inCustom = entry.domain in custom
+        itemsIndexed(visible, key = { _, e -> e.id }, contentType = { _, _ -> "query" }) { index, entry ->
+            val inCustom = entry.domain in customSet
             QueryRow(
                 modifier = Modifier.animateItem(),
                 entry = entry,

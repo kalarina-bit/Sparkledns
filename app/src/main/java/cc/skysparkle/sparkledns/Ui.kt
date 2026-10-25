@@ -47,6 +47,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import java.text.NumberFormat
+import java.util.Locale
 
 val CachedColor = Color(0xFF7FD1AE)
 val WarningColor = Color(0xFFFFB86B)
@@ -214,7 +215,15 @@ fun rememberLiveStats(): QueryStats {
     return stats
 }
 
-fun formatCount(value: Long): String = NumberFormat.getIntegerInstance().format(value)
+// Called from composition only, i.e. on the main thread; rebuilt when the locale changes
+private var countFormat: Pair<Locale, NumberFormat>? = null
+
+fun formatCount(value: Long): String {
+    val locale = Locale.getDefault()
+    val format = countFormat?.takeIf { it.first == locale }?.second
+        ?: NumberFormat.getIntegerInstance(locale).also { countFormat = locale to it }
+    return format.format(value)
+}
 
 fun cachePercent(stats: QueryStats): String =
     "${if (stats.total == 0L) 0 else stats.cached * 100 / stats.total}%"

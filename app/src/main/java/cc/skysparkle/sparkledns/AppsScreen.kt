@@ -48,9 +48,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -188,7 +188,7 @@ fun AppsScreen(modifier: Modifier = Modifier) {
 
         groups.forEach { (group, items) ->
             val expanded = searching || group !in collapsed
-            item(key = "group:${group.name}") {
+            item(key = "group:${group.name}", contentType = "group") {
                 GroupHeader(
                     modifier = Modifier.animateItem(),
                     group = group,
@@ -205,7 +205,7 @@ fun AppsScreen(modifier: Modifier = Modifier) {
                 )
             }
             if (expanded) {
-                itemsIndexed(items, key = { _, app -> app.packageName }) { index, app ->
+                itemsIndexed(items, key = { _, app -> app.packageName }, contentType = { _, _ -> "app" }) { index, app ->
                     AppRow(
                         modifier = Modifier.animateItem(),
                         app = app,
@@ -237,7 +237,8 @@ private fun GroupHeader(
         else -> ToggleableState.Indeterminate
     }
 
-    val chevron by animateFloatAsState(if (expanded) 180f else 0f, Motion.rotation, label = "chevron")
+    // Read only in the draw phase, so the animation does not recompose the header every frame
+    val chevron = animateFloatAsState(if (expanded) 180f else 0f, Motion.rotation, label = "chevron")
 
     Row(
         modifier = modifier
@@ -267,7 +268,7 @@ private fun GroupHeader(
             modifier = Modifier
                 .padding(end = 8.dp)
                 .size(22.dp)
-                .rotate(chevron),
+                .graphicsLayer { rotationZ = chevron.value },
         )
     }
 }
