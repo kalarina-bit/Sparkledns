@@ -11,7 +11,12 @@ class SparkleApp : Application() {
     override fun onCreate() {
         super.onCreate()
         CrashLog.install(this)
-        Thread({ runCatching { Blocklist.reload(this) } }, "blocklist-load").start()
+        Thread({
+            // Reads what the first screen needs before it asks, so its first frame does not wait on storage
+            Prefs(this).providerId
+            CrashLog.preload(this)
+            runCatching { Blocklist.reload(this) }
+        }, "startup-load").start()
     }
 }
 
@@ -35,10 +40,24 @@ object CrashLog {
         }
     }
 
-    fun read(context: Context): String? =
-        File(context.filesDir, FILE_NAME).takeIf { it.exists() }?.readText()
+    @Volatile
+    private var preloaded = false
+
+    @Volatile
+    private var report: String? = null
+
+    fun preload(context: Context) {
+        report = load(context)
+        preloaded = true
+    }
+
+    fun read(context: Context): String? = if (preloaded) report else load(context)
 
     fun clear(context: Context) {
+        report = null
         File(context.filesDir, FILE_NAME).delete()
     }
+
+    private fun load(context: Context): String? =
+        runCatching { File(context.filesDir, FILE_NAME).takeIf { it.exists() }?.readText() }.getOrNull()
 }
