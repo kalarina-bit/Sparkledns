@@ -9,6 +9,8 @@ import android.content.pm.ServiceInfo
 import android.graphics.drawable.Icon
 import android.net.VpnService
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.os.SystemClock
 import android.system.ErrnoException
@@ -32,6 +34,7 @@ private const val WORKERS = 16
 private const val TAG = "SparkleDNS"
 private const val CHANNEL_ID = "vpn_status"
 private const val NOTIFICATION_ID = 1
+private const val MAX_BAD_PACKETS = 100
 
 // Local VPN that routes only the fake DNS address into the tunnel; all other traffic is untouched
 class DohVpnService : VpnService() {
@@ -50,6 +53,7 @@ class DohVpnService : VpnService() {
     }
 
     private var session: Session? = null
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) {
@@ -108,7 +112,7 @@ class DohVpnService : VpnService() {
             stopSelf()
             return
         }
-        session = Session(tun, DohClient(this, provider)).also { it.start() }
+        session = Session(tun, DohClient(this, provider), ::onSessionFailed).also { it.start() }
         runCatching { previous?.stop() }
 
         _active.value = provider
@@ -125,6 +129,17 @@ class DohVpnService : VpnService() {
         runCatching { stopForeground(STOP_FOREGROUND_REMOVE) }
         getSystemService(NotificationManager::class.java)?.cancel(NOTIFICATION_ID)
         DnsTileService.refresh(this)
+    }
+
+    // The tunnel reader died while the session should be running. Dropping the VPN lets Android
+    // fall back to normal DNS instead of sending every lookup on the device into a dead tunnel.
+    private fun onSessionFailed(failed: Session) {
+        mainHandler.post {
+            if (session !== failed) return@post
+            Log.e(TAG, "Tunnel stopped working, disconnecting")
+            stopSession()
+            stopSelf()
+        }
     }
 
     private fun showNotification(provider: DohProvider) {
@@ -177,6 +192,7 @@ class DohVpnService : VpnService() {
 private class Session(
     private val tun: ParcelFileDescriptor,
     private val doh: DohClient,
+    private val onFailure: (Session) -> Unit,
 ) {
     private val alive = AtomicBoolean(true)
     private val pool = Executors.newFixedThreadPool(WORKERS)
@@ -201,24 +217,46 @@ private class Session(
             events = OsConstants.POLLIN.toShort()
         }
 
+        var badPackets = 0
+
         while (alive.get()) {
-            try {
+            val n = try {
                 if (Os.poll(arrayOf(pollFd), 500) <= 0) continue
-                val n = input.read(buf)
-                if (n < 0) break
-                val query = Packet.parseDnsQuery(buf, n) ?: continue
-                dispatch(query)
+                input.read(buf)
             } catch (e: ErrnoException) {
-                if (e.errno != OsConstants.EINTR) break
-            } catch (_: IOException) {
-                break
-            } catch (_: RejectedExecutionException) {
-                break
-            } catch (e: Exception) {
-                Log.e(TAG, "Tunnel reader failed", e)
-                break
+                if (e.errno == OsConstants.EINTR) continue
+                readerFailed(e)
+                return
+            } catch (e: IOException) {
+                readerFailed(e)
+                return
+            }
+            if (n < 0) {
+                readerFailed(null)
+                return
+            }
+            try {
+                Packet.parseDnsQuery(buf, n)?.let(::dispatch)
+                badPackets = 0
+            } catch (e: RejectedExecutionException) {
+                readerFailed(e)
+                return
+            } catch (e: RuntimeException) {
+                // One packet the code cannot handle must not stop DNS for the whole device
+                Log.w(TAG, "Dropped a packet", e)
+                if (++badPackets >= MAX_BAD_PACKETS) {
+                    readerFailed(e)
+                    return
+                }
             }
         }
+    }
+
+    // stop() closes the tunnel, which also ends the loop; only an unexpected end is a failure
+    private fun readerFailed(cause: Throwable?) {
+        if (!alive.get()) return
+        Log.e(TAG, "Tunnel reader stopped", cause)
+        onFailure(this)
     }
 
     // Blocklist and cache are answered right here; only real lookups go to the worker pool
