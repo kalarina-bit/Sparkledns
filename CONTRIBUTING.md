@@ -89,7 +89,7 @@ If your code adds new strings, add them to `values/strings.xml`. Translations fo
 1. Fork the repository and create a branch from `main`.
 2. Keep one topic per pull request.
 3. Follow the existing Kotlin and Jetpack Compose style; keep comments short and in English; don't reformat unrelated code.
-4. Make sure `./gradlew assembleDebug` builds, and test on a device or emulator.
+4. Make sure `./gradlew assembleDebug testDebugUnitTest` passes, and test on a device or emulator. The GitHub mirror runs the same checks for every commit; for changes that may affect speed or memory, the Benchmark workflow there compares your branch with `main` on an emulator (`scripts/bench.sh` does the same on your own rooted device or emulator).
 5. Write short, plain commit messages in English (for example `Fix tunnel restart after server switch`).
 6. Add screenshots for UI changes.
 
