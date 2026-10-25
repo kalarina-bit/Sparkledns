@@ -3,6 +3,7 @@ package cc.skysparkle.sparkledns
 import android.app.Application
 import android.content.Context
 import android.os.Build
+import android.os.Process
 import java.io.File
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -15,6 +16,8 @@ class SparkleApp : Application() {
             // Reads what the first screen needs before it asks, so its first frame does not wait on storage
             Prefs(this).providerId
             CrashLog.preload(this)
+            // Lists can hold millions of entries; loading them should not take CPU from the first frames
+            Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND)
             runCatching { Blocklist.reload(this) }
         }, "startup-load").start()
     }
