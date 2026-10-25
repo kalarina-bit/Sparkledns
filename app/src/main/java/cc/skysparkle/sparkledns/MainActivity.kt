@@ -92,6 +92,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -120,6 +121,9 @@ private val AppColors = darkColorScheme(
 private val ProtectedContainer = Color(0xFF16233A)
 
 private class TestResult(val ok: Boolean, val text: String)
+
+// How long a tap on Connect, Disconnect or Switch blocks further taps if the VPN state never changes
+private const val BUSY_TIMEOUT_MS = 5000L
 
 // Keeps test and sync results across rotation and process death
 private val TestResultSaver = Saver<TestResult?, String>(
@@ -164,9 +168,23 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     // Picking a server never touches a live connection; switching is an explicit action
     val pendingSwitch = active?.let { it != selectedProvider && canConnect } == true
 
+    // Set by a tap until the VPN state changes or the attempt gives up, so a double tap neither
+    // starts two connections nor switches the VPN back on right after turning it off
+    var busy by remember { mutableStateOf(false) }
+    LaunchedEffect(active) { busy = false }
+    LaunchedEffect(busy) {
+        if (busy) {
+            delay(BUSY_TIMEOUT_MS)
+            busy = false
+        }
+    }
+
     val vpnPermission = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
-    ) { if (it.resultCode == Activity.RESULT_OK) sendAction(context, DohVpnService.ACTION_START) }
+    ) {
+        if (it.resultCode == Activity.RESULT_OK) sendAction(context, DohVpnService.ACTION_START)
+        else busy = false
+    }
 
     fun connectVpn() {
         val permission = VpnService.prepare(context)
@@ -180,6 +198,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     ) { connectVpn() }
 
     fun toggle() {
+        if (busy) return
+        busy = true
         if (running) {
             sendAction(context, DohVpnService.ACTION_STOP)
             return
@@ -257,9 +277,15 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             http3 = usesHttp3,
             stats = stats,
             canConnect = canConnect,
+            busy = busy,
             switchTo = if (pendingSwitch) nameOf(selectedProvider) else null,
             onToggle = ::toggle,
-            onSwitch = { sendAction(context, DohVpnService.ACTION_START) },
+            onSwitch = {
+                if (!busy) {
+                    busy = true
+                    sendAction(context, DohVpnService.ACTION_START)
+                }
+            },
         )
 
         SectionHeader(stringResource(R.string.servers)) {
@@ -413,6 +439,7 @@ private fun StatusHero(
     http3: Boolean,
     stats: QueryStats,
     canConnect: Boolean,
+    busy: Boolean,
     switchTo: String?,
     onToggle: () -> Unit,
     onSwitch: () -> Unit,
@@ -498,7 +525,7 @@ private fun StatusHero(
 
             Button(
                 onClick = onToggle,
-                enabled = running || canConnect,
+                enabled = (running || canConnect) && !busy,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
@@ -514,7 +541,7 @@ private fun StatusHero(
             val lastSwitch = remember { arrayOf("") }
             if (switchTo != null) lastSwitch[0] = switchTo
             AnimatedVisibility(visible = switchTo != null, enter = Motion.expandIn, exit = Motion.collapseOut) {
-                OutlinedButton(onClick = onSwitch, modifier = Modifier.fillMaxWidth()) {
+                OutlinedButton(onClick = onSwitch, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
                     Icon(painterResource(R.drawable.ic_switch), contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(R.string.switch_to, lastSwitch[0]))
