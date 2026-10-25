@@ -176,6 +176,16 @@ measure() {
     echo "::endgroup::"
 }
 
+# The first launches after boot are far slower than later ones; warm up before measuring
+echo "::group::warm-up"
+install "$BASE_APK"
+for _ in 1 2 3 4 5; do
+    adb shell am force-stop "$PKG"
+    launch >/dev/null
+    sleep 2
+done
+echo "::endgroup::"
+
 for r in $(seq "$ROUNDS"); do
     if (( r % 2 )); then
         measure base "$BASE_APK"

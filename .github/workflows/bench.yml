@@ -10,7 +10,7 @@ on:
         default: origin/main
       rounds:
         description: Rounds per APK (each has 10 cold starts)
-        default: "2"
+        default: "3"
   push:
     branches: ["bench/**"]
 
@@ -52,7 +52,7 @@ jobs:
           profile: pixel_6
           disable-animations: false
           emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: bash scripts/bench.sh "$RUNNER_TEMP/bench/base.apk" "$RUNNER_TEMP/bench/head.apk" "${{ inputs.rounds || '2' }}"
+          script: bash scripts/bench.sh "$RUNNER_TEMP/bench/base.apk" "$RUNNER_TEMP/bench/head.apk" "${{ inputs.rounds || '3' }}"
 
       - uses: actions/upload-artifact@v4
         if: always()
