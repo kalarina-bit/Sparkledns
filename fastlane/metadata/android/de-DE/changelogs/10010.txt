@@ -1,0 +1,6 @@
+• DNS funktioniert weiter, wenn ein unerwartetes Paket ankommt; fällt der Tunnel aus, schaltet sich das VPN ab, statt DNS still zu blockieren
+• Anfragen erholen sich schneller nach einem Wechsel zwischen WLAN und Mobilfunk und in langsamen Netzen
+• Weniger Arbeit im Hintergrund: ausgeblendete Bildschirme werden nicht mehr aktualisiert
+• Blocklisten werden nur noch erneut geladen, wenn sie sich geändert haben
+• Schärfere App-Symbole, kleinere App
+• Ein Doppeltipp auf „Verbinden“ verbindet nicht mehr doppelt; voller Speicher lässt die App nicht mehr abstürzen

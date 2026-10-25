@@ -1,0 +1,6 @@
+• DNS veikia toliau, net jei atkeliauja netikėtas paketas; sugedus tuneliui VPN išsijungia, užuot tyliai blokavęs DNS
+• Užklausos greičiau atsigauna perjungus „Wi-Fi“ ir mobiliuosius duomenis bei lėtuose tinkluose
+• Mažiau darbo fone: paslėpti ekranai nebeatnaujinami
+• Blokavimo sąrašai atsisiunčiami iš naujo tik pasikeitus
+• Ryškesnės programėlių piktogramos, mažesnė programėlė
+• Dvigubas paspaudimas „Prisijungti“ nebejungia dukart; dėl pilnos atminties programėlė nebeužsidaro

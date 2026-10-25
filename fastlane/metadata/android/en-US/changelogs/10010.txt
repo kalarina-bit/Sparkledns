@@ -1,0 +1,6 @@
+• DNS keeps working when an unexpected packet arrives; if the tunnel fails, the VPN turns off instead of silently blocking DNS
+• Lookups recover faster after switching between Wi-Fi and mobile data and on slow networks
+• Less work in the background: hidden screens are no longer refreshed
+• Blocklists are downloaded again only when they changed
+• Sharper app icons, smaller app
+• A double tap on Connect no longer connects twice; a full storage no longer crashes the app
