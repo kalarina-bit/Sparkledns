@@ -3,7 +3,10 @@ package cc.skysparkle.sparkledns
 import android.os.SystemClock
 
 // TTL-aware LRU cache of DNS responses, keyed by the question section
-class DnsCache(private val maxEntries: Int = 2000) {
+class DnsCache(
+    private val maxEntries: Int = 2000,
+    private val clock: () -> Long = SystemClock::elapsedRealtime,
+) {
 
     private class Entry(
         val response: ByteArray,
@@ -19,7 +22,7 @@ class DnsCache(private val maxEntries: Int = 2000) {
 
     fun get(query: ByteArray): ByteArray? {
         val key = keyOf(query) ?: return null
-        val now = SystemClock.elapsedRealtime()
+        val now = clock()
         val entry = synchronized(map) {
             val e = map[key] ?: return null
             if (now >= e.expiresAt) {
@@ -47,7 +50,7 @@ class DnsCache(private val maxEntries: Int = 2000) {
         val ttl = minOf(minTtl, MAX_TTL)
         if (ttl <= 0) return
 
-        val now = SystemClock.elapsedRealtime()
+        val now = clock()
         val entry = Entry(response.copyOf(), records.first, records.second, now, now + ttl * 1000L)
         synchronized(map) { map[key] = entry }
     }
