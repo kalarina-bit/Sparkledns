@@ -27,6 +27,12 @@ android {
         }
     }
 
+    androidResources {
+        // Only the languages the app itself is translated to; library strings for other
+        // languages were unused weight, as the app falls back to English there anyway
+        localeFilters += listOf("en", "de", "ja", "lt", "ru", "zh")
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
