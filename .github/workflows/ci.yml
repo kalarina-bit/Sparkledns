@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+
+jobs:
+  build:
+    # The Gitea instance has no Android SDK on its runners; this only runs on the GitHub mirror
+    if: github.server_url == 'https://github.com'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build and unit-test every pushed commit
+        run: bash scripts/ci-check.sh "${{ github.event.before }}" "${{ github.sha }}"
+
+      - name: Release build (R8)
+        run: ./gradlew :app:assembleRelease --stacktrace
+
+      - name: APK size and key dependencies
+        run: |
+          apk=$(ls app/build/outputs/apk/release/*.apk | head -n 1)
+          echo "::notice title=Release APK::$(stat -c %s "$apk") bytes ($(basename "$apk"))"
+          deps=$(./gradlew -q :app:dependencies --configuration releaseRuntimeClasspath \
+            | grep -oE '(androidx\.lifecycle:lifecycle-runtime-compose|androidx\.profileinstaller:profileinstaller|com\.squareup\.okhttp3:okhttp):[^ ]+( -> [^ ]+)?' \
+            | sort -u | paste -sd ';' -)
+          echo "::notice title=Dependencies::$deps"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apk
+          path: app/build/outputs/apk/**/*.apk
+          if-no-files-found: ignore
