@@ -55,24 +55,16 @@ object Blocklist {
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
 
+    // Downloaded lists and own domains are kept apart, so editing a few own domains
+    // does not rebuild a set that can hold millions of entries
     @Volatile
-    private var hashes = LongArray(0)
     private var listHashes = LongArray(0)
+
+    @Volatile
+    private var customHashes = LongArray(0)
     private var loaded = false
 
-    fun isBlocked(name: String): Boolean {
-        if (!_enabled.value) return false
-        val set = hashes
-        if (set.isEmpty()) return false
-        val domain = name.trimEnd('.')
-        var start = 0
-        while (true) {
-            if (set.binarySearch(DomainHash.of(domain, start)) >= 0) return true
-            val dot = domain.indexOf('.', start)
-            if (dot < 0) return false
-            start = dot + 1
-        }
-    }
+    fun isBlocked(name: String): Boolean = _enabled.value && isBlockedIn(name, listHashes, customHashes)
 
     fun reload(context: Context) = synchronized(lock) { load(BlocklistStore(context)) }
 
@@ -88,7 +80,7 @@ object Blocklist {
         val updated = (_custom.value + domain).distinct().sorted()
         store.saveCustom(updated)
         _custom.value = updated
-        combine()
+        updateCustomHashes()
         true
     }
 
@@ -98,7 +90,7 @@ object Blocklist {
         val updated = _custom.value - domain
         store.saveCustom(updated)
         _custom.value = updated
-        combine()
+        updateCustomHashes()
     }
 
     fun removeList(context: Context, url: String) = synchronized(lock) {
@@ -175,33 +167,74 @@ object Blocklist {
         _enabled.value = store.enabled
         _custom.value = store.loadCustom()
         _lists.value = store.loadLists()
+        val custom = _custom.value
+        customHashes = LongArray(custom.size) { DomainHash.of(custom[it]) }.sortUnique()
         reloadListHashes(store)
         loaded = true
     }
 
     private fun reloadListHashes(store: BlocklistStore) {
-        listHashes = merge(_lists.value.map { store.loadListHashes(it.url) })
-        combine()
+        listHashes = mergeSorted(_lists.value.map { store.loadListHashes(it.url) })
+        _total.value = unionSize(listHashes, customHashes)
     }
 
-    private fun combine() {
+    private fun updateCustomHashes() {
         val custom = _custom.value
-        hashes = if (custom.isEmpty()) {
-            listHashes
-        } else {
-            merge(listOf(listHashes, LongArray(custom.size) { DomainHash.of(custom[it]) }))
-        }
-        _total.value = hashes.size
+        customHashes = LongArray(custom.size) { DomainHash.of(custom[it]) }.sortUnique()
+        _total.value = unionSize(listHashes, customHashes)
     }
+}
 
-    private fun merge(parts: List<LongArray>): LongArray {
-        val nonEmpty = parts.filter { it.isNotEmpty() }
-        if (nonEmpty.size <= 1) return nonEmpty.firstOrNull() ?: LongArray(0) // stored lists are already sorted
-        val all = LongArray(nonEmpty.sumOf { it.size })
-        var pos = 0
-        nonEmpty.forEach { it.copyInto(all, pos); pos += it.size }
-        return all.sortUnique()
+// True when the name or one of its parent domains is in either sorted hash set
+internal fun isBlockedIn(name: String, lists: LongArray, custom: LongArray): Boolean {
+    if (lists.isEmpty() && custom.isEmpty()) return false
+    val domain = name.trimEnd('.')
+    var start = 0
+    while (true) {
+        val hash = DomainHash.of(domain, start)
+        if (lists.binarySearch(hash) >= 0 || custom.binarySearch(hash) >= 0) return true
+        val dot = domain.indexOf('.', start)
+        if (dot < 0) return false
+        start = dot + 1
     }
+}
+
+// Number of distinct entries in both sorted sets; the custom set is small
+internal fun unionSize(lists: LongArray, custom: LongArray): Int =
+    lists.size + custom.count { lists.binarySearch(it) < 0 }
+
+// Merges sorted, duplicate-free arrays in linear time instead of sorting their concatenation
+internal fun mergeSorted(parts: List<LongArray>): LongArray {
+    var arrays = parts.filter { it.isNotEmpty() }.map { if (it.isSortedUnique()) it else it.copyOf().sortUnique() }
+    if (arrays.isEmpty()) return LongArray(0)
+    while (arrays.size > 1) {
+        arrays = arrays.chunked(2).map { if (it.size == 2) mergeTwo(it[0], it[1]) else it[0] }
+    }
+    return arrays[0]
+}
+
+private fun mergeTwo(a: LongArray, b: LongArray): LongArray {
+    val out = LongArray(a.size + b.size)
+    var i = 0
+    var j = 0
+    var n = 0
+    while (i < a.size && j < b.size) {
+        val x = a[i]
+        val y = b[j]
+        when {
+            x < y -> { out[n++] = x; i++ }
+            x > y -> { out[n++] = y; j++ }
+            else -> { out[n++] = x; i++; j++ }
+        }
+    }
+    while (i < a.size) out[n++] = a[i++]
+    while (j < b.size) out[n++] = b[j++]
+    return if (n == out.size) out else out.copyOf(n)
+}
+
+private fun LongArray.isSortedUnique(): Boolean {
+    for (i in 1 until size) if (this[i - 1] >= this[i]) return false
+    return true
 }
 
 internal object DomainHash {
