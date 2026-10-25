@@ -79,6 +79,27 @@ background_cpu() {
     record "$1" bg_wakeups_per_min "$(( n2 - n1 ))"
 }
 
+# Memory still held 30 s after leaving the app from the Apps tab, with every icon loaded once
+background_memory() {
+    local pss
+    adb shell am force-stop "$PKG"
+    launch >/dev/null
+    sleep 3
+    tap_text "Apps" || return
+    sleep 2
+    tap_text "System"
+    sleep 2
+    for _ in 1 2 3 4; do
+        adb shell input swipe $((W / 2)) $((H * 3 / 4)) $((W / 2)) $((H / 4)) 200
+        sleep 1
+    done
+    sleep 3
+    adb shell input keyevent 3
+    sleep 30
+    pss="$(adb shell dumpsys meminfo "$PKG" | tr -d '\r' | awk '/TOTAL PSS:/ {print $3; exit}')"
+    [[ -n "$pss" ]] && record "$1" bg_pss_after_apps_kb "$pss"
+}
+
 tap_text() {
     local xy
     for _ in 1 2 3 4 5; do
@@ -138,6 +159,7 @@ measure() {
     cold_starts "$1"
     memory "$1"
     background_cpu "$1"
+    background_memory "$1"
     jank "$1"
     jank "$1"
     echo "::endgroup::"
