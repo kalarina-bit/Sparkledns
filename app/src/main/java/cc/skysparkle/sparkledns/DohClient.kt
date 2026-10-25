@@ -27,6 +27,7 @@ import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import java.util.concurrent.atomic.AtomicBoolean
 
 private const val DNS_MESSAGE = "application/dns-message"
 private const val MAX_DNS_SIZE = 65535
@@ -36,17 +37,37 @@ private const val TAG = "SparkleDNS"
 // everything else and older devices use OkHttp with HTTP/2.
 class DohClient(context: Context, provider: DohProvider) {
 
-    private val transport: Transport = createTransport(context.applicationContext, provider)
+    private val appContext = context.applicationContext
 
-    val lastProtocol: String? get() = transport.lastProtocol
+    // Built on the first query, i.e. on a worker thread: setting up HttpEngine takes long enough
+    // to stall the main thread, where the VPN service creates this client
+    private val transport = lazy { createTransport(appContext, provider) }
+    private val closed = AtomicBoolean(false)
+    private val released = AtomicBoolean(false)
+
+    val lastProtocol: String? get() = if (transport.isInitialized()) transport.value.lastProtocol else null
 
     fun query(message: ByteArray): ByteArray {
-        val body = transport.query(message)
+        if (closed.get()) throw IOException("Client closed")
+        val active = transport.value
+        // shutdown() may have run while the transport was being built
+        if (closed.get()) {
+            release()
+            throw IOException("Client closed")
+        }
+        val body = active.query(message)
         if (!DnsMessage.isResponse(body)) throw IOException("Invalid DNS response")
         return body
     }
 
-    fun shutdown() = transport.shutdown()
+    fun shutdown() {
+        closed.set(true)
+        if (transport.isInitialized()) release()
+    }
+
+    private fun release() {
+        if (released.compareAndSet(false, true)) transport.value.shutdown()
+    }
 
     private fun createTransport(context: Context, provider: DohProvider): Transport {
         if (provider.http3 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
