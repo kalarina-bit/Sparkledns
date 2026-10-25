@@ -98,4 +98,5 @@
     <string name="servers_update">Обновить список серверов</string>
     <string name="servers_updated">Список серверов обновлён</string>
     <string name="servers_update_failed">Не удалось обновить список серверов: %1$s</string>
+    <string name="no_browser">Не найдено приложение, чтобы открыть ссылку</string>
 </resources>

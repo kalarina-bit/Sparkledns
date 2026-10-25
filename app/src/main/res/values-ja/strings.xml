@@ -98,4 +98,5 @@
     <string name="servers_update">サーバーリストを更新</string>
     <string name="servers_updated">サーバーリストを更新しました</string>
     <string name="servers_update_failed">サーバーリストを更新できませんでした: %1$s</string>
+    <string name="no_browser">このリンクを開けるアプリがありません</string>
 </resources>

@@ -98,4 +98,5 @@
     <string name="servers_update">Atnaujinti serverių sąrašą</string>
     <string name="servers_updated">Serverių sąrašas atnaujintas</string>
     <string name="servers_update_failed">Nepavyko atnaujinti serverių sąrašo: %1$s</string>
+    <string name="no_browser">Nerasta programėlės šiai nuorodai atidaryti</string>
 </resources>

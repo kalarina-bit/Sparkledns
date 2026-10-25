@@ -99,4 +99,5 @@
     <string name="servers_update">Update server list</string>
     <string name="servers_updated">Server list updated</string>
     <string name="servers_update_failed">Couldn\'t update the server list: %1$s</string>
+    <string name="no_browser">No app found to open this link</string>
 </resources>

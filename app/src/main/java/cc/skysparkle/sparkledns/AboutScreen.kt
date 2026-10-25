@@ -1,9 +1,12 @@
 package cc.skysparkle.sparkledns
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
@@ -264,7 +267,12 @@ private fun InfoRow(label: String, value: String) {
 }
 
 internal fun openUrl(context: Context, url: String) {
-    runCatching {
+    try {
         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    } catch (_: ActivityNotFoundException) {
+        // Without a browser the tap used to do nothing at all
+        Toast.makeText(context, R.string.no_browser, Toast.LENGTH_SHORT).show()
+    } catch (e: RuntimeException) {
+        Log.w("SparkleDNS", "Cannot open $url", e)
     }
 }
