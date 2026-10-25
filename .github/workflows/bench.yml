@@ -1,0 +1,64 @@
+name: Benchmark
+
+# Compares two revisions on one emulator: cold start, memory, background CPU, scroll jank, APK size.
+# Run it from the Actions tab, or push the commit to measure to a bench/<anything> branch.
+on:
+  workflow_dispatch:
+    inputs:
+      base:
+        description: Baseline revision
+        default: origin/main
+      rounds:
+        description: Rounds per APK (each has 10 cold starts)
+        default: "2"
+  push:
+    branches: ["bench/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  bench:
+    if: github.server_url == 'https://github.com'
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build base and head APKs
+        run: bash scripts/bench-build.sh "${{ inputs.base || 'origin/main' }}" "${{ github.sha }}" "$RUNNER_TEMP/bench"
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Measure on the emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: false
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: bash scripts/bench.sh "$RUNNER_TEMP/bench/base.apk" "$RUNNER_TEMP/bench/head.apk" "${{ inputs.rounds || '2' }}"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bench-results
+          path: |
+            ${{ runner.temp }}/bench/*.csv
+            ${{ runner.temp }}/bench/*.md
+          if-no-files-found: ignore
