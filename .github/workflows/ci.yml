@@ -8,9 +8,6 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: ci-${{ github.ref }}
-
 jobs:
   build:
     # The Gitea instance has no Android SDK on its runners; this only runs on the GitHub mirror
