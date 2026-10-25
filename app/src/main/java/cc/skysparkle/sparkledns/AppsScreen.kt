@@ -81,6 +81,8 @@ private class AppItem(val label: String, val packageName: String, val group: App
 // Decoded icons survive scrolling and tab switches instead of being rendered again every time
 private val IconCache = LruCache<String, ImageBitmap>(256)
 
+internal fun clearAppIconCache() = IconCache.evictAll()
+
 // Shown right away when the tab opens again, while the list is read anew in the background.
 // Only touched on the main thread.
 private var lastAppList: List<AppItem>? = null

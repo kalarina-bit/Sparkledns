@@ -24,6 +24,13 @@ class SparkleApp : Application() {
         }, "startup-load").start()
     }
 
+    // The VPN keeps the process running long after the screens are gone; decoded app icons
+    // (up to about 9 MB) can be rendered again the next time the Apps tab opens
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        if (level >= TRIM_MEMORY_UI_HIDDEN) clearAppIconCache()
+    }
+
     // Debug builds only: logs disk and network access on the main thread, leaked closeables and the like
     private fun enableStrictMode() {
         StrictMode.setThreadPolicy(StrictMode.ThreadPolicy.Builder().detectAll().penaltyLog().build())
