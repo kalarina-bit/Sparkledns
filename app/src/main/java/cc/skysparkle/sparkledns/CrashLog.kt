@@ -25,7 +25,7 @@ class SparkleApp : Application() {
     }
 
     // The VPN keeps the process running long after the screens are gone; decoded app icons
-    // (up to about 9 MB) can be rendered again the next time the Apps tab opens
+    // (up to 10 MB) can be rendered again the next time the Apps tab opens
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)
         if (level >= TRIM_MEMORY_UI_HIDDEN) clearAppIconCache()

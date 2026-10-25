@@ -53,6 +53,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -78,8 +79,11 @@ private enum class AppGroup(@StringRes val label: Int, @DrawableRes val icon: In
 
 private class AppItem(val label: String, val packageName: String, val group: AppGroup)
 
-// Decoded icons survive scrolling and tab switches instead of being rendered again every time
-private val IconCache = LruCache<String, ImageBitmap>(256)
+// Decoded icons survive scrolling and tab switches instead of being rendered again every time.
+// Limited by memory rather than count, since icon size now follows the screen density.
+private val IconCache = object : LruCache<String, ImageBitmap>(10 * 1024 * 1024) {
+    override fun sizeOf(key: String, value: ImageBitmap) = value.width * value.height * 4
+}
 
 internal fun clearAppIconCache() = IconCache.evictAll()
 
@@ -283,12 +287,15 @@ private fun GroupHeader(
 @Composable
 private fun AppRow(modifier: Modifier, app: AppItem, enabled: Boolean, last: Boolean, onToggle: (Boolean) -> Unit) {
     val context = LocalContext.current
-    val icon by produceState<ImageBitmap?>(IconCache.get(app.packageName), app.packageName) {
+    // Rendered at the size it is shown (40 dp), so icons stay sharp on dense screens
+    val iconPx = with(LocalDensity.current) { 40.dp.roundToPx() }
+    val cacheKey = "${app.packageName}@$iconPx"
+    val icon by produceState<ImageBitmap?>(IconCache.get(cacheKey), cacheKey) {
         if (value != null) return@produceState
         value = withContext(Dispatchers.IO) {
-            runCatching { context.packageManager.getApplicationIcon(app.packageName).toImageBitmap(96) }
+            runCatching { context.packageManager.getApplicationIcon(app.packageName).toImageBitmap(iconPx) }
                 .getOrNull()
-                ?.also { IconCache.put(app.packageName, it) }
+                ?.also { IconCache.put(cacheKey, it) }
         }
     }
 
