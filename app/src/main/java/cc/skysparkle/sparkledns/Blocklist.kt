@@ -340,7 +340,12 @@ private class BlocklistStore(context: Context) {
             val body = response.body ?: throw IOException("Empty response")
             val parsed = LongList()
             body.charStream().buffered().useLines { lines ->
-                lines.forEach { line -> BlocklistParser.parseLine(line)?.let { parsed.add(DomainHash.of(it)) } }
+                lines.forEach { line ->
+                    val domain = BlocklistParser.parseLine(line) ?: return@forEach
+                    // Far above the largest common lists; keeps a wrong URL from exhausting memory
+                    if (parsed.size >= MAX_LIST_DOMAINS) throw IOException("List too large")
+                    parsed.add(DomainHash.of(domain))
+                }
             }
             val result = parsed.toArray().sortUnique()
             if (result.isEmpty()) throw IOException("No domains found")
@@ -378,6 +383,8 @@ private class BlocklistStore(context: Context) {
         .take(8).joinToString("") { "%02x".format(it) }
 
     companion object {
+        const val MAX_LIST_DOMAINS = 4_000_000
+
         val client: OkHttpClient by lazy {
             Http.client.newBuilder()
                 .readTimeout(60, TimeUnit.SECONDS)
