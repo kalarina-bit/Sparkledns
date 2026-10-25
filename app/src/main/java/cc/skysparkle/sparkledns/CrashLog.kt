@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.os.Build
 import android.os.Process
+import android.os.StrictMode
 import java.io.File
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -11,6 +12,7 @@ import java.io.StringWriter
 class SparkleApp : Application() {
     override fun onCreate() {
         super.onCreate()
+        if (BuildConfig.DEBUG) enableStrictMode()
         CrashLog.install(this)
         Thread({
             // Reads what the first screen needs before it asks, so its first frame does not wait on storage
@@ -20,6 +22,12 @@ class SparkleApp : Application() {
             Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND)
             runCatching { Blocklist.reload(this) }
         }, "startup-load").start()
+    }
+
+    // Debug builds only: logs disk and network access on the main thread, leaked closeables and the like
+    private fun enableStrictMode() {
+        StrictMode.setThreadPolicy(StrictMode.ThreadPolicy.Builder().detectAll().penaltyLog().build())
+        StrictMode.setVmPolicy(StrictMode.VmPolicy.Builder().detectAll().penaltyLog().build())
     }
 }
 
