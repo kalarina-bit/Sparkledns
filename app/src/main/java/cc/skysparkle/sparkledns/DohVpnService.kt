@@ -108,11 +108,15 @@ class DohVpnService : VpnService() {
             .allowFamily(OsConstants.AF_INET6)
         // The app itself bypasses the VPN so it can resolve and reach the DoH server
         runCatching { builder.addDisallowedApplication(packageName) }
-        excluded.forEach { runCatching { builder.addDisallowedApplication(it) } }
+            .onFailure { Log.e(TAG, "Cannot exclude the app itself from the VPN", it) }
+        // Apps uninstalled since they were picked are simply skipped
+        excluded.forEach { app ->
+            runCatching { builder.addDisallowedApplication(app) }.onFailure { Log.i(TAG, "Not excluding $app: $it") }
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) builder.setMetered(false)
 
         // The new interface replaces the old one in place, so DNS never leaks during a server switch
-        val tun = runCatching { builder.establish() }.getOrNull()
+        val tun = runCatching { builder.establish() }.onFailure { Log.e(TAG, "Cannot establish the VPN", it) }.getOrNull()
         val previous = session
         if (tun == null) {
             stopSession()
@@ -323,7 +327,9 @@ private class Session(
         val packet = Packet.buildReply(query, DnsMessage.withId(payload, query.payload))
         try {
             synchronized(output) { output.write(packet) }
-        } catch (_: IOException) {
+        } catch (e: IOException) {
+            // Expected while the session is being stopped
+            if (alive.get()) Log.w(TAG, "Cannot write an answer to the tunnel", e)
         }
     }
 }
