@@ -4,7 +4,6 @@ import android.content.Context
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
 import java.io.IOException
@@ -74,8 +73,7 @@ object ServerList {
     @Volatile private var loaded = false
 
     private val client by lazy {
-        OkHttpClient.Builder()
-            .connectTimeout(15, TimeUnit.SECONDS)
+        Http.client.newBuilder()
             .readTimeout(30, TimeUnit.SECONDS)
             .build()
     }

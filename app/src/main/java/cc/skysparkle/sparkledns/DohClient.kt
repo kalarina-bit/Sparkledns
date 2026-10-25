@@ -10,10 +10,10 @@ import android.net.http.UrlResponseInfo
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
+import okhttp3.ConnectionPool
 import okhttp3.Dns
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.ByteArrayOutputStream
@@ -91,7 +91,11 @@ private class OkHttpTransport(private val provider: DohProvider) : Transport {
 
     private val url by lazy { provider.url.toHttpUrl() }
 
-    private val client = OkHttpClient.Builder()
+    // Its own connection pool, so stopping a session drops only DoH connections
+    private val pool = ConnectionPool()
+
+    private val client = Http.client.newBuilder()
+        .connectionPool(pool)
         .dns(BootstrapDns(provider.bootstrap))
         .connectTimeout(5, TimeUnit.SECONDS)
         .readTimeout(5, TimeUnit.SECONDS)
@@ -118,8 +122,7 @@ private class OkHttpTransport(private val provider: DohProvider) : Transport {
     }
 
     override fun shutdown() {
-        client.dispatcher.executorService.shutdown()
-        client.connectionPool.evictAll()
+        pool.evictAll()
     }
 
     private companion object {

@@ -379,8 +379,7 @@ private class BlocklistStore(context: Context) {
 
     companion object {
         val client: OkHttpClient by lazy {
-            OkHttpClient.Builder()
-                .connectTimeout(15, TimeUnit.SECONDS)
+            Http.client.newBuilder()
                 .readTimeout(60, TimeUnit.SECONDS)
                 .build()
         }
