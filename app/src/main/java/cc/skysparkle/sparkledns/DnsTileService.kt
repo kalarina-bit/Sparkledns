@@ -11,9 +11,11 @@ import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 class DnsTileService : TileService() {
@@ -32,7 +34,12 @@ class DnsTileService : TileService() {
     override fun onStartListening() {
         listening?.cancel()
         listening = MainScope().also { scope ->
-            scope.launch { DohVpnService.active.collect { updateTile() } }
+            scope.launch {
+                // The tile can start a fresh process: read settings from storage off the main thread,
+                // which also leaves them in memory for onClick
+                val prefs = withContext(Dispatchers.IO) { Prefs(applicationContext).also { it.providerId } }
+                DohVpnService.active.collect { updateTile(prefs) }
+            }
         }
     }
 
@@ -61,13 +68,13 @@ class DnsTileService : TileService() {
         }
     }
 
-    private fun updateTile() {
+    private fun updateTile(prefs: Prefs) {
         val tile = qsTile ?: return
         val active = DohVpnService.active.value
         tile.state = if (active != null) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
         tile.label = getString(R.string.app_name)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            tile.subtitle = (active ?: Prefs(this).resolve()).displayName(this)
+            tile.subtitle = (active ?: prefs.resolve()).displayName(this)
         }
         tile.updateTile()
     }
