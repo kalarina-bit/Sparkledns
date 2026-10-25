@@ -1,6 +1,8 @@
 package cc.skysparkle.sparkledns
 
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.Network
 import android.net.http.HttpEngine
 import android.net.http.HttpException
 import android.net.http.UploadDataProvider
@@ -77,7 +79,7 @@ class DohClient(context: Context, provider: DohProvider) {
                 Log.w(TAG, "HttpEngine unavailable, falling back to HTTP/2", e)
             }
         }
-        return OkHttpTransport(provider)
+        return OkHttpTransport(context, provider)
     }
 }
 
@@ -87,7 +89,7 @@ private interface Transport {
     fun shutdown()
 }
 
-private class OkHttpTransport(private val provider: DohProvider) : Transport {
+private class OkHttpTransport(context: Context, private val provider: DohProvider) : Transport {
 
     private val url by lazy { provider.url.toHttpUrl() }
 
@@ -101,6 +103,27 @@ private class OkHttpTransport(private val provider: DohProvider) : Transport {
         .readTimeout(5, TimeUnit.SECONDS)
         .callTimeout(8, TimeUnit.SECONDS)
         .build()
+
+    // Pooled connections still belong to the previous network after a switch between Wi-Fi and
+    // mobile data, and lookups over them can hang until the timeout. Drop them whenever the default
+    // network changes. (HttpEngine for HTTP/3 follows network changes on its own.)
+    private val connectivity = context.getSystemService(ConnectivityManager::class.java)
+    private val networkCallback = object : ConnectivityManager.NetworkCallback() {
+        private var current: Network? = null
+
+        override fun onAvailable(network: Network) {
+            if (current != null && current != network) pool.evictAll()
+            current = network
+        }
+
+        override fun onLost(network: Network) {
+            if (network != current) return
+            current = null
+            pool.evictAll()
+        }
+    }
+    private val watchingNetwork =
+        connectivity != null && runCatching { connectivity.registerDefaultNetworkCallback(networkCallback) }.isSuccess
 
     @Volatile
     override var lastProtocol: String? = null
@@ -122,6 +145,7 @@ private class OkHttpTransport(private val provider: DohProvider) : Transport {
     }
 
     override fun shutdown() {
+        if (watchingNetwork) runCatching { connectivity?.unregisterNetworkCallback(networkCallback) }
         pool.evictAll()
     }
 
