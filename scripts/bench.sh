@@ -25,11 +25,15 @@ record() { echo "$1,$2,$3" >> "$RAW"; } # name,metric,value
 install() {
     adb uninstall "$PKG" >/dev/null 2>&1
     adb install -g "$1" >/dev/null
-    # The first run lets ProfileInstaller store the profile, then the app is compiled
-    # the way the device does it in the background after an install
     adb shell am start -W -n "$ACT" >/dev/null
-    sleep 12
+    sleep 2
     adb shell am force-stop "$PKG"
+    # Compiles with the APK's baseline profile only, as the device does after an install,
+    # without what the JIT learned during the first run (same as Macrobenchmark's Partial mode)
+    adb shell cmd package compile --reset "$PKG" >/dev/null
+    adb shell am broadcast -f 0x20 -a androidx.profileinstaller.action.INSTALL_PROFILE \
+        "$PKG/androidx.profileinstaller.ProfileInstallReceiver" | tr -d '\r' | grep -o 'result=[0-9-]*'
+    sleep 2
     adb shell cmd package compile -f -m speed-profile "$PKG" >/dev/null
 }
 
@@ -87,7 +91,7 @@ background_memory() {
     sleep 3
     tap_text "Apps" || return
     sleep 2
-    tap_text "System"
+    tap_text "System" scroll
     sleep 2
     for _ in 1 2 3 4; do
         adb shell input swipe $((W / 2)) $((H * 3 / 4)) $((W / 2)) $((H / 4)) 200
@@ -108,7 +112,8 @@ tap_text() {
 import re, sys
 xml, text = sys.stdin.read(), sys.argv[1]
 for node in re.findall(r"<node [^>]*>", xml):
-    if re.search(r"(text|content-desc)=\"%s\"" % re.escape(text), node):
+    # Compose merges a clickable row into one node: "System, 3 of 5"
+    if re.search(r"(text|content-desc)=\"%s(\"|, )" % re.escape(text), node):
         x1, y1, x2, y2 = map(int, re.search(r"bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\"", node).groups())
         print((x1 + x2) // 2, (y1 + y2) // 2)
         break
@@ -117,6 +122,8 @@ for node in re.findall(r"<node [^>]*>", xml):
             adb shell input tap $xy
             return 0
         fi
+        # Lazy lists only show what is on screen; with "scroll", look further down
+        [[ "${2:-}" == scroll ]] && adb shell input swipe $((W / 2)) $((H * 2 / 3)) $((W / 2)) $((H / 3)) 300
         sleep 1
     done
     echo "::warning::'$1' not found on screen"
@@ -130,8 +137,12 @@ jank() {
     sleep 3
     tap_text "Apps" || return
     sleep 2
-    tap_text "System" # the only group collapsed by default
-    sleep 3
+    tap_text "System" scroll # the only group collapsed by default, listed last
+    sleep 2
+    for _ in 1 2 3; do
+        adb shell input swipe $((W / 2)) $((H / 4)) $((W / 2)) $((H * 3 / 4)) 100
+    done
+    sleep 2
     adb shell dumpsys gfxinfo "$PKG" reset >/dev/null
     for dir in down down down down down up up up up up; do
         if [[ $dir == down ]]; then

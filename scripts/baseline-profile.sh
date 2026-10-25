@@ -23,7 +23,8 @@ tap_text() {
 import re, sys
 xml, text = sys.stdin.read(), sys.argv[1]
 for node in re.findall(r"<node [^>]*>", xml):
-    if re.search(r"(text|content-desc)=\"%s\"" % re.escape(text), node):
+    # Compose merges a clickable row into one node: "System, 3 of 5"
+    if re.search(r"(text|content-desc)=\"%s(\"|, )" % re.escape(text), node):
         x1, y1, x2, y2 = map(int, re.search(r"bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\"", node).groups())
         print((x1 + x2) // 2, (y1 + y2) // 2)
         break
@@ -32,6 +33,8 @@ for node in re.findall(r"<node [^>]*>", xml):
             adb shell input tap $xy
             return 0
         fi
+        # Lazy lists only show what is on screen; with "scroll", look further down
+        [[ "${2:-}" == scroll ]] && adb shell input swipe $((W / 2)) $((H * 2 / 3)) $((W / 2)) $((H / 3)) 300
         sleep 1
     done
     echo "::warning::'$1' not found on screen"
@@ -51,7 +54,7 @@ for _ in 1 2 3; do
     swipe
     tap_text "Monitor"; sleep 2
     tap_text "Apps"; sleep 3
-    tap_text "System"; sleep 2
+    tap_text "System" scroll; sleep 2
     swipe
     tap_text "Blocklist"; sleep 2
     swipe
