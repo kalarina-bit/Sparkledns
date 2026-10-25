@@ -71,6 +71,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -119,6 +121,12 @@ private val ProtectedContainer = Color(0xFF16233A)
 
 private class TestResult(val ok: Boolean, val text: String)
 
+// Keeps test and sync results across rotation and process death
+private val TestResultSaver = Saver<TestResult?, String>(
+    save = { result -> result?.let { (if (it.ok) "1" else "0") + it.text } },
+    restore = { saved -> TestResult(saved.startsWith("1"), saved.drop(1)) },
+)
+
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -131,13 +139,13 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     var selected by remember { mutableStateOf(prefs.providerId) }
     val servers by ServerList.servers.collectAsStateWithLifecycle()
     var syncing by remember { mutableStateOf(false) }
-    var syncResult by remember { mutableStateOf<TestResult?>(null) }
-    var shownSync by remember { mutableStateOf<TestResult?>(null) }
+    var syncResult by rememberSaveable(stateSaver = TestResultSaver) { mutableStateOf<TestResult?>(null) }
+    var shownSync by rememberSaveable(stateSaver = TestResultSaver) { mutableStateOf<TestResult?>(null) }
     var customUrl by remember { mutableStateOf(prefs.customUrl) }
     var customBootstrap by remember { mutableStateOf(prefs.customBootstrap) }
     var customHttp3 by remember { mutableStateOf(prefs.customHttp3) }
-    var testResult by remember { mutableStateOf<TestResult?>(null) }
-    var shownResult by remember { mutableStateOf<TestResult?>(null) } // kept while the card animates out
+    var testResult by rememberSaveable(stateSaver = TestResultSaver) { mutableStateOf<TestResult?>(null) }
+    var shownResult by rememberSaveable(stateSaver = TestResultSaver) { mutableStateOf<TestResult?>(null) } // kept while the card animates out
     var testing by remember { mutableStateOf(false) }
     val crashReport = remember { CrashLog.read(context) }
     // Strict Private DNS makes Android ignore the VPN's DNS server; followed while Home is visible

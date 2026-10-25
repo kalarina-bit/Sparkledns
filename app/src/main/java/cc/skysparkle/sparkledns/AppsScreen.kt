@@ -43,6 +43,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -94,7 +95,7 @@ fun AppsScreen(modifier: Modifier = Modifier) {
     var apps by remember { mutableStateOf(lastAppList) }
     var excluded by remember { mutableStateOf(prefs.excludedApps) }
     var search by rememberSaveable { mutableStateOf("") }
-    var collapsed by remember { mutableStateOf(setOf(AppGroup.SYSTEM)) }
+    var collapsed by rememberSaveable(stateSaver = CollapsedSaver) { mutableStateOf(setOf(AppGroup.SYSTEM)) }
     val pending = active != null && excluded != activeExcluded
     var showAppsHint by remember { mutableStateOf(!prefs.isHintDismissed(HINT_APPS)) }
     // Closing the "reconnect" card hides it until the selection changes again
@@ -367,5 +368,11 @@ private fun Drawable.toImageBitmap(size: Int): ImageBitmap {
     draw(canvas)
     return bitmap.asImageBitmap()
 }
+
+// Collapsed groups survive rotation and process death
+private val CollapsedSaver = Saver<Set<AppGroup>, String>(
+    save = { groups -> groups.joinToString(",") { it.name } },
+    restore = { saved -> saved.split(',').mapNotNull { name -> AppGroup.entries.firstOrNull { it.name == name } }.toSet() },
+)
 
 private const val HINT_APPS = "apps"
