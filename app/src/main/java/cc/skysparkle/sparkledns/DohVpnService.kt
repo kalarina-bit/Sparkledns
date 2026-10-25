@@ -36,6 +36,9 @@ private const val CHANNEL_ID = "vpn_status"
 private const val NOTIFICATION_ID = 1
 private const val MAX_BAD_PACKETS = 100
 
+// Android's resolver retries after 5 s, so an older lookup no longer has anyone waiting for it
+private const val QUEUE_TIMEOUT_MS = 5000L
+
 // Closing TLS connections writes to the network, so sessions release their DoH client here
 // rather than on the main thread, where the service stops them
 private val closer = Executors.newSingleThreadExecutor { r -> Thread(r, "doh-close").apply { isDaemon = true } }
@@ -283,12 +286,21 @@ private class Session(
             QueryLog.add(question, QueryStatus.CACHED, 0)
             return
         }
-        pool.execute { handle(query, question) }
+        val queued = SystemClock.elapsedRealtime()
+        pool.execute { handle(query, question, queued) }
     }
 
-    private fun handle(query: UdpPacket, question: DnsMessage.Question?) {
+    private fun handle(query: UdpPacket, question: DnsMessage.Question?, queued: Long) {
         try {
             val start = SystemClock.elapsedRealtime()
+            // On a slow network lookups pile up behind the workers. Answer the stale ones with
+            // SERVFAIL at once instead of spending a worker on them, so the queue drains.
+            if (start - queued > QUEUE_TIMEOUT_MS) {
+                if (!alive.get()) return
+                QueryLog.add(question, QueryStatus.FAILED, (start - queued).toInt())
+                DnsMessage.servfail(query.payload)?.let { write(query, it) }
+                return
+            }
             var status = QueryStatus.OK
             val answer = try {
                 doh.query(query.payload).also { cache.put(query.payload, it) }
