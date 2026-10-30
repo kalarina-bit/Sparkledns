@@ -21,11 +21,10 @@
 </p>
 
 <p align="center">
-  <img src="assets/screenshots/1-your-dns-your-choice.png" width="160" alt="Your DNS, your choice">
-  <img src="assets/screenshots/2-protected.png" width="160" alt="Protected via SkySparkle">
-  <img src="assets/screenshots/3-stay-informed.png" width="160" alt="Stay informed">
-  <img src="assets/screenshots/4-block-your-way.png" width="160" alt="Block your way">
-  <img src="assets/screenshots/5-choose-your-own-route.png" width="160" alt="Choose your own route">
+  <img src="assets/screenshots/1-private-dns-control.png" width="160" alt="Private DNS control">
+  <img src="assets/screenshots/2-protected.png" width="160" alt="You're protected">
+  <img src="assets/screenshots/3-see-every-request.png" width="160" alt="See every request">
+  <img src="assets/screenshots/4-block-more-noise.png" width="160" alt="Block more noise">
 </p>
 
 > [!TIP]
