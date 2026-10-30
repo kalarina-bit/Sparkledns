@@ -1,0 +1,6 @@
+• New design: a dark look with a floating panel for Home, Activity and Settings
+• Home shows the current server and a 24-hour chart
+• Activity: stats for 24 hours or 7 days and the share of the biggest companies
+• New HaGeZi Pro preset; lists can be switched off without deleting them
+• Blocklists update automatically every day or week, on Wi-Fi only if you like
+• The server list ships with the app and is no longer downloaded

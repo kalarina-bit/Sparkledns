@@ -4,7 +4,7 @@
 <li>Siųskite DNS užklausas pasirinktam DoH serveriui pagal RFC 8484.</li>
 <li>Prieš jungdamiesi patikrinkite serverio protokolą ir delsą.</li>
 <li>Stebėkite užklausas ir statistiką realiuoju laiku, filtruokite veiklą ir blokuokite domenus vienu palietimu.</li>
-<li>Pridėkite savo domenų taisykles arba blokavimo sąrašus pagal URL, įskaitant HaGeZi Pro++ ir TIF šablonus.</li>
+<li>Pridėkite savo domenų taisykles arba blokavimo sąrašus pagal URL, įskaitant HaGeZi Pro, Pro++ ir TIF šablonus, automatiškai atnaujinamus kasdien arba kas savaitę.</li>
 <li>Leiskite pasirinktoms programėlėms apeiti DNS tunelį.</li>
 <li>Prisijunkite ar atsijunkite vienu palietimu arba per sparčiųjų nustatymų plytelę.</li>
 </ul>

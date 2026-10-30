@@ -4,7 +4,7 @@
 <li>Send DNS queries to your chosen DoH server using RFC 8484.</li>
 <li>Check server protocol and latency before you connect.</li>
 <li>See live queries and stats, filter activity, and block domains with a tap.</li>
-<li>Add custom domain rules or blocklists by URL, including HaGeZi Pro++ and TIF presets.</li>
+<li>Add custom domain rules or blocklists by URL, including HaGeZi Pro, Pro++ and TIF presets, updated automatically every day or week.</li>
 <li>Let selected apps bypass the DNS tunnel.</li>
 <li>Connect or disconnect in one tap, or use the Quick Settings tile.</li>
 </ul>

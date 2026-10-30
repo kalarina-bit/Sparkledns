@@ -1,0 +1,6 @@
+• Neues Design: dunkler Look mit schwebender Leiste für Start, Aktivität und Einstellungen
+• Der Startbildschirm zeigt den aktuellen Server und ein 24-Stunden-Diagramm
+• Aktivität: Statistik für 24 Stunden oder 7 Tage und der Anteil der größten Konzerne
+• Neue Vorlage HaGeZi Pro; Listen lassen sich ausschalten, ohne sie zu löschen
+• Blocklisten werden automatisch täglich oder wöchentlich aktualisiert, auf Wunsch nur über WLAN
+• Die Serverliste kommt mit der App und wird nicht mehr geladen

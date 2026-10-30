@@ -1,0 +1,6 @@
+• Naujas dizainas: tamsi išvaizda ir slankus skydelis su skirtukais „Pradžia“, „Veikla“ ir „Nustatymai“
+• Pradžios ekrane matyti dabartinis serveris ir 24 valandų grafikas
+• Veikla: 24 valandų arba 7 dienų statistika ir didžiausių įmonių dalis
+• Naujas HaGeZi Pro šablonas; sąrašus galima išjungti jų neištrinant
+• Blokavimo sąrašai atnaujinami automatiškai kasdien arba kas savaitę, jei norite – tik per „Wi-Fi“
+• Serverių sąrašas yra programėlėje ir nebeatsisiunčiamas

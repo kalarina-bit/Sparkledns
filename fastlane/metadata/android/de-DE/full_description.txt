@@ -4,7 +4,7 @@
 <li>Sende DNS-Anfragen per RFC 8484 an den DoH-Server deiner Wahl.</li>
 <li>Prüfe Protokoll und Latenz eines Servers, bevor du dich verbindest.</li>
 <li>Sieh Anfragen und Statistiken live, filtere die Aktivität und blockiere Domains mit einem Tippen.</li>
-<li>Füge eigene Domainregeln oder Blocklisten per URL hinzu, inklusive der Vorlagen HaGeZi Pro++ und TIF.</li>
+<li>Füge eigene Domainregeln oder Blocklisten per URL hinzu, inklusive der Vorlagen HaGeZi Pro, Pro++ und TIF, die sich täglich oder wöchentlich automatisch aktualisieren.</li>
 <li>Lass ausgewählte Apps den DNS-Tunnel umgehen.</li>
 <li>Verbinde oder trenne mit einem Tippen oder über die Kachel in den Schnelleinstellungen.</li>
 </ul>
