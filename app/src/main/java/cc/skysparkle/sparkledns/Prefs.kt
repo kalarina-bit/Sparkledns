@@ -5,10 +5,6 @@ import android.content.Context
 class Prefs(context: Context) {
     private val sp = context.applicationContext.getSharedPreferences("doh", Context.MODE_PRIVATE)
 
-    init {
-        ServerList.ensureLoaded(context.applicationContext)
-    }
-
     var providerId: String
         get() = sp.getString(KEY_PROVIDER, null) ?: Providers.default.id
         set(value) = sp.edit().putString(KEY_PROVIDER, value).apply()
@@ -28,6 +24,15 @@ class Prefs(context: Context) {
     var excludedApps: Set<String>
         get() = sp.getStringSet(KEY_EXCLUDED, null)?.toSet() ?: emptySet()
         set(value) = sp.edit().putStringSet(KEY_EXCLUDED, value).apply()
+
+    var updateInterval: UpdateInterval
+        get() = UpdateInterval.entries.getOrNull(sp.getInt(KEY_UPDATE_INTERVAL, UpdateInterval.DAILY.ordinal))
+            ?: UpdateInterval.DAILY
+        set(value) = sp.edit().putInt(KEY_UPDATE_INTERVAL, value.ordinal).apply()
+
+    var updateWifiOnly: Boolean
+        get() = sp.getBoolean(KEY_UPDATE_WIFI_ONLY, true)
+        set(value) = sp.edit().putBoolean(KEY_UPDATE_WIFI_ONLY, value).apply()
 
     // Hint cards the user closed with the X
     fun isHintDismissed(key: String): Boolean =
@@ -58,5 +63,7 @@ class Prefs(context: Context) {
         const val KEY_EXCLUDED = "excluded_apps"
         const val KEY_HINTS = "dismissed_hints"
         const val KEY_PRIVATE_DNS = "dismissed_private_dns"
+        const val KEY_UPDATE_INTERVAL = "update_interval"
+        const val KEY_UPDATE_WIFI_ONLY = "update_wifi_only"
     }
 }

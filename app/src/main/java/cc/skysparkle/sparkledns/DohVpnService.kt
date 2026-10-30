@@ -87,6 +87,7 @@ class DohVpnService : VpnService() {
 
     override fun onDestroy() {
         stopSession()
+        StatsStore.flush()
         super.onDestroy()
     }
 

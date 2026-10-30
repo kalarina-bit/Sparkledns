@@ -24,7 +24,8 @@ data class QueryStats(
     val avgLatencyMs: Int,
 )
 
-// In-memory only: nothing is written to disk or sent anywhere
+// In-memory only: nothing is written to disk or sent anywhere. StatsStore keeps hourly
+// numbers without domains for the charts.
 object QueryLog {
     private const val MAX_ENTRIES = 500
 
@@ -61,6 +62,8 @@ object QueryLog {
             }
             version.value++
         }
+        // Hourly numbers for the charts; outside the lock above, as it takes a lock of its own
+        StatsStore.record(status, latencyMs, Companies.of(question.name))
     }
 
     // Newest first. Builds a real copy: on API 35+ List.reversed() resolves to a live JDK view,

@@ -1,13 +1,6 @@
 package cc.skysparkle.sparkledns
 
 import android.content.Context
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import okhttp3.Request
-import java.io.File
-import java.io.IOException
-import java.util.concurrent.TimeUnit
 
 data class DohProvider(
     val id: String,
@@ -23,7 +16,7 @@ object Providers {
     const val CUSTOM_ID = "custom"
     const val DEFAULT_ID = "skysparkle"
 
-    // Shipped with the app and used until the list from the repository is downloaded
+    // Servers ship with the app; new ones arrive with app updates
     val builtIn = listOf(
         DohProvider(
             "skysparkle", "SkySparkle", "https://blog.skysparkle.cc/dns-query",
@@ -52,109 +45,12 @@ object Providers {
         ),
     )
 
-    val list: List<DohProvider> get() = ServerList.servers.value
+    val list: List<DohProvider> get() = builtIn
 
     // The project's own server stays the default whatever order the list uses
     val default: DohProvider get() = list.firstOrNull { it.id == DEFAULT_ID } ?: list.first()
 
     fun byId(id: String): DohProvider = list.firstOrNull { it.id == id } ?: default
-}
-
-// The server list kept in the project repository, so servers can change without an app update
-object ServerList {
-    const val SOURCE = "https://git.skysparkle.cc/kalarina/Sparkledns/raw/branch/main/servers/servers.txt"
-    private const val FILE = "servers.txt"
-    private const val MAX_BYTES = 64 * 1024
-    private const val MAX_SERVERS = 50
-
-    private val _servers = MutableStateFlow(Providers.builtIn)
-    val servers: StateFlow<List<DohProvider>> = _servers
-
-    @Volatile private var loaded = false
-
-    private val client by lazy {
-        Http.client.newBuilder()
-            .readTimeout(30, TimeUnit.SECONDS)
-            .build()
-    }
-
-    fun ensureLoaded(context: Context) {
-        if (loaded) return
-        synchronized(this) {
-            if (loaded) return
-            val cached = runCatching { File(context.filesDir, FILE).readText() }.getOrNull()
-            cached?.let(::parse)?.takeIf { it.isNotEmpty() }?.let { _servers.value = it }
-            loaded = true
-        }
-    }
-
-    // Blocking: call off the main thread. Returns the number of servers in the new list.
-    fun sync(context: Context): Int {
-        val request = Request.Builder().url(SOURCE).build()
-        val text = client.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) throw IOException("HTTP ${response.code}")
-            val body = response.body ?: throw IOException("Empty response")
-            if (body.contentLength() > MAX_BYTES) throw IOException("List too large")
-            val bytes = body.byteStream().readNBytesCompat(MAX_BYTES + 1)
-            if (bytes.size > MAX_BYTES) throw IOException("List too large")
-            String(bytes, Charsets.UTF_8)
-        }
-        val parsed = parse(text)
-        if (parsed.isEmpty()) throw IOException("No servers found")
-        val file = File(context.filesDir, FILE)
-        val tmp = File(context.filesDir, "$FILE.tmp")
-        tmp.writeText(text)
-        if (!tmp.renameTo(file)) {
-            tmp.delete()
-            throw IOException("Cannot save list")
-        }
-        _servers.value = parsed
-        loaded = true
-        return parsed.size
-    }
-
-    // Format per line: Name | DoH URL | privacy policy URL | h3 (optional) | donation URL (optional).
-    // The optional columns are recognised by content, so either can be left out. See CONTRIBUTING.md.
-    fun parse(text: String): List<DohProvider> {
-        val builtInByHost = Providers.builtIn.associateBy { it.url.toHttpUrlOrNull()?.host }
-        val seen = HashSet<String>()
-        val result = ArrayList<DohProvider>()
-        for (raw in text.lineSequence()) {
-            val line = raw.trim()
-            if (line.isEmpty() || line.startsWith("#")) continue
-            val cols = line.split('|').map { it.trim() }
-            if (cols.size < 3) continue
-            val name = cols[0].take(40)
-            val url = cols[1].toHttpUrlOrNull()
-            val policy = cols[2].takeIf { it.toHttpUrlOrNull()?.isHttps == true }
-            if (name.isEmpty() || url == null || !url.isHttps) continue
-            val extras = cols.drop(3)
-            val http3 = extras.any { it.equals("h3", ignoreCase = true) }
-            val donate = extras.firstOrNull { it.toHttpUrlOrNull()?.isHttps == true }
-            // Shipped servers keep their address, id and links, so an edited list cannot redirect them
-            val pinned = builtInByHost[url.host]
-            val server = pinned
-                ?: if (policy == null) continue
-                else DohProvider(url.host, name, cols[1], http3 = http3, policy = policy, donate = donate)
-            if (!seen.add(server.id)) continue
-            result += server
-            if (result.size >= MAX_SERVERS) break
-        }
-        return result
-    }
-}
-
-private fun java.io.InputStream.readNBytesCompat(limit: Int): ByteArray {
-    val out = java.io.ByteArrayOutputStream()
-    val buffer = ByteArray(8192)
-    var total = 0
-    while (total < limit) {
-        val read = read(buffer, 0, minOf(buffer.size, limit - total))
-        if (read < 0) break
-        out.write(buffer, 0, read)
-        total += read
-    }
-    return out.toByteArray()
 }
 
 fun parseIps(raw: String): List<String> =

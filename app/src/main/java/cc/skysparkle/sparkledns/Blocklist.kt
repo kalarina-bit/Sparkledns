@@ -24,7 +24,8 @@ import java.nio.channels.FileChannel
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 
-data class RemoteList(val url: String, val count: Int, val updated: Long)
+// A switched-off list keeps its file, so switching it on again needs no download
+data class RemoteList(val url: String, val count: Int, val updated: Long, val enabled: Boolean = true)
 
 // Blocks a domain together with all its subdomains. Changes apply instantly, no reconnect needed.
 // Domains are kept as sorted 64-bit hashes: about 8 bytes per entry, so million-entry lists fit easily.
@@ -104,6 +105,15 @@ object Blocklist {
         reloadListHashes(store)
     }
 
+    fun setListEnabled(context: Context, url: String, value: Boolean) = synchronized(lock) {
+        val store = BlocklistStore(context)
+        ensureLoaded(store)
+        val updated = _lists.value.map { if (it.url == url) it.copy(enabled = value) else it }
+        store.saveLists(updated)
+        _lists.value = updated
+        reloadListHashes(store)
+    }
+
     // Downloads run in the background, outside the lock, so editing own domains never waits for them.
     // Returns false when another download is already running.
     fun download(context: Context, url: String): Boolean {
@@ -125,11 +135,12 @@ object Blocklist {
         return true
     }
 
+    // Switched-off lists are skipped: nobody uses them until they are switched on again
     fun updateAll(context: Context): Boolean {
-        if (_lists.value.isEmpty() || !_busy.compareAndSet(null, ALL_LISTS)) return false
+        val current = _lists.value.filter { it.enabled }
+        if (current.isEmpty() || !_busy.compareAndSet(null, ALL_LISTS)) return false
         _error.value = null
         val store = BlocklistStore(context.applicationContext)
-        val current = _lists.value
         scope.launch {
             try {
                 val fresh = current.mapNotNull { list ->
@@ -150,10 +161,38 @@ object Blocklist {
         return true
     }
 
+    // Blocking, for the background update job. Returns false when a list could not be downloaded.
+    fun updateAllNow(context: Context): Boolean {
+        val store = BlocklistStore(context.applicationContext)
+        synchronized(lock) { ensureLoaded(store) }
+        val current = _lists.value.filter { it.enabled }
+        // Nothing to do, or the user is updating right now
+        if (current.isEmpty() || !_busy.compareAndSet(null, ALL_LISTS)) return true
+        var ok = true
+        try {
+            val fresh = current.mapNotNull { list ->
+                try {
+                    store.download(list.url, list)
+                } catch (e: Exception) {
+                    Log.w("SparkleDNS", "Cannot update ${list.url}", e)
+                    ok = false
+                    null
+                }
+            }
+            commit(store, fresh)
+        } catch (e: IOException) {
+            Log.w("SparkleDNS", "Cannot save updated lists", e)
+            ok = false
+        } finally {
+            _busy.value = null
+        }
+        return ok
+    }
+
     private fun commit(store: BlocklistStore, fresh: List<RemoteList>) = synchronized(lock) {
         ensureLoaded(store)
         val byUrl = fresh.associateBy { it.url }
-        val kept = _lists.value.map { byUrl[it.url] ?: it }
+        val kept = _lists.value.map { old -> byUrl[old.url]?.copy(enabled = old.enabled) ?: old }
         val added = fresh.filter { new -> kept.none { it.url == new.url } }
         val updated = kept + added
         store.saveLists(updated)
@@ -176,7 +215,7 @@ object Blocklist {
     }
 
     private fun reloadListHashes(store: BlocklistStore) {
-        listHashes = mergeSorted(_lists.value.map { store.loadListHashes(it.url) })
+        listHashes = mergeSorted(_lists.value.filter { it.enabled }.map { store.loadListHashes(it.url) })
         _total.value = unionSize(listHashes, customHashes)
     }
 
@@ -301,7 +340,7 @@ private class BlocklistStore(context: Context) {
             val array = JSONArray(raw)
             (0 until array.length()).map {
                 val o = array.getJSONObject(it)
-                RemoteList(o.getString("url"), o.getInt("count"), o.getLong("updated"))
+                RemoteList(o.getString("url"), o.getInt("count"), o.getLong("updated"), o.optBoolean("enabled", true))
             }
         }.getOrDefault(emptyList())
     }
@@ -309,7 +348,9 @@ private class BlocklistStore(context: Context) {
     fun saveLists(lists: List<RemoteList>) {
         val array = JSONArray()
         lists.forEach {
-            array.put(JSONObject().put("url", it.url).put("count", it.count).put("updated", it.updated))
+            array.put(
+                JSONObject().put("url", it.url).put("count", it.count).put("updated", it.updated).put("enabled", it.enabled)
+            )
         }
         sp.edit().putString("lists", array.toString()).commit()
     }

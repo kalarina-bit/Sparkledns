@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -238,3 +239,34 @@ fun groupedShape(first: Boolean, last: Boolean, radius: Dp = 16.dp) = RoundedCor
 
 val groupedBackground: Color
     @Composable get() = MaterialTheme.colorScheme.surfaceContainerHighest
+
+// Short numbers for stat tiles: 812, 7.27k, 48.1k, 312k, 1.2M (decimal separator of the locale)
+fun formatCompact(value: Long): String {
+    val locale = Locale.getDefault()
+    return when {
+        value < 1_000 -> formatCount(value)
+        value < 10_000 -> String.format(locale, "%.2fk", value / 1_000.0)
+        value < 100_000 -> String.format(locale, "%.1fk", value / 1_000.0)
+        value < 1_000_000 -> String.format(locale, "%.0fk", value / 1_000.0)
+        else -> String.format(locale, "%.1fM", value / 1_000_000.0)
+    }
+}
+
+@Composable
+fun EmptyState(icon: Int, text: String) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 40.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        IconBadge(icon, MaterialTheme.colorScheme.onSurfaceVariant, size = 64.dp)
+        Spacer(Modifier.height(12.dp))
+        Text(
+            text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+    }
+}

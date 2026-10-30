@@ -36,9 +36,9 @@
 - 🔌 **One-tap connect/disconnect**, with a Quick Settings tile
 - 🔄 **Switch servers on the fly** — the tunnel restarts automatically
 - 🚀 **Built-in server test** showing protocol and latency
-- 📊 **Live query monitor** with stats, filters and one-tap blocking
+- 📊 **Activity** — 24-hour and 7-day charts, share of the biggest companies, and a live log with filters and one-tap blocking. Numbers stay on the device
 - 📱 **Per-app DNS** — chosen apps bypass the tunnel
-- 🚫 **Custom blocklists** — your own domains plus hosts/domain/AdBlock lists by URL (HaGeZi Pro++ and TIF presets)
+- 🚫 **Custom blocklists** — your own domains plus hosts/domain/AdBlock lists by URL (HaGeZi Pro, Pro++ and TIF presets), updated automatically every day or week, on Wi-Fi only if you like
 - 🔓 **No analytics, no Google Play Services**
 
 ## <img src="assets/icon-install.png" width="32" alt=""> Installation

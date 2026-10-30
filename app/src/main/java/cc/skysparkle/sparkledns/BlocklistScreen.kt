@@ -2,38 +2,42 @@ package cc.skysparkle.sparkledns
 
 import android.content.Context
 import android.net.Uri
+import android.text.format.DateUtils
 import android.widget.Toast
+import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.ZeroCornerSize
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -45,49 +49,71 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
-import java.text.DateFormat
-import java.util.Date
+
+private class Preset(val name: String, val url: String, @StringRes val description: Int)
+
+private const val HAGEZI_HOME = "https://github.com/hagezi/dns-blocklists"
 
 private val Presets = listOf(
-    "HaGeZi Pro++" to "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.plus.txt",
-    "HaGeZi TIF" to "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/tif.txt",
+    Preset("HaGeZi Pro", "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.txt", R.string.preset_pro_desc),
+    Preset("HaGeZi Pro++", "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.plus.txt", R.string.preset_proplus_desc),
+    Preset("HaGeZi TIF", "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/tif.txt", R.string.preset_tif_desc),
 )
 
+private val TopShape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+private val BottomShape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
+
 @Composable
-fun BlocklistScreen(modifier: Modifier = Modifier) {
+fun BlocklistScreen(bottomPadding: Dp, onBack: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val prefs = remember { Prefs(context) }
-    var showNote by remember { mutableStateOf(!prefs.isHintDismissed(HINT_BLOCKLIST)) }
 
     val enabled by Blocklist.enabled.collectAsStateWithLifecycle()
-    val total by Blocklist.total.collectAsStateWithLifecycle()
     val custom by Blocklist.custom.collectAsStateWithLifecycle()
     val lists by Blocklist.lists.collectAsStateWithLifecycle()
-
-    var domainInput by rememberSaveable { mutableStateOf("") }
-    var domainError by remember { mutableStateOf(false) }
-    var urlInput by rememberSaveable { mutableStateOf("") }
-    // Downloads live in Blocklist, so they keep running and stay visible across tab switches
+    // Downloads live in Blocklist, so they keep running and stay visible when the page is closed
     val busy by Blocklist.busy.collectAsStateWithLifecycle()
     val error by Blocklist.error.collectAsStateWithLifecycle()
     val lastError = remember { arrayOf("") } // kept while the card animates out
     error?.let { lastError[0] = it }
+
+    var search by rememberSaveable { mutableStateOf("") }
+    var domainsOpen by rememberSaveable { mutableStateOf(false) }
+    var domainInput by rememberSaveable { mutableStateOf("") }
+    var domainError by remember { mutableStateOf(false) }
+    var showAddList by rememberSaveable { mutableStateOf(false) }
+    var showUpdates by rememberSaveable { mutableStateOf(false) }
+    var interval by remember { mutableStateOf(prefs.updateInterval) }
+    var wifiOnly by remember { mutableStateOf(prefs.updateWifiOnly) }
+
+    val term = search.trim()
+    fun matches(vararg texts: String) = term.isEmpty() || texts.any { it.contains(term, ignoreCase = true) }
+
+    val presetUrls = remember { Presets.map { it.url }.toSet() }
+    val ownLists = lists.filter { it.url !in presetUrls }
+    val shownDomains = if (term.isEmpty()) custom else custom.filter { it.contains(term, ignoreCase = true) }
 
     fun addDomain() {
         val input = domainInput
@@ -101,74 +127,111 @@ fun BlocklistScreen(modifier: Modifier = Modifier) {
         }
     }
 
-    fun addList() {
-        val url = urlInput.trim()
-        if (url.isNotEmpty() && Blocklist.download(context, url)) urlInput = ""
-    }
-
-    // Own domains are lazy rows, so hundreds of them are not all composed when the tab opens.
-    // Together they look like the card they used to be in: same color and shape, split per row.
-    val cardColor = CardDefaults.cardColors().containerColor
-    val cardShape = MaterialTheme.shapes.medium
-    val cardTop = cardShape.copy(bottomStart = ZeroCornerSize, bottomEnd = ZeroCornerSize)
-    val cardBottom = cardShape.copy(topStart = ZeroCornerSize, topEnd = ZeroCornerSize)
-
     LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
+        modifier = modifier,
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = bottomPadding),
     ) {
-        item(key = "summary") {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Card(Modifier.fillMaxWidth()) {
-                    Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                        IconBadge(
-                            R.drawable.ic_tab_block,
-                            tint = if (enabled) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline,
-                            size = 52.dp,
-                        )
-                        Spacer(Modifier.width(16.dp))
-                        Column(Modifier.weight(1f)) {
-                            Text(stringResource(R.string.bl_title), style = MaterialTheme.typography.titleMedium)
-                            Text(
-                                formatCount(total.toLong()),
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                            Text(
-                                stringResource(R.string.bl_total_label),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        Switch(checked = enabled, onCheckedChange = { Blocklist.setEnabled(context, it) })
-                    }
-                }
+        item(key = "header") {
+            PageHeader(
+                title = stringResource(R.string.blocklist_title),
+                onBack = onBack,
+                action = {
+                    AppSwitch(checked = enabled, onCheckedChange = { Blocklist.setEnabled(context, it) })
+                },
+            )
+        }
 
-                AnimatedVisibility(visible = showNote, enter = Motion.expandIn, exit = Motion.collapseOut) {
+        item(key = "search") {
+            SearchField(
+                value = search,
+                onValueChange = { search = it },
+                placeholder = stringResource(R.string.bl_search),
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
+
+        item(key = "updates") {
+            UpdatesRow(
+                interval = interval,
+                wifiOnly = wifiOnly,
+                onClick = { showUpdates = true },
+                modifier = Modifier.padding(top = 12.dp),
+            )
+        }
+
+        item(key = "error") {
+            AnimatedVisibility(visible = error != null, enter = Motion.expandIn, exit = Motion.collapseOut) {
+                Box(Modifier.padding(top = 12.dp)) {
                     HintCard(
-                        stringResource(R.string.bl_note),
-                        icon = R.drawable.ic_tab_info,
-                        onDismiss = {
-                            showNote = false
-                            prefs.dismissHint(HINT_BLOCKLIST)
-                        },
+                        stringResource(R.string.bl_download_failed, lastError[0]),
+                        icon = R.drawable.ic_alert,
+                        tint = Palette.Blocked,
                     )
                 }
-
-                SectionHeader(stringResource(R.string.bl_my), icon = R.drawable.ic_tab_block)
             }
         }
 
-        item(key = "custom") {
-            Column(
-                Modifier
-                    .padding(top = 12.dp)
-                    .fillMaxWidth()
-                    .background(cardColor, if (custom.isEmpty()) cardShape else cardTop)
-                    .padding(top = 8.dp, bottom = if (custom.isEmpty()) 8.dp else 0.dp)
+        items(Presets.filter { matches(it.name) }, key = { "preset:${it.url}" }) { preset ->
+            val list = lists.firstOrNull { it.url == preset.url }
+            val downloading = busy == preset.url || (busy == Blocklist.ALL_LISTS && list?.enabled == true)
+            BlocklistCard(
+                title = preset.name,
+                description = stringResource(preset.description),
+                source = "hagezi",
+                sourceUrl = HAGEZI_HOME,
+                info = listInfo(list, downloading),
+                checked = list?.enabled == true || busy == preset.url,
+                // A list that is not downloaded yet waits for a running download to finish
+                switchEnabled = list != null || busy == null,
+                progress = downloading,
+                onCheckedChange = { on ->
+                    if (list == null) {
+                        if (on) Blocklist.download(context, preset.url)
+                    } else {
+                        scope.editBlocklist(context) { Blocklist.setListEnabled(context, preset.url, on) }
+                    }
+                },
+                modifier = Modifier
+                    .animateItem()
+                    .padding(top = 12.dp),
+            )
+        }
+
+        items(ownLists.filter { matches(it.url) }, key = { "list:${it.url}" }) { list ->
+            val uri = remember(list.url) { Uri.parse(list.url) }
+            val downloading = busy == list.url || (busy == Blocklist.ALL_LISTS && list.enabled)
+            BlocklistCard(
+                title = uri.lastPathSegment ?: uri.host ?: list.url,
+                description = stringResource(R.string.list_added_by_you),
+                source = uri.host ?: "",
+                sourceUrl = null,
+                info = listInfo(list, downloading),
+                checked = list.enabled,
+                switchEnabled = true,
+                progress = downloading,
+                onCheckedChange = { on -> scope.editBlocklist(context) { Blocklist.setListEnabled(context, list.url, on) } },
+                onDelete = if (busy == null) {
+                    { scope.editBlocklist(context) { Blocklist.removeList(context, list.url) } }
+                } else {
+                    null
+                },
+                modifier = Modifier
+                    .animateItem()
+                    .padding(top = 12.dp),
+            )
+        }
+
+        item(key = "domains") {
+            MyDomainsHeader(
+                count = custom.size,
+                open = domainsOpen,
+                onToggle = { domainsOpen = !domainsOpen },
+                shape = if (domainsOpen) TopShape else CardShape,
+                modifier = Modifier.padding(top = 12.dp),
             ) {
+                // Input to add a domain; the accent button matches the rest of the app
                 Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     OutlinedTextField(
@@ -177,221 +240,431 @@ fun BlocklistScreen(modifier: Modifier = Modifier) {
                         placeholder = { Text(stringResource(R.string.bl_domain_hint), maxLines = 1) },
                         singleLine = true,
                         isError = domainError,
+                        shape = RoundedCornerShape(14.dp),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done),
                         keyboardActions = KeyboardActions(onDone = { addDomain() }),
                         modifier = Modifier.weight(1f),
                     )
                     Spacer(Modifier.width(8.dp))
-                    FilledTonalButton(onClick = ::addDomain, enabled = domainInput.isNotBlank()) {
-                        Icon(painterResource(R.drawable.ic_add_domain), contentDescription = null, modifier = Modifier.size(18.dp))
+                    Button(
+                        onClick = ::addDomain,
+                        enabled = domainInput.isNotBlank(),
+                        shape = RoundedCornerShape(14.dp),
+                        contentPadding = PaddingValues(horizontal = 18.dp),
+                        modifier = Modifier.height(56.dp),
+                    ) {
+                        Icon(painterResource(R.drawable.ic_add), contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text(stringResource(R.string.add))
+                        Text(stringResource(R.string.add), fontWeight = FontWeight.Bold)
                     }
                 }
                 AnimatedVisibility(visible = domainError, enter = Motion.expandIn, exit = Motion.collapseOut) {
                     Text(
                         stringResource(R.string.bl_invalid),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(horizontal = 16.dp),
+                        color = Palette.Blocked,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
                     )
                 }
                 if (custom.isEmpty()) {
                     Text(
                         stringResource(R.string.bl_empty_custom),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        color = Palette.Fg3,
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
                     )
                 }
             }
         }
 
-        itemsIndexed(custom, key = { _, domain -> "domain:$domain" }, contentType = { _, _ -> "domain" }) { index, domain ->
-            val last = index == custom.lastIndex
-            Column(
-                Modifier
-                    .animateItem()
-                    .fillMaxWidth()
-                    .background(cardColor, if (last) cardBottom else RectangleShape)
-                    .padding(bottom = if (last) 8.dp else 0.dp)
-            ) {
-                InsetDivider(16)
-                Row(
-                    modifier = Modifier.padding(start = 16.dp, end = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(domain, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    IconButton(onClick = { scope.editBlocklist(context) { Blocklist.removeCustom(context, domain) } }) {
-                        Icon(painterResource(R.drawable.ic_delete), stringResource(R.string.delete), Modifier.size(20.dp))
-                    }
-                }
-            }
-        }
-
-        item(key = "lists") {
-            Column(Modifier.padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                SectionHeader(
-                    stringResource(R.string.bl_lists),
-                    icon = R.drawable.ic_list,
-                    action = {
-                        TextButton(
-                            onClick = { Blocklist.updateAll(context) },
-                            enabled = lists.isNotEmpty() && busy == null,
-                        ) {
-                            Icon(painterResource(R.drawable.ic_refresh), contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(6.dp))
-                            Text(stringResource(if (busy == Blocklist.ALL_LISTS) R.string.bl_updating else R.string.bl_update_all))
-                        }
-                    },
+        // Own domains are lazy rows, so hundreds of them are not all composed at once.
+        // Together with the header above they look like one card.
+        if (domainsOpen) {
+            itemsIndexed(shownDomains, key = { _, domain -> "domain:$domain" }, contentType = { _, _ -> "domain" }) { index, domain ->
+                val last = index == shownDomains.lastIndex
+                DomainRow(
+                    domain = domain,
+                    shape = if (last) BottomShape else RectangleShape,
+                    onDelete = { scope.editBlocklist(context) { Blocklist.removeCustom(context, domain) } },
+                    modifier = Modifier.animateItem(),
                 )
-
-                Card(Modifier.fillMaxWidth()) {
-                    Column(
+            }
+            if (shownDomains.isEmpty()) {
+                item(key = "domains-end") {
+                    Box(
                         Modifier
-                            .animateContentSize(Motion.size)
-                            .padding(vertical = 8.dp)
-                    ) {
-                        lists.forEachIndexed { index, list ->
-                            if (index > 0) InsetDivider(68)
-                            ListRow(
-                                list = list,
-                                updating = busy == list.url || busy == Blocklist.ALL_LISTS,
-                                actionsEnabled = busy == null,
-                                onRefresh = { Blocklist.download(context, list.url) },
-                                onDelete = { scope.editBlocklist(context) { Blocklist.removeList(context, list.url) } },
-                            )
-                        }
-                        if (lists.isNotEmpty()) InsetDivider(16)
-                        Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            OutlinedTextField(
-                                value = urlInput,
-                                onValueChange = { urlInput = it },
-                                placeholder = { Text(stringResource(R.string.bl_list_url), maxLines = 1) },
-                                singleLine = true,
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done),
-                                keyboardActions = KeyboardActions(onDone = { if (busy == null) addList() }),
-                                modifier = Modifier.weight(1f),
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            FilledTonalButton(
-                                onClick = ::addList,
-                                enabled = urlInput.isNotBlank() && busy == null,
-                            ) {
-                                Icon(painterResource(R.drawable.ic_add), contentDescription = null, modifier = Modifier.size(18.dp))
-                                Spacer(Modifier.width(6.dp))
-                                Text(stringResource(R.string.add))
-                            }
-                        }
-                        // A new list being added has no row yet, so its progress shows under the input
-                        val addingNew = busy != null && busy != Blocklist.ALL_LISTS && lists.none { it.url == busy }
-                        AnimatedVisibility(visible = addingNew, enter = Motion.expandIn, exit = Motion.collapseOut) {
-                            LinearProgressIndicator(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 4.dp),
-                            )
-                        }
-                    }
-                }
-
-                val missingPresets = Presets.filter { (_, url) -> lists.none { it.url == url } }
-                AnimatedVisibility(visible = missingPresets.isNotEmpty(), enter = Motion.expandIn, exit = Motion.collapseOut) {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        SectionHeader(stringResource(R.string.bl_presets))
-                        Row(
-                            modifier = Modifier.horizontalScroll(rememberScrollState()),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            missingPresets.forEach { (name, url) ->
-                                AssistChip(
-                                    onClick = { Blocklist.download(context, url) },
-                                    enabled = busy == null,
-                                    leadingIcon = {
-                                        Icon(painterResource(R.drawable.ic_add), contentDescription = null, modifier = Modifier.size(18.dp))
-                                    },
-                                    label = { Text(if (busy == url) stringResource(R.string.bl_updating) else name) },
-                                )
-                            }
-                        }
-                    }
-                }
-
-                AnimatedVisibility(visible = error != null, enter = Motion.expandIn, exit = Motion.collapseOut) {
-                    HintCard(
-                        stringResource(R.string.bl_download_failed, lastError[0]),
-                        icon = R.drawable.ic_alert,
-                        tint = MaterialTheme.colorScheme.error,
+                            .fillMaxWidth()
+                            .height(8.dp)
+                            .clip(BottomShape)
+                            .background(Palette.Card)
                     )
+                }
+            }
+        }
+
+        item(key = "add") {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Button(
+                    onClick = { showAddList = true },
+                    enabled = busy == null,
+                    shape = RoundedCornerShape(24.dp),
+                    contentPadding = PaddingValues(start = 16.dp, end = 22.dp),
+                    modifier = Modifier.height(48.dp),
+                ) {
+                    Icon(painterResource(R.drawable.ic_add), contentDescription = null, modifier = Modifier.size(20.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.bl_add_list), fontWeight = FontWeight.ExtraBold)
                 }
             }
         }
     }
+
+    if (showAddList) {
+        AddListDialog(
+            busy = busy != null,
+            onAdd = { url -> Blocklist.download(context, url) },
+            onDismiss = { showAddList = false },
+        )
+    }
+
+    if (showUpdates) {
+        UpdatesDialog(
+            interval = interval,
+            wifiOnly = wifiOnly,
+            canUpdateNow = busy == null && lists.any { it.enabled },
+            onInterval = {
+                interval = it
+                prefs.updateInterval = it
+                AutoUpdate.apply(context)
+            },
+            onWifiOnly = {
+                wifiOnly = it
+                prefs.updateWifiOnly = it
+                AutoUpdate.apply(context)
+            },
+            onUpdateNow = {
+                Blocklist.updateAll(context)
+                showUpdates = false
+            },
+            onDismiss = { showUpdates = false },
+        )
+    }
 }
 
 @Composable
-private fun InsetDivider(start: Int) {
-    HorizontalDivider(
-        modifier = Modifier.padding(start = start.dp),
-        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+private fun listInfo(list: RemoteList?, downloading: Boolean): String = when {
+    downloading -> stringResource(R.string.bl_updating)
+    list == null -> stringResource(R.string.list_not_downloaded)
+    else -> stringResource(
+        R.string.bl_list_info,
+        formatCount(list.count.toLong()),
+        DateUtils.getRelativeTimeSpanString(list.updated, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS).toString(),
     )
 }
 
 @Composable
-private fun ListRow(
-    list: RemoteList,
-    updating: Boolean,
-    actionsEnabled: Boolean,
-    onRefresh: () -> Unit,
-    onDelete: () -> Unit,
-) {
-    val uri = remember(list.url) { Uri.parse(list.url) }
-    val title = uri.lastPathSegment ?: list.url
-    val updated = remember(list.updated) {
-        DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(list.updated))
+private fun UpdatesRow(interval: UpdateInterval, wifiOnly: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val shape = RoundedCornerShape(16.dp)
+    val label = stringResource(intervalLabel(interval))
+    val wifi = stringResource(R.string.auto_wifi)
+    val summary = if (interval != UpdateInterval.OFF && wifiOnly) "$label · $wifi" else label
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .border(1.dp, Palette.Line, shape)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(painterResource(R.drawable.ic_refresh), contentDescription = null, tint = Palette.Accent, modifier = Modifier.size(20.dp))
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.auto_update), color = Palette.Fg, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Text(summary, color = Palette.Fg2, fontSize = 12.sp)
+        }
+        Chevron()
     }
+}
 
-    Column {
+@StringRes
+private fun intervalLabel(interval: UpdateInterval): Int = when (interval) {
+    UpdateInterval.OFF -> R.string.auto_off
+    UpdateInterval.DAILY -> R.string.auto_daily
+    UpdateInterval.WEEKLY -> R.string.auto_weekly
+}
+
+@Composable
+private fun BlocklistCard(
+    title: String,
+    description: String,
+    source: String,
+    sourceUrl: String?,
+    info: String,
+    checked: Boolean,
+    switchEnabled: Boolean,
+    progress: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    onDelete: (() -> Unit)? = null,
+) {
+    val context = LocalContext.current
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .appCard()
+            .padding(start = 16.dp, end = 10.dp, top = 6.dp, bottom = 14.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.heightIn(min = 48.dp)) {
+            Text(
+                title,
+                color = Palette.Fg,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.ExtraBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
+            if (onDelete != null) {
+                IconButton(onClick = onDelete) {
+                    Icon(
+                        painterResource(R.drawable.ic_delete),
+                        contentDescription = stringResource(R.string.delete),
+                        tint = Palette.Fg3,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
+            AppSwitch(checked = checked, onCheckedChange = onCheckedChange, enabled = switchEnabled)
+        }
+        Text(
+            description,
+            color = Palette.Fg2,
+            fontSize = 12.sp,
+            lineHeight = 17.sp,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(end = 6.dp),
+        )
         Row(
-            modifier = Modifier.padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
+            modifier = Modifier.padding(top = 6.dp, end = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconBadge(R.drawable.ic_list, size = 40.dp)
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (source.isNotEmpty()) {
                 Text(
-                    uri.host ?: "",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    source,
+                    color = Palette.Accent,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                    modifier = if (sourceUrl != null) Modifier.clickable { openUrl(context, sourceUrl) } else Modifier,
                 )
-                Text(
-                    if (updating) stringResource(R.string.bl_updating)
-                    else stringResource(R.string.bl_list_info, formatCount(list.count.toLong()), updated),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Text(" · ", color = Palette.Fg3, fontSize = 12.sp)
             }
-            IconButton(onClick = onRefresh, enabled = actionsEnabled) {
-                Icon(painterResource(R.drawable.ic_refresh), stringResource(R.string.bl_update_all), Modifier.size(20.dp))
-            }
-            IconButton(onClick = onDelete, enabled = actionsEnabled) {
-                Icon(painterResource(R.drawable.ic_delete), stringResource(R.string.delete), Modifier.size(20.dp))
-            }
+            Text(info, color = Palette.Fg3, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        AnimatedVisibility(visible = updating, enter = Motion.expandIn, exit = Motion.collapseOut) {
+        AnimatedVisibility(visible = progress, enter = Motion.expandIn, exit = Motion.collapseOut) {
             LinearProgressIndicator(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 68.dp, end = 16.dp, bottom = 8.dp),
+                    .padding(top = 10.dp, end = 6.dp),
+                color = Palette.Accent,
+                trackColor = Palette.Track,
             )
         }
     }
+}
+
+@Composable
+private fun MyDomainsHeader(
+    count: Int,
+    open: Boolean,
+    onToggle: () -> Unit,
+    shape: Shape,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    val chevron by animateFloatAsState(if (open) 180f else 0f, Motion.rotation, label = "chevron")
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(Palette.Card),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onToggle)
+                .padding(start = 16.dp, end = 14.dp, top = 14.dp, bottom = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.bl_my), color = Palette.Fg, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
+                Text(
+                    stringResource(R.string.my_domains_desc),
+                    color = Palette.Fg2,
+                    fontSize = 12.sp,
+                    lineHeight = 17.sp,
+                )
+            }
+            Spacer(Modifier.width(10.dp))
+            Text(
+                formatCount(count.toLong()),
+                color = Palette.Accent,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(Palette.AccentSoft)
+                    .padding(horizontal = 8.dp, vertical = 3.dp),
+            )
+            Spacer(Modifier.width(6.dp))
+            Icon(
+                painterResource(R.drawable.ic_expand),
+                contentDescription = null,
+                tint = Palette.Fg3,
+                modifier = Modifier
+                    .size(20.dp)
+                    .graphicsLayer { rotationZ = chevron },
+            )
+        }
+        AnimatedVisibility(visible = open, enter = Motion.expandIn, exit = Motion.collapseOut) {
+            Column { content() }
+        }
+    }
+}
+
+@Composable
+private fun DomainRow(domain: String, shape: Shape, onDelete: () -> Unit, modifier: Modifier = Modifier) {
+    Column(
+        modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(Palette.Card)
+    ) {
+        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = Palette.Line)
+        Row(
+            modifier = Modifier.padding(start = 16.dp, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                domain,
+                color = Palette.Fg,
+                fontSize = 14.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
+            IconButton(onClick = onDelete) {
+                Icon(
+                    painterResource(R.drawable.ic_delete),
+                    contentDescription = stringResource(R.string.delete),
+                    tint = Palette.Fg3,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AddListDialog(busy: Boolean, onAdd: (String) -> Boolean, onDismiss: () -> Unit) {
+    var url by rememberSaveable { mutableStateOf("") }
+    fun submit() {
+        if (url.isNotBlank() && onAdd(url.trim())) onDismiss()
+    }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.bl_add_list)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(stringResource(R.string.bl_note), color = Palette.Fg2, fontSize = 13.sp)
+                OutlinedTextField(
+                    value = url,
+                    onValueChange = { url = it },
+                    label = { Text(stringResource(R.string.bl_list_url)) },
+                    placeholder = { Text("https://", maxLines = 1) },
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { submit() }),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        },
+        confirmButton = {
+            Button(onClick = ::submit, enabled = url.isNotBlank() && !busy, shape = RoundedCornerShape(14.dp)) {
+                Text(stringResource(R.string.add), fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+        },
+        containerColor = Palette.CardHigh,
+    )
+}
+
+@Composable
+private fun UpdatesDialog(
+    interval: UpdateInterval,
+    wifiOnly: Boolean,
+    canUpdateNow: Boolean,
+    onInterval: (UpdateInterval) -> Unit,
+    onWifiOnly: (Boolean) -> Unit,
+    onUpdateNow: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.auto_update)) },
+        text = {
+            Column {
+                UpdateInterval.entries.forEach { option ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .selectable(selected = option == interval, onClick = { onInterval(option) }, role = Role.RadioButton)
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(selected = option == interval, onClick = null)
+                        Spacer(Modifier.width(12.dp))
+                        Text(stringResource(intervalLabel(option)), color = Palette.Fg, fontSize = 15.sp)
+                    }
+                }
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = Palette.Line)
+                val wifiEnabled = interval != UpdateInterval.OFF
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .toggleable(value = wifiOnly, enabled = wifiEnabled, role = Role.Switch, onValueChange = onWifiOnly)
+                        .graphicsLayer { alpha = if (wifiEnabled) 1f else 0.45f }
+                        .padding(vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(stringResource(R.string.auto_wifi), color = Palette.Fg, fontSize = 15.sp)
+                        Text(stringResource(R.string.auto_wifi_desc), color = Palette.Fg3, fontSize = 12.sp)
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    AppSwitch(checked = wifiOnly, onCheckedChange = null, enabled = wifiEnabled)
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.done)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onUpdateNow, enabled = canUpdateNow) { Text(stringResource(R.string.auto_update_now)) }
+        },
+        containerColor = Palette.CardHigh,
+    )
 }
 
 // Blocklist edits write to storage, which can fail (a full disk, for one)
@@ -410,5 +683,3 @@ internal fun showEditError(context: Context, error: Throwable) {
     val reason = error.message ?: error.javaClass.simpleName
     Toast.makeText(context, context.getString(R.string.test_fail, reason), Toast.LENGTH_LONG).show()
 }
-
-private const val HINT_BLOCKLIST = "blocklist"

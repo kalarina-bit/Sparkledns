@@ -1,105 +1,47 @@
 package cc.skysparkle.sparkledns
 
-import android.Manifest
-import android.app.Activity
-import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.LinkProperties
 import android.net.Network
 import android.net.Uri
-import android.net.VpnService
 import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
 import android.provider.Settings
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -111,473 +53,22 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private val AppColors = darkColorScheme(
-    primary = Color(0xFF7FB2FF),
-    onPrimary = Color(0xFF00285C),
-    background = Color(0xFF0F1115),
-    surface = Color(0xFF0F1115),
-)
-
-private val ProtectedContainer = Color(0xFF16233A)
-
-private class TestResult(val ok: Boolean, val text: String)
+internal class TestResult(val ok: Boolean, val text: String)
 
 // How long a tap on Connect, Disconnect or Switch blocks further taps if the VPN state never changes
-private const val BUSY_TIMEOUT_MS = 5000L
+internal const val BUSY_TIMEOUT_MS = 5000L
 
-// Keeps test and sync results across rotation and process death
-private val TestResultSaver = Saver<TestResult?, String>(
+// Keeps test results across rotation and process death
+internal val TestResultSaver = Saver<TestResult?, String>(
     save = { result -> result?.let { (if (it.ok) "1" else "0") + it.text } },
     restore = { saved -> TestResult(saved.startsWith("1"), saved.drop(1)) },
 )
 
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    val prefs = remember { Prefs(context) }
-    val active by DohVpnService.active.collectAsStateWithLifecycle()
-    val running = active != null
-    val scope = rememberCoroutineScope()
-    val stats = rememberLiveStats()
-
-    var selected by remember { mutableStateOf(prefs.providerId) }
-    val servers by ServerList.servers.collectAsStateWithLifecycle()
-    var syncing by remember { mutableStateOf(false) }
-    var syncResult by rememberSaveable(stateSaver = TestResultSaver) { mutableStateOf<TestResult?>(null) }
-    var shownSync by rememberSaveable(stateSaver = TestResultSaver) { mutableStateOf<TestResult?>(null) }
-    var customUrl by remember { mutableStateOf(prefs.customUrl) }
-    var customBootstrap by remember { mutableStateOf(prefs.customBootstrap) }
-    var customHttp3 by remember { mutableStateOf(prefs.customHttp3) }
-    var testResult by rememberSaveable(stateSaver = TestResultSaver) { mutableStateOf<TestResult?>(null) }
-    var shownResult by rememberSaveable(stateSaver = TestResultSaver) { mutableStateOf<TestResult?>(null) } // kept while the card animates out
-    var testing by remember { mutableStateOf(false) }
-    val crashReport = remember { CrashLog.read(context) }
-    // Strict Private DNS makes Android ignore the VPN's DNS server; followed while Home is visible
-    val privateDnsHost by remember { privateDnsHosts(context) }.collectAsStateWithLifecycle(initialValue = null)
-    var crashVisible by remember { mutableStateOf(crashReport != null) }
-
-    val isCustom = selected == Providers.CUSTOM_ID
-    val customValid = remember(customUrl) { customUrl.trim().toHttpUrlOrNull()?.isHttps == true }
-    val canConnect = !isCustom || customValid
-    val selectedProvider = remember(selected, customUrl, customBootstrap, customHttp3, servers) { prefs.resolve() }
-    val customName = stringResource(R.string.custom)
-    fun nameOf(p: DohProvider) = if (p.id == Providers.CUSTOM_ID) customName else p.name
-    val shownProvider = active ?: selectedProvider
-    val usesHttp3 = shownProvider.http3 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
-
-    // Picking a server never touches a live connection; switching is an explicit action
-    val pendingSwitch = active?.let { it != selectedProvider && canConnect } == true
-
-    // Set by a tap until the VPN state changes or the attempt gives up, so a double tap neither
-    // starts two connections nor switches the VPN back on right after turning it off
-    var busy by remember { mutableStateOf(false) }
-    LaunchedEffect(active) { busy = false }
-    LaunchedEffect(busy) {
-        if (busy) {
-            delay(BUSY_TIMEOUT_MS)
-            busy = false
-        }
-    }
-
-    val vpnPermission = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) {
-        if (it.resultCode == Activity.RESULT_OK) sendAction(context, DohVpnService.ACTION_START)
-        else busy = false
-    }
-
-    fun connectVpn() {
-        val permission = VpnService.prepare(context)
-        if (permission != null) vpnPermission.launch(permission)
-        else sendAction(context, DohVpnService.ACTION_START)
-    }
-
-    // The status notification is optional: connect whatever the user answers
-    val notificationPermission = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { connectVpn() }
-
-    fun toggle() {
-        if (busy) return
-        busy = true
-        if (running) {
-            sendAction(context, DohVpnService.ACTION_STOP)
-            return
-        }
-        val needsNotificationPermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-        if (needsNotificationPermission) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
-        else connectVpn()
-    }
-
-    fun select(id: String) {
-        selected = id
-        prefs.providerId = id
-        testResult = null
-    }
-
-    // A server removed from the list falls back to the default one
-    LaunchedEffect(servers) {
-        if (selected != Providers.CUSTOM_ID && servers.none { it.id == selected }) select(Providers.default.id)
-    }
-
-    val syncOk = stringResource(R.string.servers_updated)
-    val syncFail = stringResource(R.string.servers_update_failed)
-    fun syncServers() {
-        syncing = true
-        syncResult = null
-        scope.launch {
-            val result = withContext(Dispatchers.IO) {
-                runCatching { ServerList.sync(context) }
-                    .fold(
-                        onSuccess = { TestResult(true, syncOk) },
-                        onFailure = { TestResult(false, syncFail.format(it.message ?: it.javaClass.simpleName)) },
-                    )
-            }
-            shownSync = result
-            syncResult = result
-            syncing = false
-        }
-    }
-
-    fun runTest() {
-        val provider = prefs.resolve()
-        testing = true
-        testResult = null
-        scope.launch {
-            val result = withContext(Dispatchers.IO) { testProvider(context, provider) }
-            shownResult = result
-            testResult = result
-            testing = false
-        }
-    }
-
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        AnimatedVisibility(visible = crashVisible, enter = Motion.expandIn, exit = Motion.collapseOut) {
-            val report = crashReport.orEmpty()
-            CrashCard(
-                report = report,
-                onCopy = {
-                    context.getSystemService(ClipboardManager::class.java)
-                        .setPrimaryClip(ClipData.newPlainText("SparkleDNS crash", report))
-                },
-                onDismiss = { CrashLog.clear(context); crashVisible = false },
-            )
-        }
-
-        StatusHero(
-            running = running,
-            providerName = nameOf(shownProvider),
-            http3 = usesHttp3,
-            stats = stats,
-            canConnect = canConnect,
-            busy = busy,
-            switchTo = if (pendingSwitch) nameOf(selectedProvider) else null,
-            onToggle = ::toggle,
-            onSwitch = {
-                if (!busy) {
-                    busy = true
-                    sendAction(context, DohVpnService.ACTION_START)
-                }
-            },
-        )
-
-        SectionHeader(stringResource(R.string.servers)) {
-            if (syncing) {
-                Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
-                }
-            } else {
-                IconButton(onClick = ::syncServers) {
-                    Icon(
-                        painterResource(R.drawable.ic_refresh),
-                        contentDescription = stringResource(R.string.servers_update),
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
-            }
-        }
-
-        AnimatedVisibility(visible = syncResult != null, enter = Motion.expandIn, exit = Motion.collapseOut) {
-            shownSync?.let { result ->
-                HintCard(
-                    text = result.text,
-                    icon = if (result.ok) R.drawable.ic_check else R.drawable.ic_alert,
-                    tint = if (result.ok) CachedColor else MaterialTheme.colorScheme.error,
-                    onDismiss = { syncResult = null },
-                )
-            }
-        }
-
-        Card(Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(vertical = 6.dp)) {
-                servers.forEachIndexed { index, p ->
-                    if (index > 0) RowDivider()
-                    ProviderRow(
-                        title = p.name,
-                        subtitle = hostOf(p.url),
-                        selected = selected == p.id,
-                        onPolicy = p.policy?.let { url -> { openUrl(context, url) } },
-                        onDonate = p.donate?.let { url -> { openUrl(context, url) } },
-                    ) { select(p.id) }
-                }
-                RowDivider()
-                ProviderRow(
-                    title = stringResource(R.string.custom),
-                    subtitle = hostOf(customUrl),
-                    selected = isCustom,
-                ) { select(Providers.CUSTOM_ID) }
-            }
-        }
-
-        AnimatedVisibility(visible = isCustom, enter = Motion.expandIn, exit = Motion.collapseOut) {
-            Card(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
-                        value = customUrl,
-                        onValueChange = { customUrl = it; prefs.customUrl = it },
-                        label = { Text(stringResource(R.string.custom_url)) },
-                        singleLine = true,
-                        isError = !customValid,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Next),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    if (!customValid) {
-                        Text(
-                            stringResource(R.string.invalid_url),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error,
-                        )
-                    }
-                    OutlinedTextField(
-                        value = customBootstrap,
-                        onValueChange = { customBootstrap = it; prefs.customBootstrap = it },
-                        label = { Text(stringResource(R.string.custom_bootstrap)) },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .toggleable(
-                                value = customHttp3,
-                                role = Role.Switch,
-                                onValueChange = { customHttp3 = it; prefs.customHttp3 = it },
-                            )
-                            .padding(vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Column(Modifier.weight(1f)) {
-                            Text(stringResource(R.string.http3), style = MaterialTheme.typography.bodyLarge)
-                            Text(
-                                stringResource(R.string.http3_note),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        Spacer(Modifier.width(12.dp))
-                        Switch(checked = customHttp3, onCheckedChange = null)
-                    }
-                }
-            }
-        }
-
-        OutlinedButton(
-            onClick = ::runTest,
-            enabled = !testing && canConnect,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp),
-        ) { Text(stringResource(if (testing) R.string.testing else R.string.test)) }
-
-        AnimatedVisibility(visible = testResult != null, enter = Motion.expandIn, exit = Motion.collapseOut) {
-            shownResult?.let { result ->
-                HintCard(
-                    text = result.text,
-                    icon = if (result.ok) R.drawable.ic_check else R.drawable.ic_alert,
-                    tint = if (result.ok) CachedColor else MaterialTheme.colorScheme.error,
-                    onDismiss = { testResult = null },
-                )
-            }
-        }
-
-        val lastHost = remember { arrayOf("") }
-        privateDnsHost?.let { lastHost[0] = it }
-        var dismissedDnsHost by remember { mutableStateOf(prefs.dismissedPrivateDns) }
-        AnimatedVisibility(
-            visible = privateDnsHost != null && privateDnsHost != dismissedDnsHost,
-            enter = Motion.expandIn,
-            exit = Motion.collapseOut,
-        ) {
-            HintCard(
-                text = stringResource(R.string.hint, lastHost[0]),
-                icon = R.drawable.ic_alert,
-                tint = WarningColor,
-                action = {
-                    TextButton(onClick = { openNetworkSettings(context) }) { Text(stringResource(R.string.open_settings)) }
-                },
-                onDismiss = {
-                    dismissedDnsHost = lastHost[0]
-                    prefs.dismissedPrivateDns = lastHost[0]
-                },
-            )
-        }
-    }
-}
-
-@Composable
-private fun StatusHero(
-    running: Boolean,
-    providerName: String,
-    http3: Boolean,
-    stats: QueryStats,
-    canConnect: Boolean,
-    busy: Boolean,
-    switchTo: String?,
-    onToggle: () -> Unit,
-    onSwitch: () -> Unit,
-) {
-    val accent by animateColorAsState(
-        if (running) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
-        animationSpec = Motion.color,
-        label = "accent",
-    )
-    val container by animateColorAsState(
-        if (running) ProtectedContainer else MaterialTheme.colorScheme.surfaceContainerHighest,
-        animationSpec = Motion.color,
-        label = "container",
-    )
-
-    val ringAlpha by animateFloatAsState(if (running) 1f else 0f, Motion.rotation, label = "ring")
-
+internal fun CrashCard(report: String, onCopy: () -> Unit, onDismiss: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = container),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Box(Modifier.size(124.dp), contentAlignment = Alignment.Center) {
-                if (ringAlpha > 0f) PulseRing(accent, ringAlpha)
-                Box(
-                    modifier = Modifier
-                        .size(92.dp)
-                        .clip(CircleShape)
-                        .background(accent.copy(alpha = 0.18f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        painterResource(R.drawable.ic_privacy),
-                        contentDescription = null,
-                        tint = accent,
-                        modifier = Modifier.size(52.dp),
-                    )
-                }
-            }
-
-            AnimatedContent(
-                targetState = running,
-                transitionSpec = { fadeIn(Motion.enterFade) togetherWith fadeOut(Motion.exitFade) },
-                label = "status",
-            ) { on ->
-                Text(
-                    stringResource(if (on) R.string.status_on else R.string.status_off),
-                    style = MaterialTheme.typography.headlineSmall,
-                )
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    stringResource(R.string.via, providerName),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                if (http3) {
-                    Spacer(Modifier.width(8.dp))
-                    Pill("HTTP/3", accent)
-                }
-            }
-
-            AnimatedVisibility(visible = running, enter = Motion.expandIn, exit = Motion.collapseOut) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    StatColumn(formatCount(stats.total), stringResource(R.string.mon_queries), Modifier.weight(1f))
-                    StatDivider()
-                    StatColumn(formatCount(stats.blocked), stringResource(R.string.mon_blocked), Modifier.weight(1f))
-                    StatDivider()
-                    StatColumn(cachePercent(stats), stringResource(R.string.mon_cached), Modifier.weight(1f))
-                }
-            }
-
-            Button(
-                onClick = onToggle,
-                enabled = (running || canConnect) && !busy,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-            ) {
-                AnimatedContent(
-                    targetState = running,
-                    transitionSpec = { fadeIn(Motion.enterFade) togetherWith fadeOut(Motion.exitFade) },
-                    label = "toggle",
-                ) { on -> Text(stringResource(if (on) R.string.disconnect else R.string.connect)) }
-            }
-
-            // Remembers the last name so the button keeps its label while it animates out
-            val lastSwitch = remember { arrayOf("") }
-            if (switchTo != null) lastSwitch[0] = switchTo
-            AnimatedVisibility(visible = switchTo != null, enter = Motion.expandIn, exit = Motion.collapseOut) {
-                OutlinedButton(onClick = onSwitch, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
-                    Icon(painterResource(R.drawable.ic_switch), contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text(stringResource(R.string.switch_to, lastSwitch[0]))
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun PulseRing(color: Color, visibility: Float) {
-    val transition = rememberInfiniteTransition(label = "pulse")
-    val progress by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(1800, easing = LinearEasing)),
-        label = "progress",
-    )
-    Box(
-        Modifier
-            .size(124.dp)
-            .graphicsLayer {
-                val scale = 0.74f + 0.26f * progress
-                scaleX = scale
-                scaleY = scale
-                alpha = (1f - progress) * visibility
-            }
-            .clip(CircleShape)
-            .background(color.copy(alpha = 0.28f))
-    )
-}
-
-@Composable
-private fun CrashCard(report: String, onCopy: () -> Unit, onDismiss: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -601,74 +92,9 @@ private fun CrashCard(report: String, onCopy: () -> Unit, onDismiss: () -> Unit)
     }
 }
 
-@Composable
-private fun ProviderRow(
-    title: String,
-    subtitle: String,
-    selected: Boolean,
-    onPolicy: (() -> Unit)? = null,
-    onDonate: (() -> Unit)? = null,
-    onClick: () -> Unit,
-) {
-    val highlight by animateColorAsState(
-        if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.08f) else Color.Transparent,
-        animationSpec = Motion.color,
-        label = "highlight",
-    )
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(highlight)
-            .selectable(selected = selected, onClick = onClick, role = Role.RadioButton)
-            .padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        RadioButton(selected = selected, onClick = null)
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge)
-            Text(
-                subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        if (onDonate != null) {
-            IconButton(onClick = onDonate, modifier = Modifier.size(40.dp)) {
-                Icon(
-                    painterResource(R.drawable.ic_donate),
-                    contentDescription = stringResource(R.string.donate),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(18.dp),
-                )
-            }
-        }
-        if (onPolicy != null) {
-            IconButton(onClick = onPolicy, modifier = Modifier.size(40.dp)) {
-                Icon(
-                    painterResource(R.drawable.ic_policy),
-                    contentDescription = stringResource(R.string.about_privacy_policy),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(18.dp),
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun RowDivider() {
-    HorizontalDivider(
-        modifier = Modifier.padding(start = 60.dp),
-        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-    )
-}
-
 // Hostname of strict Private DNS (DNS-over-TLS) on the current network, null when it is Automatic or Off.
 // Android reports the current state on registration and every change after it.
-private fun privateDnsHosts(context: Context): Flow<String?> {
+internal fun privateDnsHosts(context: Context): Flow<String?> {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return flowOf(null)
     val cm = context.applicationContext.getSystemService(ConnectivityManager::class.java) ?: return flowOf(null)
     return callbackFlow {
@@ -686,13 +112,13 @@ private fun privateDnsHosts(context: Context): Flow<String?> {
     }.distinctUntilChanged()
 }
 
-private fun openNetworkSettings(context: Context) {
+internal fun openNetworkSettings(context: Context) {
     runCatching {
         context.startActivity(Intent(Settings.ACTION_WIRELESS_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     }
 }
 
-private fun hostOf(url: String): String =
+internal fun hostOf(url: String): String =
     runCatching { Uri.parse(url.trim()).host }.getOrNull()?.takeIf { it.isNotEmpty() } ?: url
 
 internal fun sendAction(context: Context, action: String) {
@@ -700,7 +126,7 @@ internal fun sendAction(context: Context, action: String) {
 }
 
 // Runs from the app process, which is excluded from the VPN, so it tests the server directly
-private fun testProvider(context: Context, provider: DohProvider): TestResult {
+internal fun testProvider(context: Context, provider: DohProvider): TestResult {
     val client = DohClient(context, provider)
     return try {
         val t0 = SystemClock.elapsedRealtime()

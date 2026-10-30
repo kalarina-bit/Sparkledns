@@ -18,6 +18,10 @@ class SparkleApp : Application() {
             // Reads what the first screen needs before it asks, so its first frame does not wait on storage
             Prefs(this).providerId
             CrashLog.preload(this)
+            StatsStore.init(this)
+            // Older versions cached a server list downloaded from the repository
+            File(filesDir, "servers.txt").delete()
+            AutoUpdate.apply(this)
             // Lists can hold millions of entries; loading them should not take CPU from the first frames
             Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND)
             runCatching { Blocklist.reload(this) }

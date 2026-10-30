@@ -338,7 +338,7 @@ private fun AppRow(modifier: Modifier, app: AppItem, enabled: Boolean, last: Boo
                 )
             }
             Spacer(Modifier.width(12.dp))
-            Switch(checked = enabled, onCheckedChange = null)
+            Switch(checked = enabled, onCheckedChange = null, colors = appSwitchColors())
         }
     }
 }
