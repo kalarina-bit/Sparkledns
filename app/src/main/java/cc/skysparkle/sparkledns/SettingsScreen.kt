@@ -122,7 +122,7 @@ fun SettingsScreen(
 
         SectionLabel(stringResource(R.string.servers), Modifier.padding(top = 8.dp))
         Column(Modifier.fillMaxWidth().appCard()) {
-            Providers.list.forEachIndexed { index, provider ->
+            Providers.builtIn.forEachIndexed { index, provider ->
                 if (index > 0) ListDivider()
                 ServerRow(
                     title = provider.name,

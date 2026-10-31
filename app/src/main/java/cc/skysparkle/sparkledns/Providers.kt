@@ -45,12 +45,10 @@ object Providers {
         ),
     )
 
-    val list: List<DohProvider> get() = builtIn
-
     // The project's own server stays the default whatever order the list uses
-    val default: DohProvider get() = list.firstOrNull { it.id == DEFAULT_ID } ?: list.first()
+    val default: DohProvider = builtIn.firstOrNull { it.id == DEFAULT_ID } ?: builtIn.first()
 
-    fun byId(id: String): DohProvider = list.firstOrNull { it.id == id } ?: default
+    fun byId(id: String): DohProvider = builtIn.firstOrNull { it.id == id } ?: default
 }
 
 fun parseIps(raw: String): List<String> =
