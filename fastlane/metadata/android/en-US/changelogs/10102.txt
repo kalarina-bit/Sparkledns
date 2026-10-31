@@ -1,4 +1,5 @@
 • Faster and lighter: the tunnel no longer wakes the phone while idle, the app starts quicker and the screens redraw less
 • Smaller app
+• Names on the Apps and About pages are readable again
 • Donation and privacy policy icons next to the servers are easier to see
 • Blocklists from versions older than 1.1.0 may need to be added again

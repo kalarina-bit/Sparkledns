@@ -1,4 +1,5 @@
 • Schneller und sparsamer: Der Tunnel weckt das Handy im Leerlauf nicht mehr, die App startet schneller und Bildschirme werden seltener neu gezeichnet
 • Kleinere App
+• Namen auf den Seiten „Apps“ und „Über“ sind wieder lesbar
 • Die Symbole für Spenden und Datenschutzerklärung bei den Servern sind besser zu sehen
 • Blocklisten aus Versionen vor 1.1.0 müssen eventuell neu hinzugefügt werden
