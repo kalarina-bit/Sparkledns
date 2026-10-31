@@ -34,15 +34,14 @@ object QueryLog {
 
     fun add(question: DnsMessage.Question?, status: QueryStatus, latencyMs: Int) {
         if (question == null) return
+        val time = System.currentTimeMillis()
         synchronized(this) {
             if (entries.size >= MAX_ENTRIES) entries.removeFirst()
-            entries.addLast(
-                QueryEntry(nextId++, System.currentTimeMillis(), question.name.ifEmpty { "." }, question.type, status, latencyMs)
-            )
+            entries.addLast(QueryEntry(nextId++, time, question.name.ifEmpty { "." }, question.type, status, latencyMs))
             version.value++
         }
         // Hourly numbers for the charts; outside the lock above, as it takes a lock of its own
-        StatsStore.record(status, latencyMs, Companies.of(question.name))
+        StatsStore.record(status, latencyMs, Companies.of(question.name), time)
     }
 
     // Newest first. Builds a real copy: on API 35+ List.reversed() resolves to a live JDK view,

@@ -25,6 +25,15 @@ class BlocklistMatchTest {
     }
 
     @Test
+    fun skipsTrailingDots() {
+        val lists = set("example.com")
+
+        assertTrue(isBlockedIn("www.example.com..", lists, LongArray(0)))
+        assertFalse(isBlockedIn("example.org.", lists, LongArray(0)))
+        assertFalse(isBlockedIn("...", lists, LongArray(0)))
+    }
+
+    @Test
     fun mergesSortedListsWithoutDuplicates() {
         val a = longArrayOf(-5, 1, 4, 9)
         val b = longArrayOf(1, 2, 9, 12)

@@ -231,18 +231,26 @@ object Blocklist {
     }
 }
 
-// True when the name or one of its parent domains is in either sorted hash set
+// True when the name or one of its parent domains is in either sorted hash set. Runs for every
+// query, so trailing dots are skipped by index rather than trimmed off a copy of the name.
 internal fun isBlockedIn(name: String, lists: LongArray, custom: LongArray): Boolean {
     if (lists.isEmpty() && custom.isEmpty()) return false
-    val domain = name.trimEnd('.')
+    val end = nameEnd(name)
     var start = 0
     while (true) {
-        val hash = DomainHash.of(domain, start)
+        val hash = DomainHash.of(name, start, end)
         if (lists.binarySearch(hash) >= 0 || custom.binarySearch(hash) >= 0) return true
-        val dot = domain.indexOf('.', start)
-        if (dot < 0) return false
+        val dot = name.indexOf('.', start)
+        if (dot < 0 || dot >= end) return false
         start = dot + 1
     }
+}
+
+// Length of the name without trailing dots
+internal fun nameEnd(name: String): Int {
+    var end = name.length
+    while (end > 0 && name[end - 1] == '.') end--
+    return end
 }
 
 // Number of distinct entries in both sorted sets; the custom set is small
@@ -287,10 +295,10 @@ internal object DomainHash {
     private const val FNV_OFFSET = -3750763034362895579L // 0xcbf29ce484222325
     private const val FNV_PRIME = 1099511628211L
 
-    // FNV-1a over the domain starting at [start], so parent domains are hashed without substrings
-    fun of(s: String, start: Int = 0): Long {
+    // FNV-1a over the characters from [start] to [end], so parent domains are hashed without substrings
+    fun of(s: String, start: Int = 0, end: Int = s.length): Long {
         var h = FNV_OFFSET
-        for (i in start until s.length) {
+        for (i in start until end) {
             h = h xor s[i].code.toLong()
             h *= FNV_PRIME
         }

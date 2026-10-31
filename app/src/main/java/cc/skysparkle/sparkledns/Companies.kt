@@ -1,5 +1,7 @@
 package cc.skysparkle.sparkledns
 
+import java.util.TreeMap
+
 // The position of each company is saved in StatsStore: add new ones at the end only
 enum class Company(val label: String) {
     GOOGLE("Google"),
@@ -17,8 +19,16 @@ enum class Company(val label: String) {
 // Tells which big company a domain belongs to, for the Company dominance card.
 // Matches the domain and every parent of it against a small built-in table.
 object Companies {
-    private val bySuffix = HashMap<String, Company>().apply {
-        fun add(company: Company, vararg domains: String) = domains.forEach { put(it, company) }
+    private const val GOOGLE_PREFIX = "google."
+
+    // Hashes of the domains, sorted, with the company of each at the same index: this runs for
+    // every query, and parent domains are looked up by hash without copying the name
+    private val hashes: LongArray
+    private val owners: Array<Company>
+
+    init {
+        val table = TreeMap<Long, Company>()
+        fun add(company: Company, vararg domains: String) = domains.forEach { table[DomainHash.of(it)] = company }
 
         add(
             Company.GOOGLE,
@@ -62,17 +72,24 @@ object Companies {
         add(Company.YANDEX, "yandex.ru", "yandex.net", "yandex.com", "ya.ru", "yastatic.net", "yandex.by", "yandex.kz")
         add(Company.SAMSUNG, "samsung.com", "samsungapps.com", "samsungcloud.com", "samsungqbe.com", "samsungosp.com")
         add(Company.XIAOMI, "xiaomi.com", "xiaomi.net", "mi.com", "miui.com", "mi-img.com")
+
+        hashes = table.keys.toLongArray()
+        owners = table.values.toTypedArray()
     }
 
     fun of(name: String): Company? {
-        var domain = name.lowercase().trimEnd('.')
-        while (domain.isNotEmpty()) {
-            bySuffix[domain]?.let { return it }
+        // Names from the tunnel are lowercase already; anything else is lowercased once
+        val domain = if (name.any { it.isUpperCase() }) name.lowercase() else name
+        val end = nameEnd(domain)
+        var start = 0
+        while (start < end) {
+            val index = hashes.binarySearch(DomainHash.of(domain, start, end))
+            if (index >= 0) return owners[index]
             // Google's country sites: google.de, google.co.uk, google.com.br
-            if (domain.startsWith("google.") && domain.length - "google.".length <= 6) return Company.GOOGLE
-            val dot = domain.indexOf('.')
-            if (dot < 0) return null
-            domain = domain.substring(dot + 1)
+            if (end - start - GOOGLE_PREFIX.length in 1..6 && domain.startsWith(GOOGLE_PREFIX, start)) return Company.GOOGLE
+            val dot = domain.indexOf('.', start)
+            if (dot < 0 || dot >= end) return null
+            start = dot + 1
         }
         return null
     }

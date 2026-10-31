@@ -10,7 +10,7 @@ class DnsCache(
 
     private class Entry(
         val response: ByteArray,
-        val ttlOffsets: IntArray,
+        // Offset and value of each TTL field, one pair after another
         val ttls: IntArray,
         val storedAt: Long,
         val expiresAt: Long,
@@ -35,7 +35,12 @@ class DnsCache(
         out[0] = query[0]
         out[1] = query[1]
         val elapsed = ((now - entry.storedAt) / 1000).toInt()
-        entry.ttlOffsets.forEachIndexed { i, off -> put32(out, off, maxOf(entry.ttls[i] - elapsed, 0)) }
+        val ttls = entry.ttls
+        var i = 0
+        while (i < ttls.size) {
+            put32(out, ttls[i], maxOf(ttls[i + 1] - elapsed, 0))
+            i += 2
+        }
         return out
     }
 
@@ -45,26 +50,32 @@ class DnsCache(
         val rcode = response[3].toInt() and 0x0F
         if (rcode != 0 && rcode != 3) return // only NOERROR and NXDOMAIN
 
-        val records = parseTtls(response) ?: return
-        val minTtl = if (records.first.isEmpty()) NO_RECORDS_TTL else records.second.min()
+        val ttls = parseTtls(response) ?: return
+        var minTtl = if (ttls.isEmpty()) NO_RECORDS_TTL else Int.MAX_VALUE
+        var i = 1
+        while (i < ttls.size) {
+            minTtl = minOf(minTtl, ttls[i])
+            i += 2
+        }
         val ttl = minOf(minTtl, MAX_TTL)
         if (ttl <= 0) return
 
         val now = clock()
-        val entry = Entry(response.copyOf(), records.first, records.second, now, now + ttl * 1000L)
+        val entry = Entry(response.copyOf(), ttls, now, now + ttl * 1000L)
         synchronized(map) { map[key] = entry }
     }
 
-    // Offsets and values of every TTL field except the EDNS OPT pseudo-record
-    private fun parseTtls(msg: ByteArray): Pair<IntArray, IntArray>? {
+    // Offset and value of every TTL field except the EDNS OPT pseudo-record, as pairs in one array
+    private fun parseTtls(msg: ByteArray): IntArray? {
         var pos = 12
         repeat(u16(msg, 4)) {
             pos = skipName(msg, pos) ?: return null
             pos += 4
         }
         val total = u16(msg, 6) + u16(msg, 8) + u16(msg, 10)
-        val offsets = ArrayList<Int>(total)
-        val values = ArrayList<Int>(total)
+        // The counts come from the server; the array grows only if a message really has that many
+        var ttls = IntArray(2 * minOf(total, 16))
+        var n = 0
         repeat(total) {
             pos = skipName(msg, pos) ?: return null
             if (pos + 10 > msg.size) return null
@@ -72,13 +83,14 @@ class DnsCache(
             val ttlOffset = pos + 4
             val rdLength = u16(msg, pos + 8)
             if (type != TYPE_OPT) {
-                offsets += ttlOffset
-                values += minOf(u32(msg, ttlOffset), Int.MAX_VALUE.toLong()).toInt()
+                if (n == ttls.size) ttls = ttls.copyOf(n * 2)
+                ttls[n++] = ttlOffset
+                ttls[n++] = minOf(u32(msg, ttlOffset), Int.MAX_VALUE.toLong()).toInt()
             }
             pos += 10 + rdLength
             if (pos > msg.size) return null
         }
-        return offsets.toIntArray() to values.toIntArray()
+        return if (n == ttls.size) ttls else ttls.copyOf(n)
     }
 
     private fun keyOf(query: ByteArray): String? {

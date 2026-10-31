@@ -18,8 +18,8 @@ class PacketTest {
         val parsed = requireNotNull(Packet.parseDnsQuery(packet, packet.size))
 
         assertArrayEquals(query, parsed.payload)
-        assertArrayEquals(client, parsed.srcIp)
-        assertArrayEquals(server, parsed.dstIp)
+        assertEquals(i32(client, 0), parsed.srcIp)
+        assertEquals(i32(server, 0), parsed.dstIp)
         assertEquals(40000, parsed.srcPort)
         assertEquals(53, parsed.dstPort)
     }

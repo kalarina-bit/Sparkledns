@@ -49,5 +49,6 @@ class BlocklistParserTest {
         val name = "a.b.example.com"
         assertEquals(DomainHash.of("example.com"), DomainHash.of(name, name.indexOf("example")))
         assertEquals(DomainHash.of(name), DomainHash.of(name, 0))
+        assertEquals(DomainHash.of("b.example"), DomainHash.of(name, 2, name.indexOf(".com")))
     }
 }
