@@ -360,7 +360,7 @@ private class BlocklistStore(context: Context) {
             val array = JSONArray(raw)
             (0 until array.length()).map {
                 val o = array.getJSONObject(it)
-                RemoteList(o.getString("url"), o.getInt("count"), o.getLong("updated"), o.optBoolean("enabled", true))
+                RemoteList(o.getString("url"), o.getInt("count"), o.getLong("updated"), o.getBoolean("enabled"))
             }
         }.getOrDefault(emptyList())
     }
