@@ -56,6 +56,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -82,6 +83,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -104,6 +106,9 @@ private data class Bar(val total: Long, val blocked: Long)
 private data class Chart(val period: StatsPeriod, val bars: List<Bar>, val labels: List<String>)
 
 private val ChartLabelStyle = TextStyle(color = Palette.Fg3, fontSize = 10.sp)
+
+// Where the three grip lines on the knob of the power switch sit, as fractions of its width
+private val KnobLines = floatArrayOf(0.29f, 0.5f, 0.71f)
 
 @Composable
 fun HomeScreen(
@@ -356,7 +361,7 @@ private fun StatusCard(
                 Modifier
                     .size(7.dp)
                     .clip(CircleShape)
-                    .background(dot)
+                    .drawBehind { drawRect(dot) }
             )
             Spacer(Modifier.width(8.dp))
             val via = stringResource(R.string.home_via, providerName) + if (http3) " · HTTP/3" else ""
@@ -377,7 +382,8 @@ private fun StatusCard(
     }
 }
 
-// The big ON / OFF switch; the white knob slides across
+// The big ON / OFF switch; the white knob slides across. The animated color and position are
+// read only when drawing and placing, so the animation does not recompose the switch every frame.
 @Composable
 private fun PowerToggle(on: Boolean, enabled: Boolean, onToggle: () -> Unit) {
     val track by animateColorAsState(if (on) Palette.Accent else Palette.Track, Motion.color, label = "track")
@@ -388,7 +394,7 @@ private fun PowerToggle(on: Boolean, enabled: Boolean, onToggle: () -> Unit) {
             .size(width = 120.dp, height = 50.dp)
             .graphicsLayer { alpha = if (enabled) 1f else 0.5f }
             .clip(RoundedCornerShape(25.dp))
-            .background(track)
+            .drawBehind { drawRect(track) }
             .toggleable(value = on, enabled = enabled, role = Role.Switch, onValueChange = { onToggle() })
             .semantics { contentDescription = description }
             .padding(5.dp),
@@ -405,7 +411,7 @@ private fun PowerToggle(on: Boolean, enabled: Boolean, onToggle: () -> Unit) {
         )
         Box(
             modifier = Modifier
-                .offset(x = knob)
+                .offset { IntOffset(knob.roundToPx(), 0) }
                 .size(40.dp)
                 .clip(CircleShape)
                 .background(Color.White),
@@ -413,7 +419,7 @@ private fun PowerToggle(on: Boolean, enabled: Boolean, onToggle: () -> Unit) {
         ) {
             Canvas(Modifier.size(14.dp)) {
                 val stroke = 1.6.dp.toPx()
-                listOf(0.29f, 0.5f, 0.71f).forEach { fraction ->
+                KnobLines.forEach { fraction ->
                     drawLine(
                         color = Palette.Fg3,
                         start = Offset(size.width * fraction, size.height * 0.21f),

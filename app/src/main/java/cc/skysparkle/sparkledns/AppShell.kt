@@ -39,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -58,6 +59,8 @@ private enum class Screen(@StringRes val label: Int, @DrawableRes val icon: Int,
     APPS(R.string.settings_apps, R.drawable.ic_tab_apps, false),
     ABOUT(R.string.tab_about, R.drawable.ic_tab_info, false),
 }
+
+private val Tabs = Screen.entries.filter { it.isTab }
 
 @Composable
 fun AppShell() {
@@ -161,30 +164,34 @@ private fun NavPill(current: Screen, onSelect: (Screen) -> Unit, modifier: Modif
             .selectableGroup(),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Screen.entries.filter { it.isTab }.forEach { item ->
-            val selected = item == current
-            val background by animateColorAsState(
-                if (selected) Palette.AccentSoft else Color.Transparent,
-                animationSpec = Motion.color,
-                label = "navBackground",
-            )
-            val tint by animateColorAsState(
-                if (selected) Palette.Accent else Palette.NavIcon,
-                animationSpec = Motion.color,
-                label = "navTint",
-            )
-            val label = stringResource(item.label)
-            Box(
-                modifier = Modifier
-                    .size(width = 58.dp, height = 44.dp)
-                    .clip(RoundedCornerShape(22.dp))
-                    .background(background)
-                    .selectable(selected = selected, onClick = { onSelect(item) }, role = Role.Tab)
-                    .semantics { contentDescription = label },
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(painterResource(item.icon), contentDescription = null, tint = tint, modifier = Modifier.size(22.dp))
-            }
-        }
+        Tabs.forEach { item -> NavItem(item, selected = item == current, onSelect = onSelect) }
+    }
+}
+
+// One tab of the panel. Its own composable, so a color animation recomposes only the tabs that
+// change instead of the whole panel; the background is read only when drawing.
+@Composable
+private fun NavItem(item: Screen, selected: Boolean, onSelect: (Screen) -> Unit) {
+    val background by animateColorAsState(
+        if (selected) Palette.AccentSoft else Color.Transparent,
+        animationSpec = Motion.color,
+        label = "navBackground",
+    )
+    val tint by animateColorAsState(
+        if (selected) Palette.Accent else Palette.NavIcon,
+        animationSpec = Motion.color,
+        label = "navTint",
+    )
+    val label = stringResource(item.label)
+    Box(
+        modifier = Modifier
+            .size(width = 58.dp, height = 44.dp)
+            .clip(RoundedCornerShape(22.dp))
+            .drawBehind { drawRect(background) }
+            .selectable(selected = selected, onClick = { onSelect(item) }, role = Role.Tab)
+            .semantics { contentDescription = label },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(painterResource(item.icon), contentDescription = null, tint = tint, modifier = Modifier.size(22.dp))
     }
 }

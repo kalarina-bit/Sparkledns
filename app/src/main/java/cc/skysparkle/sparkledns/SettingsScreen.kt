@@ -3,7 +3,6 @@ package cc.skysparkle.sparkledns
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -36,6 +35,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -269,7 +269,8 @@ private fun ServerRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(highlight)
+            // Read when drawing, so the fade does not recompose the row every frame
+            .drawBehind { drawRect(highlight) }
             .selectable(selected = selected, onClick = onClick, role = Role.RadioButton)
             .heightIn(min = 60.dp)
             .padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
