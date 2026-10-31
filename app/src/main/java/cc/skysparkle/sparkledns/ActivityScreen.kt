@@ -5,7 +5,6 @@ import android.content.ClipboardManager
 import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -46,6 +45,7 @@ import androidx.compose.runtime.structuralEqualityPolicy
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -415,21 +415,27 @@ private fun companySlices(summary: StatsSummary, otherLabel: String): List<Slice
 
 @Composable
 private fun Donut(slices: List<Slice>, modifier: Modifier = Modifier) {
-    Canvas(modifier) {
-        val stroke = 14.dp.toPx()
-        val diameter = size.minDimension - stroke
-        val topLeft = Offset((size.width - diameter) / 2f, (size.height - diameter) / 2f)
-        val arcSize = Size(diameter, diameter)
-        drawArc(OtherColor, 0f, 360f, useCenter = false, topLeft = topLeft, size = arcSize, style = Stroke(width = stroke))
-        var start = -90f
-        slices.forEach { slice ->
-            val sweep = slice.share * 360f
-            if (sweep > 0f) {
-                drawArc(slice.color, start, sweep, useCenter = false, topLeft = topLeft, size = arcSize, style = Stroke(width = stroke))
+    // The ring's geometry is worked out when the size changes, not every frame
+    Spacer(
+        modifier.drawWithCache {
+            val width = 14.dp.toPx()
+            val stroke = Stroke(width = width)
+            val diameter = size.minDimension - width
+            val topLeft = Offset((size.width - diameter) / 2f, (size.height - diameter) / 2f)
+            val arcSize = Size(diameter, diameter)
+            onDrawBehind {
+                drawArc(OtherColor, 0f, 360f, useCenter = false, topLeft = topLeft, size = arcSize, style = stroke)
+                var start = -90f
+                slices.forEach { slice ->
+                    val sweep = slice.share * 360f
+                    if (sweep > 0f) {
+                        drawArc(slice.color, start, sweep, useCenter = false, topLeft = topLeft, size = arcSize, style = stroke)
+                    }
+                    start += sweep
+                }
             }
-            start += sweep
         }
-    }
+    )
 }
 
 @Composable

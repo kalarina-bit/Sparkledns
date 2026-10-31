@@ -56,7 +56,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -73,12 +73,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -88,11 +90,20 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
+import kotlin.math.ceil
+import kotlin.math.roundToInt
 
 private const val HOUR_MS = 3_600_000L
 
 // One bar of the chart: an hour, or a day in the 7-day view
-private class Bar(val total: Long, val blocked: Long, val label: String)
+private data class Bar(val total: Long, val blocked: Long)
+
+// Bars with the labels under them: the first hour of the day view, or every day of the week.
+// A refresh that brings equal data leaves the chart alone.
+private data class Chart(val period: StatsPeriod, val bars: List<Bar>, val labels: List<String>)
+
+private val ChartLabelStyle = TextStyle(color = Palette.Fg3, fontSize = 10.sp)
 
 @Composable
 fun HomeScreen(
@@ -116,10 +127,10 @@ fun HomeScreen(
 
     var period by rememberSaveable { mutableStateOf(StatsPeriod.DAY) }
     var summary by remember { mutableStateOf(StatsStore.summary(period.hours)) }
-    var bars by remember { mutableStateOf(chartBars(period)) }
+    var chartData by remember { mutableStateOf(buildChart(period)) }
     fun refreshStats() {
         summary = StatsStore.summary(period.hours)
-        bars = chartBars(period)
+        chartData = buildChart(period)
     }
     OnQueryLogChange { refreshStats() }
     val statsVersion by StatsStore.version.collectAsStateWithLifecycle()
@@ -227,7 +238,7 @@ fun HomeScreen(
         }
     }
     val chart: @Composable () -> Unit = {
-        ChartSection(bars, period, chartHeight, onPeriod = { period = it })
+        ChartSection(chartData, period, chartHeight, onPeriod = { period = it })
     }
     val blocklist: @Composable () -> Unit = {
         BlocklistCard(
@@ -244,18 +255,18 @@ fun HomeScreen(
     Column(
         modifier = modifier
             .verticalScroll(rememberScrollState())
-            .drawBehind {
-                // Soft light behind the logo while protected
-                if (glow > 0f) {
-                    drawCircle(
-                        brush = Brush.radialGradient(
-                            colors = listOf(Palette.Accent.copy(alpha = 0.22f * glow), Color.Transparent),
-                            center = Offset(size.width / 2f, 0f),
-                            radius = size.width * 0.65f,
-                        ),
-                        radius = size.width * 0.65f,
-                        center = Offset(size.width / 2f, 0f),
-                    )
+            .drawWithCache {
+                // Soft light behind the logo while protected. The gradient depends on the size only;
+                // the fade is applied as alpha when drawing.
+                val center = Offset(size.width / 2f, 0f)
+                val radius = size.width * 0.65f
+                val light = Brush.radialGradient(
+                    colors = listOf(Palette.Accent.copy(alpha = 0.22f), Color.Transparent),
+                    center = center,
+                    radius = radius,
+                )
+                onDrawBehind {
+                    if (glow > 0f) drawCircle(brush = light, radius = radius, center = center, alpha = glow)
                 }
             }
             .padding(start = side, end = side, top = 16.dp, bottom = bottomPadding),
@@ -450,7 +461,7 @@ fun StatBlock(value: String, label: String, modifier: Modifier = Modifier, value
 }
 
 @Composable
-private fun ChartSection(bars: List<Bar>, period: StatsPeriod, height: Dp, onPeriod: (StatsPeriod) -> Unit) {
+private fun ChartSection(chart: Chart, period: StatsPeriod, height: Dp, onPeriod: (StatsPeriod) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             PeriodChip(period, onPeriod)
@@ -465,7 +476,7 @@ private fun ChartSection(bars: List<Bar>, period: StatsPeriod, height: Dp, onPer
                 .height(height),
             contentAlignment = Alignment.Center,
         ) {
-            if (bars.all { it.total == 0L }) {
+            if (chart.bars.all { it.total == 0L }) {
                 Text(
                     stringResource(R.string.chart_empty),
                     color = Palette.Fg3,
@@ -475,19 +486,19 @@ private fun ChartSection(bars: List<Bar>, period: StatsPeriod, height: Dp, onPer
                     modifier = Modifier.padding(horizontal = 24.dp),
                 )
             } else {
-                TrafficChart(bars, Modifier.fillMaxWidth().height(height))
+                TrafficChart(chart.bars, Modifier.fillMaxWidth().height(height))
             }
         }
         // Hours: first hour on the left, now on the right. Days: a label under every bar.
         Row(Modifier.fillMaxWidth()) {
-            if (period == StatsPeriod.DAY) {
-                Text(bars.firstOrNull()?.label.orEmpty(), color = Palette.Fg3, fontSize = 11.sp, modifier = Modifier.weight(1f))
+            if (chart.period == StatsPeriod.DAY) {
+                Text(chart.labels.firstOrNull().orEmpty(), color = Palette.Fg3, fontSize = 11.sp, modifier = Modifier.weight(1f))
                 Text(stringResource(R.string.chart_now), color = Palette.Fg3, fontSize = 11.sp)
             } else {
-                bars.forEachIndexed { index, bar ->
+                chart.labels.forEachIndexed { index, label ->
                     Text(
-                        bar.label,
-                        color = if (index == bars.lastIndex) Palette.Fg else Palette.Fg3,
+                        label,
+                        color = if (index == chart.labels.lastIndex) Palette.Fg else Palette.Fg3,
                         fontSize = 11.sp,
                         maxLines = 1,
                         textAlign = TextAlign.Center,
@@ -518,62 +529,83 @@ private fun LegendItem(label: String, color: Color) {
 @Composable
 private fun TrafficChart(bars: List<Bar>, modifier: Modifier = Modifier) {
     val measurer = rememberTextMeasurer()
-    val labelStyle = TextStyle(color = Palette.Fg3, fontSize = 10.sp)
-    Canvas(modifier) {
-        val n = bars.size
-        if (n == 0) return@Canvas
-        val maxValue = niceCeiling(bars.maxOf { it.total }.coerceAtLeast(1L))
-        val top = 16.dp.toPx()
-        val base = size.height - 2.dp.toPx()
-        val span = base - top
-        val slot = size.width / n
-        val barWidth = (slot * if (n > 10) 0.62f else 0.5f).coerceAtLeast(2.dp.toPx())
-        val radius = CornerRadius((barWidth / 2).coerceAtMost(4.dp.toPx()))
-        fun height(value: Long) = value.toFloat() / maxValue * span
+    // Scale, grid and grid labels are worked out when the bars or the size change, not every frame
+    Spacer(
+        modifier.drawWithCache {
+            val n = bars.size
+            if (n == 0) return@drawWithCache onDrawBehind {}
+            val maxValue = niceCeiling(bars.maxOf { it.total }.coerceAtLeast(1L))
+            val top = 16.dp.toPx()
+            val base = size.height - 2.dp.toPx()
+            val span = base - top
+            val slot = size.width / n
+            val barWidth = (slot * if (n > 10) 0.62f else 0.5f).coerceAtLeast(2.dp.toPx())
+            val radius = CornerRadius((barWidth / 2).coerceAtMost(4.dp.toPx()))
+            val stub = 2.dp.toPx()
+            val minBar = 4.dp.toPx()
+            val minBlocked = 2.dp.toPx()
+            val gridWidth = 1.dp.toPx()
+            val dash = PathEffect.dashPathEffect(floatArrayOf(3.dp.toPx(), 4.dp.toPx()))
+            fun height(value: Long) = value.toFloat() / maxValue * span
 
-        listOf(maxValue / 2, maxValue).filter { it > 0 }.forEach { value ->
-            val gridY = base - height(value)
-            drawLine(
-                color = Palette.Line,
-                start = Offset(0f, gridY),
-                end = Offset(size.width, gridY),
-                strokeWidth = 1.dp.toPx(),
-                pathEffect = PathEffect.dashPathEffect(floatArrayOf(3.dp.toPx(), 4.dp.toPx())),
-            )
-            drawText(
-                textMeasurer = measurer,
-                text = formatCompact(value),
-                topLeft = Offset(0f, gridY - 14.dp.toPx()),
-                style = labelStyle,
-            )
-        }
-
-        bars.forEachIndexed { index, bar ->
-            val x = index * slot + (slot - barWidth) / 2
-            if (bar.total == 0L) {
-                val stub = 2.dp.toPx()
-                drawRoundRect(Palette.Line, Offset(x, base - stub), Size(barWidth, stub), CornerRadius(stub / 2))
-                return@forEachIndexed
+            val grid = listOf(maxValue / 2, maxValue).filter { it > 0 }.map { value ->
+                val y = base - height(value)
+                val labelTop = y - 14.dp.toPx()
+                // The same constraints drawText() would use for a label at this spot
+                val label = measurer.measure(
+                    text = formatCompact(value),
+                    style = ChartLabelStyle,
+                    constraints = Constraints(
+                        maxWidth = ceil(size.width).roundToInt().coerceAtLeast(0),
+                        maxHeight = ceil(size.height - labelTop).roundToInt().coerceAtLeast(0),
+                    ),
+                    layoutDirection = layoutDirection,
+                    density = this,
+                )
+                GridLine(y, labelTop, label)
             }
-            val current = index == n - 1
-            val h = height(bar.total).coerceAtLeast(4.dp.toPx())
-            drawRoundRect(
-                if (current) Palette.Accent else Palette.Accent.copy(alpha = 0.6f),
-                Offset(x, base - h),
-                Size(barWidth, h),
-                radius,
-            )
-            if (bar.blocked > 0) {
-                val hb = height(bar.blocked).coerceIn(2.dp.toPx(), h)
-                if (hb >= h - radius.x) {
-                    drawRoundRect(Palette.Blocked, Offset(x, base - hb), Size(barWidth, hb), radius)
-                } else {
-                    drawRect(Palette.Blocked, Offset(x, base - hb), Size(barWidth, hb))
+
+            onDrawBehind {
+                grid.forEach { line ->
+                    drawLine(
+                        color = Palette.Line,
+                        start = Offset(0f, line.y),
+                        end = Offset(size.width, line.y),
+                        strokeWidth = gridWidth,
+                        pathEffect = dash,
+                    )
+                    drawText(line.label, topLeft = Offset(0f, line.labelTop))
+                }
+
+                bars.forEachIndexed { index, bar ->
+                    val x = index * slot + (slot - barWidth) / 2
+                    if (bar.total == 0L) {
+                        drawRoundRect(Palette.Line, Offset(x, base - stub), Size(barWidth, stub), CornerRadius(stub / 2))
+                        return@forEachIndexed
+                    }
+                    val current = index == n - 1
+                    val h = height(bar.total).coerceAtLeast(minBar)
+                    drawRoundRect(
+                        if (current) Palette.Accent else Palette.Accent.copy(alpha = 0.6f),
+                        Offset(x, base - h),
+                        Size(barWidth, h),
+                        radius,
+                    )
+                    if (bar.blocked > 0) {
+                        val hb = height(bar.blocked).coerceIn(minBlocked, h)
+                        if (hb >= h - radius.x) {
+                            drawRoundRect(Palette.Blocked, Offset(x, base - hb), Size(barWidth, hb), radius)
+                        } else {
+                            drawRect(Palette.Blocked, Offset(x, base - hb), Size(barWidth, hb))
+                        }
+                    }
                 }
             }
         }
-    }
+    )
 }
+
+private class GridLine(val y: Float, val labelTop: Float, val label: TextLayoutResult)
 
 // 1, 2 or 5 times a power of ten, at least [value]: keeps the grid labels round
 private fun niceCeiling(value: Long): Long {
@@ -585,15 +617,31 @@ private fun niceCeiling(value: Long): Long {
     return 10 * magnitude
 }
 
+// Date formats of the chart for the current locale and time zone. The chart is refreshed up to
+// once a second, so they are kept rather than built anew each time. Main thread only.
+private class ChartFormats(val locale: Locale, val zone: String) {
+    val hour = SimpleDateFormat("HH:00", locale)
+    val day = SimpleDateFormat("EEE", locale)
+}
+
+private var chartFormats: ChartFormats? = null
+
+private fun chartFormats(): ChartFormats {
+    val locale = Locale.getDefault()
+    val zone = TimeZone.getDefault().id
+    return chartFormats?.takeIf { it.locale == locale && it.zone == zone }
+        ?: ChartFormats(locale, zone).also { chartFormats = it }
+}
+
 // 24 hourly bars, or 7 bars for the calendar days of the last week (today last)
-private fun chartBars(period: StatsPeriod, now: Long = System.currentTimeMillis()): List<Bar> {
+private fun buildChart(period: StatsPeriod, now: Long = System.currentTimeMillis()): Chart {
     val hours = StatsStore.hourly(period.hours, now)
     val firstHour = now / HOUR_MS - (hours.size - 1)
+    val formats = chartFormats()
     if (period == StatsPeriod.DAY) {
-        val format = SimpleDateFormat("HH:00", Locale.getDefault())
-        return hours.mapIndexed { index, point ->
-            Bar(point.total, point.blocked, format.format(Date((firstHour + index) * HOUR_MS)))
-        }
+        // Only the first hour gets a label; the other end of the axis says "now"
+        val label = formats.hour.format(Date(firstHour * HOUR_MS))
+        return Chart(period, hours.map { Bar(it.total, it.blocked) }, listOf(label))
     }
     val calendar = Calendar.getInstance()
     fun dayKey(time: Long): Int {
@@ -615,8 +663,7 @@ private fun chartBars(period: StatsPeriod, now: Long = System.currentTimeMillis(
             blocked[day] += point.blocked
         }
     }
-    val format = SimpleDateFormat("EEE", Locale.getDefault())
-    return dayStarts.mapIndexed { index, time -> Bar(totals[index], blocked[index], format.format(Date(time))) }
+    return Chart(period, List(7) { Bar(totals[it], blocked[it]) }, dayStarts.map { formats.day.format(Date(it)) })
 }
 
 private enum class BlocklistOffer { NONE, SWITCH_ON, FIRST_LIST }

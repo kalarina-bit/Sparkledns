@@ -214,6 +214,8 @@ fun SubPage(title: String, onBack: () -> Unit, modifier: Modifier = Modifier, co
     }
 }
 
+private val SearchTextStyle = TextStyle(color = Palette.Fg, fontSize = 14.sp)
+
 @Composable
 fun SearchField(
     value: String,
@@ -247,7 +249,7 @@ fun SearchField(
                 onValueChange = onValueChange,
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                textStyle = TextStyle(color = Palette.Fg, fontSize = 14.sp),
+                textStyle = SearchTextStyle,
                 cursorBrush = SolidColor(Palette.Accent),
             )
         }
