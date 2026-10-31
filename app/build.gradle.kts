@@ -49,6 +49,21 @@ android {
         includeInBundle = false
     }
 
+    packaging {
+        resources {
+            // Library files the app never reads: Kotlin metadata for reflection, the coroutines debug
+            // agent, version markers for tooling and OkHttp's public suffix list, which only cookies use
+            excludes += listOf(
+                "/META-INF/*.version",
+                "/META-INF/*.kotlin_module",
+                "/kotlin/**",
+                "/kotlin-tooling-metadata.json",
+                "/DebugProbesKt.bin",
+                "/okhttp3/internal/publicsuffix/**",
+            )
+        }
+    }
+
     testOptions {
         // android.util.Log and friends are no-ops in JVM unit tests
         unitTests.isReturnDefaultValues = true
