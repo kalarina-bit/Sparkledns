@@ -73,6 +73,7 @@ private val Frameworks = listOf(
     OpenSourceItem("AndroidX Activity", "The Android Open Source Project", APACHE_2, APACHE_2_URL, "https://developer.android.com/jetpack/androidx/releases/activity"),
     OpenSourceItem("OkHttp", "Square, Inc.", APACHE_2, APACHE_2_URL, "https://square.github.io/okhttp/"),
     OpenSourceItem("Okio", "Square, Inc.", APACHE_2, APACHE_2_URL, "https://square.github.io/okio/"),
+    OpenSourceItem("Material Symbols", "Google", APACHE_2, APACHE_2_URL, "https://github.com/google/material-design-icons"),
     OpenSourceItem(
         "Android HttpEngine (Cronet)", "The Chromium Authors", "BSD 3-Clause",
         "https://chromium.googlesource.com/chromium/src/+/main/LICENSE", "https://developer.android.com/reference/android/net/http/HttpEngine",
@@ -155,13 +156,13 @@ private fun AboutContent(modifier: Modifier, onOpenLicenses: () -> Unit) {
         }
 
         OutlinedButton(onClick = { openUrl(context, PRIVACY_POLICY) }, modifier = Modifier.fillMaxWidth()) {
-            Icon(painterResource(R.drawable.ic_shield_search), contentDescription = null, modifier = Modifier.size(18.dp))
+            Icon(painterResource(R.drawable.ic_policy), contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
             Text(stringResource(R.string.about_privacy_policy))
         }
 
         OutlinedButton(onClick = { openUrl(context, SOURCE_CODE) }, modifier = Modifier.fillMaxWidth()) {
-            Icon(painterResource(R.drawable.ic_android), contentDescription = null, modifier = Modifier.size(18.dp))
+            Icon(painterResource(R.drawable.ic_code), contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
             Text(stringResource(R.string.about_source))
         }

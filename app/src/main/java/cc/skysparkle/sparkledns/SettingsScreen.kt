@@ -1,5 +1,6 @@
 package cc.skysparkle.sparkledns
 
+import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
@@ -195,7 +196,11 @@ fun SettingsScreen(
                 modifier = Modifier
                     .weight(1f)
                     .height(48.dp),
-            ) { Text(stringResource(if (testing) R.string.testing else R.string.test), maxLines = 1) }
+            ) {
+                Icon(painterResource(R.drawable.ic_speed), contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(stringResource(if (testing) R.string.testing else R.string.test), maxLines = 1)
+            }
 
             // Remembers the last name so the button keeps its label while it animates out
             val lastSwitch = remember { arrayOf("") }
@@ -214,6 +219,8 @@ fun SettingsScreen(
                         .fillMaxWidth()
                         .height(48.dp),
                 ) {
+                    Icon(painterResource(R.drawable.ic_swap), contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
                     Text(
                         stringResource(R.string.switch_to, lastSwitch[0]),
                         maxLines = 1,
@@ -237,6 +244,7 @@ fun SettingsScreen(
         SectionLabel(stringResource(R.string.settings_general), Modifier.padding(top = 8.dp))
         Column(Modifier.fillMaxWidth().appCard()) {
             NavRow(
+                icon = R.drawable.ic_tab_apps,
                 title = stringResource(R.string.settings_apps),
                 subtitle = if (excludedCount > 0) stringResource(R.string.apps_count, excludedCount)
                 else stringResource(R.string.settings_apps_desc),
@@ -244,6 +252,7 @@ fun SettingsScreen(
             )
             ListDivider()
             NavRow(
+                icon = R.drawable.ic_tab_info,
                 title = stringResource(R.string.tab_about),
                 subtitle = "${stringResource(R.string.about_version)} ${BuildConfig.VERSION_NAME}",
                 onClick = onOpenAbout,
@@ -322,7 +331,7 @@ private fun ServerRow(
 }
 
 @Composable
-private fun NavRow(title: String, subtitle: String, onClick: () -> Unit) {
+private fun NavRow(@DrawableRes icon: Int, title: String, subtitle: String, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -331,6 +340,8 @@ private fun NavRow(title: String, subtitle: String, onClick: () -> Unit) {
             .padding(start = 16.dp, end = 12.dp, top = 10.dp, bottom = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        Icon(painterResource(icon), contentDescription = null, tint = Palette.Accent, modifier = Modifier.size(24.dp))
+        Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
             Text(title, color = Palette.Fg, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             Text(subtitle, color = Palette.Fg3, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)

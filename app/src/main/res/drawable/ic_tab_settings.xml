@@ -1,17 +1,10 @@
+<!-- Material Symbols Light "settings" by Google, Apache License 2.0 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
     <path
-        android:fillColor="#00000000"
-        android:pathData="M4,7h9M17,7h3M4,17h3M11,17h9"
-        android:strokeWidth="1.9"
-        android:strokeColor="#FFFFFFFF"
-        android:strokeLineCap="round" />
-    <path
-        android:fillColor="#00000000"
-        android:pathData="M13,7a2,2 0,1 0,4 0a2,2 0,1 0,-4 0zM7,17a2,2 0,1 0,4 0a2,2 0,1 0,-4 0z"
-        android:strokeWidth="1.9"
-        android:strokeColor="#FFFFFFFF" />
+        android:fillColor="#FFFFFFFF"
+        android:pathData="m 10.135 21 l -.362 -2.892 q -.479 -.145 -1.035 -.454 q -.557 -.31 -.947 -.664 l -2.668 1.135 l -1.865 -3.25 l 2.306 -1.739 q -.045 -.27 -.073 -.558 q -.03 -.288 -.03 -.559 q 0 -.252 .03 -.53 q .028 -.278 .073 -.626 L 3.258 9.126 l 1.865 -3.212 L 7.771 7.03 q .448 -.373 .97 -.673 q .52 -.3 1.013 -.464 L 10.134 3 h 3.732 l .361 2.912 q .575 .202 1.016 .463 t .909 .654 l 2.725 -1.115 l 1.865 3.211 l -2.382 1.796 q .082 .31 .092 .569 t .01 .51 q 0 .233 -.02 .491 q -.019 .259 -.088 .626 l 2.344 1.758 l -1.865 3.25 l -2.681 -1.154 q -.467 .393 -.94 .673 t -.985 .445 L 13.866 21 z m 1.838 -6.5 q 1.046 0 1.773 -.727 T 14.473 12 t -.727 -1.773 t -1.773 -.727 q -1.052 0 -1.776 .727 T 9.473 12 t .724 1.773 t 1.776 .727" />
 </vector>

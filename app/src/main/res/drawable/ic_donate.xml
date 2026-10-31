@@ -1,21 +1,10 @@
+<!-- Material Symbols Light "volunteer-activism" by Google, Apache License 2.0 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
-    android:viewportWidth="256"
-    android:viewportHeight="256">
+    android:viewportWidth="24"
+    android:viewportHeight="24">
     <path
-        android:pathData="M128,38 A90,90 0 1,1 128,218 A90,90 0 1,1 128,38 Z"
-        android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="11" />
-    <path
-        android:pathData="M156,99 C151,88 141,82 128,82 C112,82 100,91 100,105 C100,120 113,125 128,128 C144,131 158,137 158,153 C158,167 145,175 128,175 C113,175 101,168 97,156"
-        android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="11"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round" />
-    <path
-        android:pathData="M128,64 L128,82 M128,175 L128,193"
-        android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="11"
-        android:strokeLineCap="round" />
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M 6.385 19.583 v -6.737 h 2.08 q .137 0 .283 .028 t .283 .078 l 6.021 2.21 q .446 .163 .736 .536 q .289 .373 .289 .839 q 0 .275 -.18 .446 t -.443 .17 h -1.202 q -.51 0 -.995 -.06 t -.951 -.226 l -1.792 -.644 l -.287 .744 l 1.964 .675 q .472 .16 .976 .22 q .504 .061 1.021 .061 h 5.158 q .685 0 1.17 .45 T 21 19.5 l -6.994 2.308 z m -4 1.417 v -8.154 h 3 V 21 z m 13.307 -8.615 l -3.765 -3.608 q -.66 -.635 -1.101 -1.422 q -.442 -.788 -.442 -1.709 q 0 -1.106 .77 -1.876 T 13.032 3 q .819 0 1.49 .443 t 1.171 1.076 q .5 -.633 1.172 -1.076 q .67 -.443 1.49 -.443 q 1.106 0 1.876 .77 T 21 5.646 q 0 .921 -.438 1.709 t -1.099 1.422 z" />
 </vector>

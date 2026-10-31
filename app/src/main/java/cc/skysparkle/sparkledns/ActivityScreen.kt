@@ -3,6 +3,7 @@ package cc.skysparkle.sparkledns
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.widget.Toast
+import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -203,7 +204,7 @@ fun ActivityScreen(bottomPadding: Dp, modifier: Modifier = Modifier) {
                     enabled = entries.isNotEmpty(),
                 ) {
                     Icon(
-                        painterResource(R.drawable.ic_delete),
+                        painterResource(R.drawable.ic_delete_sweep),
                         contentDescription = stringResource(R.string.mon_clear),
                         tint = Palette.Fg2,
                         modifier = Modifier.size(20.dp),
@@ -222,7 +223,7 @@ fun ActivityScreen(bottomPadding: Dp, modifier: Modifier = Modifier) {
                     Box {
                         IconButton(onClick = { filterMenu = true }) {
                             Icon(
-                                painterResource(R.drawable.ic_tab_settings),
+                                painterResource(R.drawable.ic_filter),
                                 contentDescription = stringResource(R.string.filter),
                                 tint = if (filter == ActivityFilter.ALL) Palette.Fg2 else Palette.Accent,
                                 modifier = Modifier.size(18.dp),
@@ -457,6 +458,7 @@ private fun QueryRow(
             if (blockedByMe) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.mon_unblock)) },
+                    leadingIcon = { MenuIcon(R.drawable.ic_check) },
                     onClick = {
                         menu = false
                         onUnblock()
@@ -465,6 +467,7 @@ private fun QueryRow(
             } else if (entry.status != QueryStatus.BLOCKED) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.mon_block)) },
+                    leadingIcon = { MenuIcon(R.drawable.ic_tab_block) },
                     onClick = {
                         menu = false
                         onBlock()
@@ -473,6 +476,7 @@ private fun QueryRow(
             }
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.copy)) },
+                leadingIcon = { MenuIcon(R.drawable.ic_copy) },
                 onClick = {
                     menu = false
                     onCopy()
@@ -480,6 +484,11 @@ private fun QueryRow(
             )
         }
     }
+}
+
+@Composable
+private fun MenuIcon(@DrawableRes icon: Int) {
+    Icon(painterResource(icon), contentDescription = null, tint = Palette.Fg2, modifier = Modifier.size(20.dp))
 }
 
 // First letter of the main part of a domain: "a" for app-measurement.com, "g" for www.google.com

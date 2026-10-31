@@ -1,10 +1,10 @@
+<!-- Material Symbols Light "business-center" by Google, Apache License 2.0 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
-    android:viewportWidth="256"
-    android:viewportHeight="256">
+    android:viewportWidth="24"
+    android:viewportHeight="24">
     <path
         android:fillColor="#FFFFFFFF"
-        android:fillType="evenOdd"
-        android:pathData="M211.0,212.3L47.0,212.7L43.0,212.0L39.0,210.0L35.7,207.0L33.0,203.0L31.7,199.0L31.5,196.0L31.5,90.0L32.5,85.0L34.0,82.0L39.0,77.0L41.0,75.7L45.0,74.5L95.0,74.3L95.5,73.0L95.5,58.0L97.0,52.0L99.7,48.0L103.0,45.0L106.0,43.3L111.0,42.3L144.0,42.3L148.0,43.0L152.0,45.0L156.0,49.0L158.3,53.0L159.3,56.0L159.5,73.0L160.0,74.3L208.0,74.3L212.0,75.0L216.0,77.0L220.0,81.0L222.3,85.0L223.3,88.0L223.5,197.0L222.5,202.0L221.0,205.0L216.0,210.0L214.0,211.3ZM148.5,74.0L148.3,57.0L147.0,55.0L145.0,53.7L142.0,52.7L113.0,52.7L110.0,53.7L108.0,55.0L106.5,58.0L106.3,73.0L107.0,74.3Z" />
+        android:pathData="M 4.616 20 q -.691 0 -1.153 -.462 T 3 18.384 V 14.5 h 7 V 16 h 4 v -1.5 h 7 v 3.885 q 0 .69 -.462 1.152 T 19.385 20 z M 11 15 v -2 h 2 v 2 z m -8 -1.5 V 8.616 q 0 -.691 .463 -1.153 T 4.615 7 H 9 V 5.615 q 0 -.69 .463 -1.153 T 10.616 4 h 2.769 q .69 0 1.153 .462 T 15 5.615 V 7 h 4.385 q .69 0 1.152 .463 T 21 8.616 V 13.5 h -7 V 12 h -4 v 1.5 z M 10 7 h 4 V 5.615 q 0 -.23 -.192 -.423 T 13.385 5 h -2.77 q -.23 0 -.423 .192 T 10 5.615 z" />
 </vector>

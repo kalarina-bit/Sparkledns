@@ -1,10 +1,10 @@
+<!-- Material Symbols Light "news" by Google, Apache License 2.0 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
-    android:viewportWidth="256"
-    android:viewportHeight="256">
+    android:viewportWidth="24"
+    android:viewportHeight="24">
     <path
         android:fillColor="#FFFFFFFF"
-        android:fillType="evenOdd"
-        android:pathData="M201.0,212.0L198.0,212.7L58.0,212.7L55.0,212.3L51.0,211.0L47.0,208.0L43.7,203.0L42.3,198.0L42.3,58.0L42.7,55.0L44.0,51.0L48.0,46.3L52.0,43.7L57.0,42.3L165.0,42.3L166.0,42.7L212.3,89.0L212.5,199.0L211.0,204.0L208.0,208.0L205.0,210.3ZM201.7,95.0L160.0,53.3L159.5,54.0L159.5,95.0L160.0,95.5L201.0,95.5ZM127.5,95.0L127.5,86.0L127.0,84.7L79.7,85.0L79.5,95.0L80.0,95.5L127.0,95.5ZM175.5,132.0L175.5,123.0L175.0,122.3L80.0,122.3L79.5,123.0L79.5,132.0L80.0,132.7L175.0,132.7ZM175.3,170.0L175.5,160.0L175.0,159.5L80.0,159.5L79.5,160.0L79.5,169.0L80.0,170.3Z" />
+        android:pathData="M 5.616 20 q -.691 0 -1.153 -.462 T 4 18.384 V 5.616 q 0 -.691 .463 -1.153 T 5.616 4 h 9.961 L 20 8.423 v 9.962 q 0 .69 -.462 1.153 T 18.384 20 z M 7.5 16 h 9 v -1 h -9 z m 0 -3.5 h 9 v -1 h -9 z M 15 9 h 4 l -4 -4 z M 7.5 9 H 12 V 8 H 7.5 z" />
 </vector>

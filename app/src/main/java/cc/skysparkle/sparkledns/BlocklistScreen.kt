@@ -382,7 +382,7 @@ private fun UpdatesRow(interval: UpdateInterval, wifiOnly: Boolean, onClick: () 
             .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(painterResource(R.drawable.ic_refresh), contentDescription = null, tint = Palette.Accent, modifier = Modifier.size(20.dp))
+        Icon(painterResource(R.drawable.ic_update), contentDescription = null, tint = Palette.Accent, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(stringResource(R.string.auto_update), color = Palette.Fg, fontSize = 14.sp, fontWeight = FontWeight.Bold)

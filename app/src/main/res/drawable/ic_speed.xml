@@ -1,0 +1,10 @@
+<!-- Material Symbols Light "speed" by Google, Apache License 2.0 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M 10.758 15.192 q .452 .452 1.18 .415 q .73 -.038 1.078 -.515 l 5.253 -7.323 l -7.361 5.216 q -.496 .334 -.559 1.035 t .409 1.172 M 5.1 19 q -.28 0 -.512 -.141 q -.232 -.142 -.392 -.386 q -.592 -1.021 -.894 -2.158 T 3 14 q 0 -1.864 .71 -3.506 q .711 -1.642 1.927 -2.857 Q 6.852 6.42 8.494 5.71 T 12 5 q 1.858 0 3.485 .698 t 2.852 1.901 t 1.938 2.817 t .72 3.472 q .005 1.24 -.294 2.409 t -.903 2.253 q -.14 .244 -.382 .347 q -.241 .103 -.522 .103 z" />
+</vector>

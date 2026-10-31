@@ -1,14 +1,10 @@
+<!-- Material Symbols Light "chevron-right" by Google, Apache License 2.0 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
-    android:autoMirrored="true"
     android:viewportWidth="24"
     android:viewportHeight="24">
     <path
-        android:fillColor="#00000000"
-        android:pathData="M9,6l6,6l-6,6"
-        android:strokeWidth="2"
-        android:strokeColor="#FFFFFFFF"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round" />
+        android:fillColor="#FFFFFFFF"
+        android:pathData="m 13.292 12 l -4.6 -4.6 l .708 -.708 L 14.708 12 L 9.4 17.308 l -.708 -.708 z" />
 </vector>

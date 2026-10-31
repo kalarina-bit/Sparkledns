@@ -1,14 +1,10 @@
+<!-- Material Symbols Light "policy" by Google, Apache License 2.0 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
-    android:viewportWidth="256"
-    android:viewportHeight="256">
-    <path
-        android:pathData="M128,38 L58,67 L58,120 C58,165 90,200 128,217 C166,200 198,165 198,120 L198,67 Z"
-        android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="11"
-        android:strokeLineJoin="round" />
+    android:viewportWidth="24"
+    android:viewportHeight="24">
     <path
         android:fillColor="#FFFFFFFF"
-        android:pathData="M127.5,86.0 L135.8,111.6 L162.7,111.6 L140.9,127.4 L149.2,152.9 L127.5,137.1 L105.8,152.9 L114.1,127.4 L92.3,111.6 L119.2,111.6 Z" />
+        android:pathData="M 12 20.962 q -3.014 -.895 -5.007 -3.651 T 5 11.1 V 5.692 l 7 -2.615 l 7 2.615 V 11.1 q 0 1.498 -.422 2.88 t -1.14 2.674 l -2.95 -2.95 q .237 -.379 .375 -.814 Q 15 12.454 15 12 q 0 -1.246 -.877 -2.123 T 12 9 t -2.123 .877 T 9 12 t .877 2.123 T 12 15 q .487 0 .941 -.147 q .455 -.147 .828 -.441 l 3.071 3.065 q -1.011 1.167 -2.18 2.11 T 12 20.962 M 12 14 q -.825 0 -1.412 -.587 T 10 12 t .588 -1.412 T 12 10 t 1.413 .588 T 14 12 t -.587 1.413 T 12 14" />
 </vector>
