@@ -72,7 +72,10 @@ object Blocklist {
 
     fun isBlocked(name: String): Boolean = _enabled.value && isBlockedIn(name, listHashes, customHashes)
 
-    fun reload(context: Context) = synchronized(lock) { load(BlocklistStore(context)) }
+    // Reads the saved lists unless something did already, such as the background update job
+    fun ensureLoaded(context: Context) {
+        synchronized(lock) { ensureLoaded(BlocklistStore(context)) }
+    }
 
     fun setEnabled(context: Context, value: Boolean) {
         BlocklistStore(context).enabled = value
@@ -329,8 +332,12 @@ private fun LongArray.sortUnique(): LongArray {
 }
 
 private class BlocklistStore(context: Context) {
-    private val dir = File(context.filesDir, "blocklist").apply { mkdirs() }
-    private val sp = context.getSharedPreferences("blocklist", Context.MODE_PRIVATE)
+    private val appContext = context.applicationContext
+
+    // Created on first use: switching blocking on or off, which happens on the main thread,
+    // touches only the settings
+    private val dir by lazy { File(appContext.filesDir, "blocklist").apply { mkdirs() } }
+    private val sp = appContext.getSharedPreferences("blocklist", Context.MODE_PRIVATE)
 
     var enabled: Boolean
         get() = sp.getBoolean("enabled", true)

@@ -51,6 +51,7 @@ import kotlinx.coroutines.flow.flowOf
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AppLogo.preload(this)
         enableEdgeToEdge()
         setContent {
             MaterialTheme(colorScheme = AppColors) { AppShell() }

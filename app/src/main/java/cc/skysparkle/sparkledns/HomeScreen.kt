@@ -131,8 +131,8 @@ fun HomeScreen(
     val shown = active ?: selected
     val usesHttp3 = shown.http3 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
 
-    val crashReport = remember { CrashLog.read(context) }
-    var crashVisible by remember { mutableStateOf(crashReport != null) }
+    val crashReport by CrashLog.report.collectAsStateWithLifecycle()
+    val shownReport = rememberLast(crashReport).orEmpty() // kept while the card animates out
     // Strict Private DNS makes Android ignore the VPN's DNS server; followed while Home is visible
     val privateDnsHost by remember { privateDnsHosts(context) }.collectAsStateWithLifecycle(initialValue = null)
 
@@ -262,22 +262,21 @@ fun HomeScreen(
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         Image(
-            painterResource(R.drawable.app_logo),
+            remember { AppLogo.get(context) },
             contentDescription = null,
             modifier = Modifier
                 .size(44.dp)
                 .align(Alignment.CenterHorizontally),
         )
 
-        AnimatedVisibility(visible = crashVisible, enter = Motion.expandIn, exit = Motion.collapseOut) {
-            val report = crashReport.orEmpty()
+        AnimatedVisibility(visible = crashReport != null, enter = Motion.expandIn, exit = Motion.collapseOut) {
             CrashCard(
-                report = report,
+                report = shownReport,
                 onCopy = {
                     context.getSystemService(ClipboardManager::class.java)
-                        .setPrimaryClip(ClipData.newPlainText("SparkleDNS crash", report))
+                        .setPrimaryClip(ClipData.newPlainText("SparkleDNS crash", shownReport))
                 },
-                onDismiss = { CrashLog.clear(context); crashVisible = false },
+                onDismiss = { CrashLog.clear(context) },
             )
         }
 

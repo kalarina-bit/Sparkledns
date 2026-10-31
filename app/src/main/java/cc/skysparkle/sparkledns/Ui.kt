@@ -1,5 +1,6 @@
 package cc.skysparkle.sparkledns
 
+import android.content.Context
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
@@ -32,6 +33,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -47,6 +50,28 @@ import java.util.Locale
 
 val CachedColor = Color(0xFF7FD1AE)
 val WarningColor = Color(0xFFFFB86B)
+
+// The 512 px logo, decoded once while the screens are in use. Home shows it each time the tab
+// opens, and decoding it there would cost the main thread a frame.
+object AppLogo {
+    @Volatile
+    private var bitmap: ImageBitmap? = null
+
+    // Started with the activity, so the first frame of Home usually finds the logo decoded
+    fun preload(context: Context) {
+        if (bitmap != null) return
+        val appContext = context.applicationContext
+        Thread({ runCatching { get(appContext) } }, "logo-load").start()
+    }
+
+    @Synchronized
+    fun get(context: Context): ImageBitmap =
+        bitmap ?: ImageBitmap.imageResource(context.resources, R.drawable.app_logo).also { bitmap = it }
+
+    fun clear() {
+        bitmap = null
+    }
+}
 
 // Icon on a soft circle of its own color
 @Composable
