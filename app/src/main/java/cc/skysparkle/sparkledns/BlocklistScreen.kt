@@ -100,8 +100,7 @@ fun BlocklistScreen(bottomPadding: Dp, onBack: () -> Unit, modifier: Modifier = 
     // Downloads live in Blocklist, so they keep running and stay visible when the page is closed
     val busy by Blocklist.busy.collectAsStateWithLifecycle()
     val error by Blocklist.error.collectAsStateWithLifecycle()
-    val lastError = remember { arrayOf("") } // kept while the card animates out
-    error?.let { lastError[0] = it }
+    val shownError = rememberLast(error).orEmpty()
 
     var search by rememberSaveable { mutableStateOf("") }
     var domainsOpen by rememberSaveable { mutableStateOf(false) }
@@ -167,7 +166,7 @@ fun BlocklistScreen(bottomPadding: Dp, onBack: () -> Unit, modifier: Modifier = 
             AnimatedVisibility(visible = error != null, enter = Motion.expandIn, exit = Motion.collapseOut) {
                 Box(Modifier.padding(top = 12.dp)) {
                     HintCard(
-                        stringResource(R.string.bl_download_failed, lastError[0]),
+                        stringResource(R.string.bl_download_failed, shownError),
                         icon = R.drawable.ic_alert,
                         tint = Palette.Blocked,
                     )
@@ -434,16 +433,7 @@ private fun BlocklistCard(
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
             )
-            if (onDelete != null) {
-                IconButton(onClick = onDelete) {
-                    Icon(
-                        painterResource(R.drawable.ic_delete),
-                        contentDescription = stringResource(R.string.delete),
-                        tint = Palette.Fg3,
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
-            }
+            if (onDelete != null) DeleteButton(onDelete)
             AppSwitch(checked = checked, onCheckedChange = onCheckedChange, enabled = switchEnabled)
         }
         Text(
@@ -551,7 +541,7 @@ private fun DomainRow(domain: String, shape: Shape, onDelete: () -> Unit, modifi
             .clip(shape)
             .background(Palette.Card)
     ) {
-        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = Palette.Line)
+        ListDivider()
         Row(
             modifier = Modifier.padding(start = 16.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -564,15 +554,20 @@ private fun DomainRow(domain: String, shape: Shape, onDelete: () -> Unit, modifi
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
             )
-            IconButton(onClick = onDelete) {
-                Icon(
-                    painterResource(R.drawable.ic_delete),
-                    contentDescription = stringResource(R.string.delete),
-                    tint = Palette.Fg3,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
+            DeleteButton(onDelete)
         }
+    }
+}
+
+@Composable
+private fun DeleteButton(onClick: () -> Unit) {
+    IconButton(onClick = onClick) {
+        Icon(
+            painterResource(R.drawable.ic_delete),
+            contentDescription = stringResource(R.string.delete),
+            tint = Palette.Fg3,
+            modifier = Modifier.size(20.dp),
+        )
     }
 }
 

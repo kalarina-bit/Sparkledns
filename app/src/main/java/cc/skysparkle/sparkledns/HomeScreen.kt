@@ -83,7 +83,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import kotlinx.coroutines.delay
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -137,16 +136,7 @@ fun HomeScreen(
     // Strict Private DNS makes Android ignore the VPN's DNS server; followed while Home is visible
     val privateDnsHost by remember { privateDnsHosts(context) }.collectAsStateWithLifecycle(initialValue = null)
 
-    // Set by a tap until the VPN state changes or the attempt gives up, so a double tap neither
-    // starts two connections nor switches the VPN back on right after turning it off
-    var busy by remember { mutableStateOf(false) }
-    LaunchedEffect(active) { busy = false }
-    LaunchedEffect(busy) {
-        if (busy) {
-            delay(BUSY_TIMEOUT_MS)
-            busy = false
-        }
-    }
+    var busy by rememberVpnBusy(active)
 
     val vpnPermission = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -430,8 +420,7 @@ private fun PowerToggle(on: Boolean, enabled: Boolean, onToggle: () -> Unit) {
 @Composable
 private fun PrivateDnsWarning(privateDnsHost: String?, prefs: Prefs) {
     val context = LocalContext.current
-    val lastHost = remember { arrayOf("") }
-    privateDnsHost?.let { lastHost[0] = it }
+    val shownHost = rememberLast(privateDnsHost).orEmpty()
     var dismissedHost by remember { mutableStateOf(prefs.dismissedPrivateDns) }
     AnimatedVisibility(
         visible = privateDnsHost != null && privateDnsHost != dismissedHost,
@@ -439,15 +428,15 @@ private fun PrivateDnsWarning(privateDnsHost: String?, prefs: Prefs) {
         exit = Motion.collapseOut,
     ) {
         HintCard(
-            text = stringResource(R.string.hint, lastHost[0]),
+            text = stringResource(R.string.hint, shownHost),
             icon = R.drawable.ic_alert,
             tint = WarningColor,
             action = {
                 TextButton(onClick = { openNetworkSettings(context) }) { Text(stringResource(R.string.open_settings)) }
             },
             onDismiss = {
-                dismissedHost = lastHost[0]
-                prefs.dismissedPrivateDns = lastHost[0]
+                dismissedHost = shownHost
+                prefs.dismissedPrivateDns = shownHost
             },
         )
     }

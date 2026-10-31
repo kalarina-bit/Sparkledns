@@ -26,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -107,6 +108,16 @@ fun HintCard(
             }
         }
     }
+}
+
+private class Last<T>(var value: T?)
+
+// The last non-null value, so a card can keep showing its text while it animates out
+@Composable
+fun <T : Any> rememberLast(value: T?): T? {
+    val last = remember { Last<T>(null) }
+    if (value != null) last.value = value
+    return last.value
 }
 
 // Runs [onChange] when the query log changes, at most once a second and only while the screen

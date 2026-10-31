@@ -28,7 +28,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,7 +50,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -85,14 +83,7 @@ fun SettingsScreen(
 
     // Picking a server never touches a live connection; switching is an explicit action
     val pendingSwitch = active?.let { it != selectedProvider && canConnect } == true
-    var busy by remember { mutableStateOf(false) }
-    LaunchedEffect(active) { busy = false }
-    LaunchedEffect(busy) {
-        if (busy) {
-            delay(BUSY_TIMEOUT_MS)
-            busy = false
-        }
-    }
+    var busy by rememberVpnBusy(active)
 
     fun select(id: String) {
         selected = id
@@ -203,9 +194,8 @@ fun SettingsScreen(
                 Text(stringResource(if (testing) R.string.testing else R.string.test), maxLines = 1)
             }
 
-            // Remembers the last name so the button keeps its label while it animates out
-            val lastSwitch = remember { arrayOf("") }
-            if (pendingSwitch) lastSwitch[0] = selectedProvider.displayName(context)
+            // The button keeps its label while it animates out
+            val switchName = rememberLast(if (pendingSwitch) selectedProvider.displayName(context) else null).orEmpty()
             AnimatedVisibility(visible = pendingSwitch, modifier = Modifier.weight(1f)) {
                 Button(
                     onClick = {
@@ -223,7 +213,7 @@ fun SettingsScreen(
                     Icon(painterResource(R.drawable.ic_swap), contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        stringResource(R.string.switch_to, lastSwitch[0]),
+                        stringResource(R.string.switch_to, switchName),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -296,26 +286,8 @@ private fun ServerRow(
             )
             Text(subtitle, color = Palette.Fg3, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        if (onDonate != null) {
-            IconButton(onClick = onDonate, modifier = Modifier.size(40.dp)) {
-                Icon(
-                    painterResource(R.drawable.ic_donate),
-                    contentDescription = stringResource(R.string.donate),
-                    tint = Palette.Fg3,
-                    modifier = Modifier.size(18.dp),
-                )
-            }
-        }
-        if (onPolicy != null) {
-            IconButton(onClick = onPolicy, modifier = Modifier.size(40.dp)) {
-                Icon(
-                    painterResource(R.drawable.ic_policy),
-                    contentDescription = stringResource(R.string.about_privacy_policy),
-                    tint = Palette.Fg3,
-                    modifier = Modifier.size(18.dp),
-                )
-            }
-        }
+        if (onDonate != null) LinkButton(R.drawable.ic_donate, stringResource(R.string.donate), onDonate)
+        if (onPolicy != null) LinkButton(R.drawable.ic_policy, stringResource(R.string.about_privacy_policy), onPolicy)
         Spacer(Modifier.width(4.dp))
         if (selected) {
             Icon(
@@ -328,6 +300,14 @@ private fun ServerRow(
             Spacer(Modifier.size(22.dp))
         }
         Spacer(Modifier.width(6.dp))
+    }
+}
+
+// Small button next to a server that opens one of its pages
+@Composable
+private fun LinkButton(@DrawableRes icon: Int, description: String, onClick: () -> Unit) {
+    IconButton(onClick = onClick, modifier = Modifier.size(40.dp)) {
+        Icon(painterResource(icon), contentDescription = description, tint = Palette.Fg3, modifier = Modifier.size(18.dp))
     }
 }
 

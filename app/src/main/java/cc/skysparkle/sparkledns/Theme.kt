@@ -126,7 +126,7 @@ fun AppSwitch(
 }
 
 @Composable
-fun appSwitchColors() = SwitchDefaults.colors(
+private fun appSwitchColors() = SwitchDefaults.colors(
     checkedThumbColor = Color.White,
     checkedTrackColor = Palette.Accent,
     checkedBorderColor = Palette.Accent,

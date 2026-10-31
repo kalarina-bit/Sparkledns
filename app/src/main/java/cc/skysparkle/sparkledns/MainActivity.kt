@@ -29,6 +29,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,6 +42,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -56,7 +61,22 @@ class MainActivity : ComponentActivity() {
 internal class TestResult(val ok: Boolean, val text: String)
 
 // How long a tap on Connect, Disconnect or Switch blocks further taps if the VPN state never changes
-internal const val BUSY_TIMEOUT_MS = 5000L
+private const val BUSY_TIMEOUT_MS = 5000L
+
+// Set by a tap until the VPN state changes or the attempt gives up, so a double tap neither
+// starts two connections nor switches the VPN back on right after turning it off
+@Composable
+internal fun rememberVpnBusy(active: DohProvider?): MutableState<Boolean> {
+    val busy = remember { mutableStateOf(false) }
+    LaunchedEffect(active) { busy.value = false }
+    LaunchedEffect(busy.value) {
+        if (busy.value) {
+            delay(BUSY_TIMEOUT_MS)
+            busy.value = false
+        }
+    }
+    return busy
+}
 
 // Keeps test results across rotation and process death
 internal val TestResultSaver = Saver<TestResult?, String>(
