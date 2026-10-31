@@ -25,6 +25,10 @@ object QueryLog {
     private var nextId = 0L
     private val version = MutableStateFlow(0L)
 
+    // The last snapshot, handed out again while the log has not changed
+    private var lastSnapshot: List<QueryEntry> = emptyList()
+    private var snapshotVersion = 0L
+
     // Fires right away, then at most once a second while queries keep coming: a busy log refreshes
     // the screen no more often than the old one-second polling did, and an idle one not at all
     fun changes(): Flow<Long> = version.transform {
@@ -45,9 +49,17 @@ object QueryLog {
     }
 
     // Newest first. Builds a real copy: on API 35+ List.reversed() resolves to a live JDK view,
-    // and on older devices that method does not exist at all
+    // and on older devices that method does not exist at all. While the log does not change the
+    // same list comes back, so a screen refreshed with it has nothing to update.
     @Synchronized
-    fun snapshot(): List<QueryEntry> = List(entries.size) { entries[entries.size - 1 - it] }
+    fun snapshot(): List<QueryEntry> {
+        val current = version.value
+        if (snapshotVersion != current) {
+            lastSnapshot = List(entries.size) { entries[entries.size - 1 - it] }
+            snapshotVersion = current
+        }
+        return lastSnapshot
+    }
 
     @Synchronized
     fun clear() {

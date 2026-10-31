@@ -35,12 +35,14 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.structuralEqualityPolicy
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -99,18 +101,23 @@ fun ActivityScreen(bottomPadding: Dp, modifier: Modifier = Modifier) {
     val statsVersion by StatsStore.version.collectAsStateWithLifecycle()
     LaunchedEffect(period, statsVersion) { summary = StatsStore.summary(period.hours) }
 
-    val visible = remember(entries, filter, search) {
-        val term = search.trim()
-        entries.filter { e ->
-            val matchesFilter = when (filter) {
-                ActivityFilter.ALL -> true
-                ActivityFilter.BLOCKED -> e.status == QueryStatus.BLOCKED
-                ActivityFilter.CACHED -> e.status == QueryStatus.CACHED
-                ActivityFilter.ERRORS -> e.status == QueryStatus.FAILED
+    // Filtered again only when the log, the filter or the search changes, and the list below is
+    // updated only when the result differs: new entries that the filter hides change nothing
+    val visible by remember {
+        derivedStateOf(structuralEqualityPolicy()) {
+            val term = search.trim()
+            entries.filter { e ->
+                val matchesFilter = when (filter) {
+                    ActivityFilter.ALL -> true
+                    ActivityFilter.BLOCKED -> e.status == QueryStatus.BLOCKED
+                    ActivityFilter.CACHED -> e.status == QueryStatus.CACHED
+                    ActivityFilter.ERRORS -> e.status == QueryStatus.FAILED
+                }
+                matchesFilter && (term.isEmpty() || e.domain.contains(term, ignoreCase = true))
             }
-            matchesFilter && (term.isEmpty() || e.domain.contains(term, ignoreCase = true))
         }
     }
+    val canClear by remember { derivedStateOf { entries.isNotEmpty() } }
 
     fun toggleBlock(domain: String, unblock: Boolean) {
         scope.launch {
@@ -144,7 +151,6 @@ fun ActivityScreen(bottomPadding: Dp, modifier: Modifier = Modifier) {
 
     val wide = windowWidth() >= WideLayoutWidth
     val side = sidePadding(windowWidth(), if (wide) MaxWideContentWidth else MaxContentWidth)
-    val canClear = entries.isNotEmpty()
     val clear = {
         QueryLog.clear()
         entries = emptyList()
