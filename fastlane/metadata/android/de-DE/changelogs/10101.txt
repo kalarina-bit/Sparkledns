@@ -1,2 +1,6 @@
-• Neue gefüllte Symbole in der ganzen App (Material Symbols)
-• Symbole in Menüs, Einstellungen und auf Schaltflächen
+• Neue gefüllte Symbole (Material Symbols)
+• Balkendiagramm für 24 Stunden oder 7 Tage, höher auf großen Bildschirmen
+• Tablets: Inhalt mittig, auf breiten Bildschirmen zweispaltig
+• Anteile der Konzerne erscheinen, sobald genug Daten da sind
+• HaGeZi Pro direkt auf dem Startbildschirm einschalten
+• Tippe auf den Server, um ihn zu wechseln

@@ -96,14 +96,12 @@
     <string name="period_24h">24 часа</string>
     <string name="period_7d">7 дней</string>
     <string name="home_lists_info">Включено списков: %1$d · правил: %2$s</string>
-    <string name="blocking_off">Блокировка выключена</string>
     <string name="blocklist_title">Блок-листы DNS</string>
     <string name="tab_activity">Активность</string>
     <string name="tab_settings">Настройки</string>
     <string name="companies_title">Доля компаний</string>
     <string name="companies_desc">Какая часть ваших запросов уходит крупнейшим компаниям.</string>
     <string name="companies_other">Другие</string>
-    <string name="no_data">Данных пока нет</string>
     <string name="recent_title">Последние запросы</string>
     <string name="filter">Фильтр</string>
     <string name="bl_search">Поиск списков</string>
@@ -126,4 +124,11 @@
     <string name="settings_general">Общие</string>
     <string name="settings_apps">Приложения без SparkleDNS</string>
     <string name="settings_apps_desc">Выбранные приложения используют обычный DNS сети</string>
+    <string name="chart_empty">Данных пока нет. После подключения график будет заполняться по часам.</string>
+    <string name="companies_wait">Собираем данные: %1$d из %2$d запросов</string>
+    <string name="blocklist_cta_lists">Ни один список не включён. Включите HaGeZi Pro, чтобы блокировать рекламу и трекеры.</string>
+    <string name="blocklist_cta_master">Блокировка выключена. Включите её, чтобы фильтровать рекламу и трекеры.</string>
+    <string name="turn_on">Включить</string>
+    <string name="downloading">Загрузка…</string>
+    <string name="change_server">Сменить сервер</string>
 </resources>

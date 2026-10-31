@@ -96,14 +96,12 @@
     <string name="period_24h">24 valandos</string>
     <string name="period_7d">7 dienos</string>
     <string name="home_lists_info">Įjungta sąrašų: %1$d · taisyklių: %2$s</string>
-    <string name="blocking_off">Blokavimas išjungtas</string>
     <string name="blocklist_title">DNS blokavimo sąrašai</string>
     <string name="tab_activity">Veikla</string>
     <string name="tab_settings">Nustatymai</string>
     <string name="companies_title">Įmonių dalis</string>
     <string name="companies_desc">Kokia jūsų užklausų dalis tenka didžiausioms įmonėms.</string>
     <string name="companies_other">Kitos</string>
-    <string name="no_data">Duomenų dar nėra</string>
     <string name="recent_title">Naujausios užklausos</string>
     <string name="filter">Filtras</string>
     <string name="bl_search">Ieškoti sąrašų</string>
@@ -126,4 +124,11 @@
     <string name="settings_general">Bendrieji</string>
     <string name="settings_apps">Programėlės be SparkleDNS</string>
     <string name="settings_apps_desc">Pasirinktos programėlės naudoja įprastą tinklo DNS</string>
+    <string name="chart_empty">Duomenų dar nėra. Prisijungus grafikas pildysis kas valandą.</string>
+    <string name="companies_wait">Renkami duomenys: %1$d iš %2$d užklausų</string>
+    <string name="blocklist_cta_lists">Neįjungtas nė vienas sąrašas. Įjunkite HaGeZi Pro, kad blokuotumėte reklamas ir sekiklius.</string>
+    <string name="blocklist_cta_master">Blokavimas išjungtas. Įjunkite jį, kad filtruotumėte reklamas ir sekiklius.</string>
+    <string name="turn_on">Įjungti</string>
+    <string name="downloading">Atsisiunčiama…</string>
+    <string name="change_server">Keisti serverį</string>
 </resources>

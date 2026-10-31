@@ -75,8 +75,11 @@ private class Preset(val name: String, val url: String, @StringRes val descripti
 
 private const val HAGEZI_HOME = "https://github.com/hagezi/dns-blocklists"
 
+// Offered on Home when no list is switched on
+internal const val HAGEZI_PRO_URL = "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.txt"
+
 private val Presets = listOf(
-    Preset("HaGeZi Pro", "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.txt", R.string.preset_pro_desc),
+    Preset("HaGeZi Pro", HAGEZI_PRO_URL, R.string.preset_pro_desc),
     Preset("HaGeZi Pro++", "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.plus.txt", R.string.preset_proplus_desc),
     Preset("HaGeZi TIF", "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/tif.txt", R.string.preset_tif_desc),
 )
@@ -89,6 +92,7 @@ fun BlocklistScreen(bottomPadding: Dp, onBack: () -> Unit, modifier: Modifier = 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val prefs = remember { Prefs(context) }
+    val side = sidePadding(windowWidth())
 
     val enabled by Blocklist.enabled.collectAsStateWithLifecycle()
     val custom by Blocklist.custom.collectAsStateWithLifecycle()
@@ -129,7 +133,7 @@ fun BlocklistScreen(bottomPadding: Dp, onBack: () -> Unit, modifier: Modifier = 
 
     LazyColumn(
         modifier = modifier,
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = bottomPadding),
+        contentPadding = PaddingValues(start = side, end = side, bottom = bottomPadding),
     ) {
         item(key = "header") {
             PageHeader(

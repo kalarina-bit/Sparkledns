@@ -1,6 +1,7 @@
 package cc.skysparkle.sparkledns
 
 import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -8,6 +9,8 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -44,6 +47,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
@@ -268,5 +272,29 @@ fun EmptyState(icon: Int, text: String) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
+    }
+}
+
+enum class StatsPeriod(val hours: Int, @StringRes val label: Int) {
+    DAY(24, R.string.period_24h),
+    WEEK(24 * 7, R.string.period_7d),
+}
+
+// Switches between the last 24 hours and the last 7 days
+@Composable
+fun PeriodChip(period: StatsPeriod, onChange: (StatsPeriod) -> Unit) {
+    val shape = RoundedCornerShape(18.dp)
+    Row(
+        modifier = Modifier
+            .clip(shape)
+            .border(1.dp, Palette.Track, shape)
+            .clickable { onChange(if (period == StatsPeriod.DAY) StatsPeriod.WEEK else StatsPeriod.DAY) }
+            .heightIn(min = 36.dp)
+            .padding(start = 14.dp, end = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(stringResource(period.label), color = Palette.Fg, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.width(4.dp))
+        Icon(painterResource(R.drawable.ic_expand), contentDescription = null, tint = Palette.Fg2, modifier = Modifier.size(16.dp))
     }
 }

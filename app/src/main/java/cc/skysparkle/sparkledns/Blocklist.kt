@@ -66,6 +66,10 @@ object Blocklist {
     private var customHashes = LongArray(0)
     private var loaded = false
 
+    // False until the saved lists have been read at start-up
+    private val _ready = MutableStateFlow(false)
+    val ready: StateFlow<Boolean> = _ready
+
     fun isBlocked(name: String): Boolean = _enabled.value && isBlockedIn(name, listHashes, customHashes)
 
     fun reload(context: Context) = synchronized(lock) { load(BlocklistStore(context)) }
@@ -212,6 +216,7 @@ object Blocklist {
         customHashes = LongArray(custom.size) { DomainHash.of(custom[it]) }.sortUnique()
         reloadListHashes(store)
         loaded = true
+        _ready.value = true
     }
 
     private fun reloadListHashes(store: BlocklistStore) {

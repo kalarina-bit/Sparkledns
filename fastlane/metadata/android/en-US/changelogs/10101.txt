@@ -1,2 +1,6 @@
-• New filled icons throughout the app (Material Symbols)
-• Icons in menus, Settings and on buttons
+• New filled icons (Material Symbols)
+• Bar chart for 24 hours or 7 days, taller on big screens
+• Tablets: content stays centred, two columns on wide screens
+• Company shares appear once there is enough data
+• Turn on HaGeZi Pro right from Home
+• Tap the server on Home to change it

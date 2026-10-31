@@ -101,6 +101,7 @@ fun AppShell() {
                 Screen.HOME -> HomeScreen(
                     bottomPadding = tabBottom,
                     onOpenBlocklist = { page = Screen.BLOCKLIST },
+                    onOpenServers = { tab = Screen.SETTINGS },
                     modifier = modifier,
                 )
                 Screen.ACTIVITY -> ActivityScreen(bottomPadding = tabBottom, modifier = modifier)

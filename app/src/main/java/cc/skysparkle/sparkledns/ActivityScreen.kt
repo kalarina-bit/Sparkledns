@@ -7,7 +7,6 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,15 +14,18 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
@@ -32,12 +34,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,23 +54,18 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private enum class ActivityFilter(@StringRes val label: Int) {
     ALL(R.string.mon_all),
     BLOCKED(R.string.status_blocked),
     CACHED(R.string.status_cached),
     ERRORS(R.string.mon_errors),
-}
-
-private enum class Period(val hours: Int, @StringRes val label: Int) {
-    DAY(24, R.string.period_24h),
-    WEEK(24 * 7, R.string.period_7d),
 }
 
 private val TimeFormat = SimpleDateFormat("HH:mm:ss", Locale.ROOT)
@@ -88,12 +83,11 @@ fun ActivityScreen(bottomPadding: Dp, modifier: Modifier = Modifier) {
     val custom by Blocklist.custom.collectAsStateWithLifecycle()
     val customSet = remember(custom) { custom.toHashSet() }
 
-    var period by rememberSaveable { mutableStateOf(Period.DAY) }
+    var period by rememberSaveable { mutableStateOf(StatsPeriod.DAY) }
     var entries by remember { mutableStateOf(QueryLog.snapshot()) }
     var summary by remember { mutableStateOf(StatsStore.summary(period.hours)) }
     var filter by rememberSaveable { mutableStateOf(ActivityFilter.ALL) }
     var search by rememberSaveable { mutableStateOf("") }
-    var filterMenu by remember { mutableStateOf(false) }
 
     OnQueryLogChange {
         entries = QueryLog.snapshot()
@@ -145,112 +139,28 @@ fun ActivityScreen(bottomPadding: Dp, modifier: Modifier = Modifier) {
             .setPrimaryClip(ClipData.newPlainText("domain", domain))
     }
 
-    LazyColumn(
-        modifier = modifier,
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = bottomPadding),
-    ) {
-        item(key = "header") {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 44.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                ScreenTitle(stringResource(R.string.tab_activity), Modifier.weight(1f))
-                PeriodChip(stringResource(period.label)) {
-                    period = if (period == Period.DAY) Period.WEEK else Period.DAY
-                }
-            }
-        }
+    val wide = windowWidth() >= WideLayoutWidth
+    val side = sidePadding(windowWidth(), if (wide) MaxWideContentWidth else MaxContentWidth)
+    val canClear = entries.isNotEmpty()
+    val clear = {
+        QueryLog.clear()
+        entries = emptyList()
+    }
 
-        item(key = "stats") {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 20.dp, start = 4.dp, end = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                StatBlock(formatCompact(summary.total), stringResource(R.string.stat_requests), Modifier.weight(1f))
-                StatBlock(formatCompact(summary.blocked), stringResource(R.string.mon_blocked), Modifier.weight(1f))
-                StatBlock(stringResource(R.string.mon_ms, summary.avgLatencyMs), stringResource(R.string.stat_avg), Modifier.weight(1f))
-                val cache = if (summary.total == 0L) 0 else summary.cached * 100 / summary.total
-                StatBlock("$cache%", stringResource(R.string.mon_cached), Modifier.weight(1f))
-            }
-        }
-
-        item(key = "companies") {
-            CompanyCard(summary, Modifier.padding(top = 20.dp))
-        }
-
+    // The log rows, shared by the one- and two-column layouts
+    val log: LazyListScope.() -> Unit = {
         item(key = "recent") {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 24.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    stringResource(R.string.recent_title),
-                    color = Palette.Fg,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    modifier = Modifier.weight(1f),
-                )
-                IconButton(
-                    onClick = {
-                        QueryLog.clear()
-                        entries = emptyList()
-                    },
-                    enabled = entries.isNotEmpty(),
-                ) {
-                    Icon(
-                        painterResource(R.drawable.ic_delete_sweep),
-                        contentDescription = stringResource(R.string.mon_clear),
-                        tint = Palette.Fg2,
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
-            }
+            RecentHeader(canClear, clear, Modifier.padding(top = if (wide) 0.dp else 24.dp))
         }
-
         item(key = "search") {
-            SearchField(
-                value = search,
-                onValueChange = { search = it },
-                placeholder = stringResource(R.string.mon_search),
+            LogSearch(
+                search = search,
+                onSearch = { search = it },
+                filter = filter,
+                onFilter = { filter = it },
                 modifier = Modifier.padding(top = 6.dp, bottom = 4.dp),
-                trailing = {
-                    Box {
-                        IconButton(onClick = { filterMenu = true }) {
-                            Icon(
-                                painterResource(R.drawable.ic_filter),
-                                contentDescription = stringResource(R.string.filter),
-                                tint = if (filter == ActivityFilter.ALL) Palette.Fg2 else Palette.Accent,
-                                modifier = Modifier.size(18.dp),
-                            )
-                        }
-                        DropdownMenu(expanded = filterMenu, onDismissRequest = { filterMenu = false }) {
-                            ActivityFilter.entries.forEach { option ->
-                                DropdownMenuItem(
-                                    text = {
-                                        Text(
-                                            stringResource(option.label),
-                                            color = if (option == filter) Palette.Accent else Palette.Fg,
-                                            fontWeight = if (option == filter) FontWeight.Bold else FontWeight.Normal,
-                                        )
-                                    },
-                                    onClick = {
-                                        filter = option
-                                        filterMenu = false
-                                    },
-                                )
-                            }
-                        }
-                    }
-                },
             )
         }
-
         if (visible.isEmpty()) {
             item(key = "empty") {
                 EmptyState(
@@ -259,7 +169,6 @@ fun ActivityScreen(bottomPadding: Dp, modifier: Modifier = Modifier) {
                 )
             }
         }
-
         itemsIndexed(visible, key = { _, entry -> entry.id }, contentType = { _, _ -> "query" }) { index, entry ->
             val blockedByMe = entry.domain in customSet
             QueryRow(
@@ -273,23 +182,147 @@ fun ActivityScreen(bottomPadding: Dp, modifier: Modifier = Modifier) {
             )
         }
     }
+
+    if (wide) {
+        Row(
+            modifier = modifier.padding(horizontal = side),
+            horizontalArrangement = Arrangement.spacedBy(24.dp),
+        ) {
+            Column(
+                Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .verticalScroll(rememberScrollState())
+                    .padding(top = 16.dp, bottom = bottomPadding),
+            ) {
+                ActivityHeader(period) { period = it }
+                ActivityStats(summary, Modifier.padding(top = 20.dp))
+                CompanyCard(summary, Modifier.padding(top = 20.dp))
+            }
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
+                contentPadding = PaddingValues(top = 16.dp, bottom = bottomPadding),
+                content = log,
+            )
+        }
+    } else {
+        LazyColumn(
+            modifier = modifier,
+            contentPadding = PaddingValues(start = side, end = side, top = 16.dp, bottom = bottomPadding),
+        ) {
+            item(key = "header") { ActivityHeader(period) { period = it } }
+            item(key = "stats") { ActivityStats(summary, Modifier.padding(top = 20.dp)) }
+            item(key = "companies") { CompanyCard(summary, Modifier.padding(top = 20.dp)) }
+            log()
+        }
+    }
 }
 
 @Composable
-private fun PeriodChip(text: String, onClick: () -> Unit) {
+private fun ActivityHeader(period: StatsPeriod, onPeriod: (StatsPeriod) -> Unit) {
     Row(
         modifier = Modifier
-            .clip(RoundedCornerShape(18.dp))
-            .border(1.dp, Palette.Track, RoundedCornerShape(18.dp))
-            .clickable(onClick = onClick)
-            .padding(start = 14.dp, end = 10.dp, top = 8.dp, bottom = 8.dp),
+            .fillMaxWidth()
+            .heightIn(min = 44.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text, color = Palette.Fg, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.width(4.dp))
-        Icon(painterResource(R.drawable.ic_expand), contentDescription = null, tint = Palette.Fg2, modifier = Modifier.size(14.dp))
+        ScreenTitle(stringResource(R.string.tab_activity), Modifier.weight(1f))
+        PeriodChip(period, onPeriod)
     }
 }
+
+@Composable
+private fun ActivityStats(summary: StatsSummary, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        StatBlock(formatCompact(summary.total), stringResource(R.string.stat_requests), Modifier.weight(1f))
+        StatBlock(formatCompact(summary.blocked), stringResource(R.string.mon_blocked), Modifier.weight(1f))
+        StatBlock(stringResource(R.string.mon_ms, summary.avgLatencyMs), stringResource(R.string.stat_avg), Modifier.weight(1f))
+        val cache = if (summary.total == 0L) 0 else summary.cached * 100 / summary.total
+        StatBlock("$cache%", stringResource(R.string.mon_cached), Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun RecentHeader(canClear: Boolean, onClear: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = 44.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            stringResource(R.string.recent_title),
+            color = Palette.Fg,
+            fontSize = 17.sp,
+            fontWeight = FontWeight.ExtraBold,
+            modifier = Modifier.weight(1f),
+        )
+        IconButton(onClick = onClear, enabled = canClear) {
+            Icon(
+                painterResource(R.drawable.ic_delete_sweep),
+                contentDescription = stringResource(R.string.mon_clear),
+                tint = Palette.Fg2,
+                modifier = Modifier.size(20.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun LogSearch(
+    search: String,
+    onSearch: (String) -> Unit,
+    filter: ActivityFilter,
+    onFilter: (ActivityFilter) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var menu by remember { mutableStateOf(false) }
+    SearchField(
+        value = search,
+        onValueChange = onSearch,
+        placeholder = stringResource(R.string.mon_search),
+        modifier = modifier,
+        trailing = {
+            Box {
+                IconButton(onClick = { menu = true }) {
+                    Icon(
+                        painterResource(R.drawable.ic_filter),
+                        contentDescription = stringResource(R.string.filter),
+                        tint = if (filter == ActivityFilter.ALL) Palette.Fg2 else Palette.Accent,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+                DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                    ActivityFilter.entries.forEach { option ->
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    stringResource(option.label),
+                                    color = if (option == filter) Palette.Accent else Palette.Fg,
+                                    fontWeight = if (option == filter) FontWeight.Bold else FontWeight.Normal,
+                                )
+                            },
+                            onClick = {
+                                onFilter(option)
+                                menu = false
+                            },
+                        )
+                    }
+                }
+            }
+        },
+    )
+}
+
+// Below this many requests the shares say more about chance than about habits
+private const val MIN_COMPANY_REQUESTS = 50L
 
 @Composable
 private fun CompanyCard(summary: StatsSummary, modifier: Modifier = Modifier) {
@@ -305,12 +338,19 @@ private fun CompanyCard(summary: StatsSummary, modifier: Modifier = Modifier) {
         Text(stringResource(R.string.companies_title), color = Palette.Fg, fontSize = 15.sp, fontWeight = FontWeight.Bold)
         Text(stringResource(R.string.companies_desc), color = Palette.Fg2, fontSize = 12.sp, lineHeight = 17.sp)
         Spacer(Modifier.size(10.dp))
-        if (summary.total == 0L) {
+        if (summary.total < MIN_COMPANY_REQUESTS) {
             Text(
-                stringResource(R.string.no_data),
+                stringResource(R.string.companies_wait, summary.total, MIN_COMPANY_REQUESTS),
                 color = Palette.Fg3,
                 fontSize = 13.sp,
-                modifier = Modifier.padding(vertical = 12.dp),
+            )
+            LinearProgressIndicator(
+                progress = { summary.total.toFloat() / MIN_COMPANY_REQUESTS },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp, bottom = 4.dp),
+                color = Palette.Accent,
+                trackColor = Palette.Track,
             )
         } else {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -334,12 +374,7 @@ private fun CompanyCard(summary: StatsSummary, modifier: Modifier = Modifier) {
                                 overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.weight(1f),
                             )
-                            Text(
-                                String.format(Locale.getDefault(), "%.1f%%", slice.share * 100f),
-                                color = Palette.Fg,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                            )
+                            Text(percentLabel(slice.share), color = Palette.Fg, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -348,7 +383,13 @@ private fun CompanyCard(summary: StatsSummary, modifier: Modifier = Modifier) {
     }
 }
 
-// The four companies with most requests, then everything else
+// Whole percents; a sliver above zero shows as "<1%" rather than "0%"
+private fun percentLabel(share: Float): String {
+    val percent = share * 100f
+    return if (percent < 1f) "<1%" else "${Math.round(percent)}%"
+}
+
+// The four companies with most requests, then everything else; empty slices are left out
 private fun companySlices(summary: StatsSummary, otherLabel: String): List<Slice> {
     if (summary.total == 0L) return emptyList()
     val top = Company.entries
@@ -360,7 +401,7 @@ private fun companySlices(summary: StatsSummary, otherLabel: String): List<Slice
         Slice(company.label, count.toFloat() / summary.total, SliceColors[index])
     }
     val rest = (1f - slices.sumOf { it.share.toDouble() }.toFloat()).coerceAtLeast(0f)
-    return slices + Slice(otherLabel, rest, OtherColor)
+    return if (rest >= 0.005f) slices + Slice(otherLabel, rest, OtherColor) else slices
 }
 
 @Composable

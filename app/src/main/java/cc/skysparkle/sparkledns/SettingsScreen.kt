@@ -66,6 +66,7 @@ fun SettingsScreen(
     val context = LocalContext.current
     val prefs = remember { Prefs(context) }
     val scope = rememberCoroutineScope()
+    val side = sidePadding(windowWidth())
     val active by DohVpnService.active.collectAsStateWithLifecycle()
 
     var selected by remember { mutableStateOf(prefs.providerId) }
@@ -114,7 +115,7 @@ fun SettingsScreen(
     Column(
         modifier = modifier
             .verticalScroll(rememberScrollState())
-            .padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = bottomPadding),
+            .padding(start = side, end = side, top = 16.dp, bottom = bottomPadding),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         ScreenTitle(stringResource(R.string.tab_settings), Modifier.heightIn(min = 44.dp))

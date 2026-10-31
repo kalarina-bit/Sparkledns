@@ -96,14 +96,12 @@
     <string name="period_24h">24 時間</string>
     <string name="period_7d">7 日間</string>
     <string name="home_lists_info">有効なリスト: %1$d · ルール: %2$s</string>
-    <string name="blocking_off">ブロックはオフです</string>
     <string name="blocklist_title">DNS ブロックリスト</string>
     <string name="tab_activity">アクティビティ</string>
     <string name="tab_settings">設定</string>
     <string name="companies_title">企業の占有率</string>
     <string name="companies_desc">リクエストのうち大手企業に送られる割合です。</string>
     <string name="companies_other">その他</string>
-    <string name="no_data">まだデータがありません</string>
     <string name="recent_title">最近のアクティビティ</string>
     <string name="filter">フィルター</string>
     <string name="bl_search">リストを検索</string>
@@ -126,4 +124,11 @@
     <string name="settings_general">一般</string>
     <string name="settings_apps">SparkleDNS を使わないアプリ</string>
     <string name="settings_apps_desc">選んだアプリはネットワークの通常の DNS を使います</string>
+    <string name="chart_empty">まだデータがありません。接続すると 1 時間ごとにグラフが埋まっていきます。</string>
+    <string name="companies_wait">データ収集中: %2$d 件中 %1$d 件</string>
+    <string name="blocklist_cta_lists">有効なリストがありません。HaGeZi Pro をオンにして広告とトラッカーをブロックしましょう。</string>
+    <string name="blocklist_cta_master">ブロックはオフです。オンにすると広告とトラッカーをフィルタリングします。</string>
+    <string name="turn_on">オンにする</string>
+    <string name="downloading">ダウンロード中…</string>
+    <string name="change_server">サーバーを変更</string>
 </resources>
