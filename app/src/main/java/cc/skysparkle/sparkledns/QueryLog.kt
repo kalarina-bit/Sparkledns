@@ -16,14 +16,6 @@ class QueryEntry(
     val latencyMs: Int,
 )
 
-data class QueryStats(
-    val total: Long,
-    val cached: Long,
-    val blocked: Long,
-    val failed: Long,
-    val avgLatencyMs: Int,
-)
-
 // In-memory only: nothing is written to disk or sent anywhere. StatsStore keeps hourly
 // numbers without domains for the charts.
 object QueryLog {
@@ -31,12 +23,6 @@ object QueryLog {
 
     private val entries = ArrayDeque<QueryEntry>()
     private var nextId = 0L
-    private var total = 0L
-    private var cached = 0L
-    private var blocked = 0L
-    private var failed = 0L
-    private var latencySum = 0L
-    private var latencyCount = 0L
     private val version = MutableStateFlow(0L)
 
     // Fires right away, then at most once a second while queries keep coming: a busy log refreshes
@@ -53,13 +39,6 @@ object QueryLog {
             entries.addLast(
                 QueryEntry(nextId++, System.currentTimeMillis(), question.name.ifEmpty { "." }, question.type, status, latencyMs)
             )
-            total++
-            when (status) {
-                QueryStatus.OK -> { latencySum += latencyMs; latencyCount++ }
-                QueryStatus.CACHED -> cached++
-                QueryStatus.BLOCKED -> blocked++
-                QueryStatus.FAILED -> failed++
-            }
             version.value++
         }
         // Hourly numbers for the charts; outside the lock above, as it takes a lock of its own
@@ -72,18 +51,8 @@ object QueryLog {
     fun snapshot(): List<QueryEntry> = List(entries.size) { entries[entries.size - 1 - it] }
 
     @Synchronized
-    fun stats() = QueryStats(
-        total = total,
-        cached = cached,
-        blocked = blocked,
-        failed = failed,
-        avgLatencyMs = if (latencyCount == 0L) 0 else (latencySum / latencyCount).toInt(),
-    )
-
-    @Synchronized
     fun clear() {
         entries.clear()
-        total = 0; cached = 0; blocked = 0; failed = 0; latencySum = 0; latencyCount = 0
         version.value++
     }
 }

@@ -2,12 +2,6 @@ package cc.skysparkle.sparkledns
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -32,10 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,7 +35,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -69,52 +59,6 @@ fun IconBadge(@DrawableRes icon: Int, tint: Color = MaterialTheme.colorScheme.pr
     ) {
         Icon(painterResource(icon), contentDescription = null, tint = tint, modifier = Modifier.size(size * 0.5f))
     }
-}
-
-@Composable
-fun SectionHeader(
-    title: String,
-    @DrawableRes icon: Int? = null,
-    modifier: Modifier = Modifier,
-    action: (@Composable () -> Unit)? = null,
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = 40.dp)
-            .padding(top = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (icon != null) {
-            Icon(
-                painterResource(icon),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(18.dp),
-            )
-            Spacer(Modifier.width(8.dp))
-        }
-        Text(
-            title,
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f),
-        )
-        action?.invoke()
-    }
-}
-
-@Composable
-fun Pill(text: String, color: Color) {
-    Text(
-        text,
-        style = MaterialTheme.typography.labelMedium,
-        color = color,
-        modifier = Modifier
-            .clip(RoundedCornerShape(50))
-            .background(color.copy(alpha = 0.14f))
-            .padding(horizontal = 10.dp, vertical = 3.dp),
-    )
 }
 
 @Composable
@@ -165,41 +109,6 @@ fun HintCard(
     }
 }
 
-@Composable
-fun StatColumn(value: String, label: String, modifier: Modifier = Modifier) {
-    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        // Numbers roll up when they change
-        AnimatedContent(
-            targetState = value,
-            transitionSpec = {
-                (slideInVertically(Motion.slide) { it / 2 } + fadeIn(Motion.enterFade)) togetherWith
-                    (slideOutVertically(Motion.slide) { -it / 2 } + fadeOut(Motion.exitFade)) using
-                    Motion.sizeTransform()
-            },
-            label = "stat",
-        ) { shown ->
-            Text(shown, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, maxLines = 1)
-        }
-        Text(
-            label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
-}
-
-@Composable
-fun StatDivider() {
-    Box(
-        Modifier
-            .size(width = 1.dp, height = 32.dp)
-            .background(MaterialTheme.colorScheme.outlineVariant)
-    )
-}
-
 // Runs [onChange] when the query log changes, at most once a second and only while the screen
 // is started: nothing runs while the app sits in the background
 @Composable
@@ -213,13 +122,6 @@ fun OnQueryLogChange(onChange: () -> Unit) {
     }
 }
 
-@Composable
-fun rememberLiveStats(): QueryStats {
-    var stats by remember { mutableStateOf(QueryLog.stats()) }
-    OnQueryLogChange { stats = QueryLog.stats() }
-    return stats
-}
-
 // Called from composition only, i.e. on the main thread; rebuilt when the locale changes
 private var countFormat: Pair<Locale, NumberFormat>? = null
 
@@ -229,9 +131,6 @@ fun formatCount(value: Long): String {
         ?: NumberFormat.getIntegerInstance(locale).also { countFormat = locale to it }
     return format.format(value)
 }
-
-fun cachePercent(stats: QueryStats): String =
-    "${if (stats.total == 0L) 0 else stats.cached * 100 / stats.total}%"
 
 // Rows of one visual group share a background; only the outer corners are rounded
 fun groupedShape(first: Boolean, last: Boolean, radius: Dp = 16.dp) = RoundedCornerShape(
