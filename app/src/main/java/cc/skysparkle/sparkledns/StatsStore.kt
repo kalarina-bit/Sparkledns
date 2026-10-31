@@ -46,7 +46,7 @@ object StatsStore {
     private val counters = Array(HOURS) { LongArray(FIELDS) }
     private var file: File? = null
 
-    // Bumped when the numbers change without a new query: loaded from disk or cleared
+    // Bumped when the numbers change without a new query: loaded from disk
     private val _version = MutableStateFlow(0)
     val version: StateFlow<Int> = _version
     private var lastSave = 0L
@@ -119,18 +119,6 @@ object StatsStore {
             val index = slot(id)
             if (hourIds[index] == id) HourPoint(counters[index][TOTAL], counters[index][BLOCKED]) else HourPoint(0, 0)
         }
-    }
-
-    fun clear() {
-        val snapshot = synchronized(this) {
-            hourIds.fill(-1L)
-            counters.forEach { it.fill(0L) }
-            dirty = false
-            lastSave = System.currentTimeMillis()
-            if (file != null) encode() else null
-        }
-        snapshot?.let(::save)
-        _version.value++
     }
 
     // Saves what is not on disk yet; called when the VPN stops

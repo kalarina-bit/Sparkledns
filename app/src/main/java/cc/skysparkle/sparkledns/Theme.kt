@@ -48,7 +48,6 @@ object Palette {
     val CardHigh = Color(0xFF1E2026)
     val Line = Color(0xFF24262C)
     val Track = Color(0xFF3A3C44)
-    val Muted = Color(0xFF5B5F6B)
     val Fg = Color(0xFFF2F3F5)
     val Fg2 = Color(0xFF9A9DA6)
     val Fg3 = Color(0xFF7E828C)
