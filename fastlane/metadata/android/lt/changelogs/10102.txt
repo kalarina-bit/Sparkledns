@@ -1,0 +1,4 @@
+• Greičiau ir taupiau: tunelis nebežadina telefono, kai jis nenaudojamas, programa greičiau pasileidžia, ekranai rečiau perpiešiami
+• Mažesnė programa
+• Paramos ir privatumo politikos piktogramos prie serverių geriau matomos
+• Blokavimo sąrašus iš senesnių nei 1.1.0 versijų gali tekti pridėti iš naujo
