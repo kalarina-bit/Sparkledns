@@ -21,8 +21,6 @@ class SparkleApp : Application() {
             Prefs(this).providerId
             CrashLog.load(this)
             StatsStore.init(this)
-            // Older versions cached a server list downloaded from the repository
-            File(filesDir, "servers.txt").delete()
             AutoUpdate.apply(this)
             // Lists can hold millions of entries; loading them should not take CPU from the first frames
             Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND)

@@ -377,7 +377,6 @@ private class BlocklistStore(context: Context) {
 
     fun loadListHashes(url: String): LongArray {
         val file = binFile(url)
-        if (!file.exists()) migrateText(url)?.let { return it }
         if (!file.exists()) return LongArray(0)
         return runCatching {
             FileInputStream(file).use { stream ->
@@ -391,7 +390,6 @@ private class BlocklistStore(context: Context) {
 
     fun deleteListFile(url: String) {
         binFile(url).delete()
-        textFile(url).delete()
         sp.edit().remove(etagKey(url)).remove(modifiedKey(url)).apply()
     }
 
@@ -440,16 +438,6 @@ private class BlocklistStore(context: Context) {
         }
     }
 
-    // Lists saved by older versions as plain text are converted once
-    private fun migrateText(url: String): LongArray? {
-        val text = textFile(url)
-        if (!text.exists()) return null
-        val result = text.readLines().map { DomainHash.of(it) }.toLongArray().sortUnique()
-        runCatching { write(url, result) }
-        text.delete()
-        return result
-    }
-
     private fun etagKey(url: String) = "etag_${hash(url)}"
     private fun modifiedKey(url: String) = "modified_${hash(url)}"
 
@@ -457,7 +445,6 @@ private class BlocklistStore(context: Context) {
         if (value == null) remove(key) else putString(key, value)
 
     private fun binFile(url: String) = File(dir, "list_${hash(url)}.bin")
-    private fun textFile(url: String) = File(dir, "list_${hash(url)}.txt")
 
     private fun hash(url: String) = MessageDigest.getInstance("SHA-256").digest(url.toByteArray())
         .take(8).joinToString("") { "%02x".format(it) }
