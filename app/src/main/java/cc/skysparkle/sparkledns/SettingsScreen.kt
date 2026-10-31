@@ -304,11 +304,12 @@ private fun ServerRow(
     }
 }
 
-// Small button next to a server that opens one of its pages
+// Small button next to a server that opens one of its pages. The thin icons need the brighter
+// gray and a little more size to stand out from the card.
 @Composable
 private fun LinkButton(@DrawableRes icon: Int, description: String, onClick: () -> Unit) {
     IconButton(onClick = onClick, modifier = Modifier.size(40.dp)) {
-        Icon(painterResource(icon), contentDescription = description, tint = Palette.Fg3, modifier = Modifier.size(18.dp))
+        Icon(painterResource(icon), contentDescription = description, tint = Palette.Fg2, modifier = Modifier.size(22.dp))
     }
 }
 
