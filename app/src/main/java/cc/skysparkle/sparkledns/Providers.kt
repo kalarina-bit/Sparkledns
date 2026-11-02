@@ -24,6 +24,7 @@ object Providers {
         ),
         DohProvider(
             "quad9", "Quad9", "https://dns.quad9.net/dns-query", listOf("9.9.9.9", "149.112.112.112"),
+            http3 = true,
             policy = "https://quad9.net/service/privacy/",
             donate = "https://quad9.net/donate/",
         ),
@@ -45,12 +46,10 @@ object Providers {
         ),
     )
 
-    val list: List<DohProvider> get() = builtIn
-
     // The project's own server stays the default whatever order the list uses
-    val default: DohProvider get() = list.firstOrNull { it.id == DEFAULT_ID } ?: list.first()
+    val default: DohProvider = builtIn.firstOrNull { it.id == DEFAULT_ID } ?: builtIn.first()
 
-    fun byId(id: String): DohProvider = list.firstOrNull { it.id == id } ?: default
+    fun byId(id: String): DohProvider = builtIn.firstOrNull { it.id == id } ?: default
 }
 
 fun parseIps(raw: String): List<String> =

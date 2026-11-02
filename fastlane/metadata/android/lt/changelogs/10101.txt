@@ -1,2 +1,6 @@
-• Naujos užpildytos piktogramos visoje programėlėje (Material Symbols)
-• Piktogramos meniu, nustatymuose ir mygtukuose
+• Naujos užpildytos piktogramos (Material Symbols)
+• Stulpelinė 24 valandų arba 7 dienų diagrama, aukštesnė dideliuose ekranuose
+• Planšetės: turinys centre, plačiuose ekranuose – du stulpeliai
+• Įmonių dalys rodomos, kai surenkama pakankamai duomenų
+• HaGeZi Pro įjungiamas tiesiai pradžios ekrane
+• Bakstelėkite serverį pradžios ekrane, kad jį pakeistumėte

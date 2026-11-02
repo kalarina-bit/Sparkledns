@@ -66,9 +66,16 @@ object Blocklist {
     private var customHashes = LongArray(0)
     private var loaded = false
 
+    // False until the saved lists have been read at start-up
+    private val _ready = MutableStateFlow(false)
+    val ready: StateFlow<Boolean> = _ready
+
     fun isBlocked(name: String): Boolean = _enabled.value && isBlockedIn(name, listHashes, customHashes)
 
-    fun reload(context: Context) = synchronized(lock) { load(BlocklistStore(context)) }
+    // Reads the saved lists unless something did already, such as the background update job
+    fun ensureLoaded(context: Context) {
+        synchronized(lock) { ensureLoaded(BlocklistStore(context)) }
+    }
 
     fun setEnabled(context: Context, value: Boolean) {
         BlocklistStore(context).enabled = value
@@ -212,6 +219,7 @@ object Blocklist {
         customHashes = LongArray(custom.size) { DomainHash.of(custom[it]) }.sortUnique()
         reloadListHashes(store)
         loaded = true
+        _ready.value = true
     }
 
     private fun reloadListHashes(store: BlocklistStore) {
@@ -226,18 +234,26 @@ object Blocklist {
     }
 }
 
-// True when the name or one of its parent domains is in either sorted hash set
+// True when the name or one of its parent domains is in either sorted hash set. Runs for every
+// query, so trailing dots are skipped by index rather than trimmed off a copy of the name.
 internal fun isBlockedIn(name: String, lists: LongArray, custom: LongArray): Boolean {
     if (lists.isEmpty() && custom.isEmpty()) return false
-    val domain = name.trimEnd('.')
+    val end = nameEnd(name)
     var start = 0
     while (true) {
-        val hash = DomainHash.of(domain, start)
+        val hash = DomainHash.of(name, start, end)
         if (lists.binarySearch(hash) >= 0 || custom.binarySearch(hash) >= 0) return true
-        val dot = domain.indexOf('.', start)
-        if (dot < 0) return false
+        val dot = name.indexOf('.', start)
+        if (dot < 0 || dot >= end) return false
         start = dot + 1
     }
+}
+
+// Length of the name without trailing dots
+internal fun nameEnd(name: String): Int {
+    var end = name.length
+    while (end > 0 && name[end - 1] == '.') end--
+    return end
 }
 
 // Number of distinct entries in both sorted sets; the custom set is small
@@ -282,10 +298,10 @@ internal object DomainHash {
     private const val FNV_OFFSET = -3750763034362895579L // 0xcbf29ce484222325
     private const val FNV_PRIME = 1099511628211L
 
-    // FNV-1a over the domain starting at [start], so parent domains are hashed without substrings
-    fun of(s: String, start: Int = 0): Long {
+    // FNV-1a over the characters from [start] to [end], so parent domains are hashed without substrings
+    fun of(s: String, start: Int = 0, end: Int = s.length): Long {
         var h = FNV_OFFSET
-        for (i in start until s.length) {
+        for (i in start until end) {
             h = h xor s[i].code.toLong()
             h *= FNV_PRIME
         }
@@ -316,8 +332,12 @@ private fun LongArray.sortUnique(): LongArray {
 }
 
 private class BlocklistStore(context: Context) {
-    private val dir = File(context.filesDir, "blocklist").apply { mkdirs() }
-    private val sp = context.getSharedPreferences("blocklist", Context.MODE_PRIVATE)
+    private val appContext = context.applicationContext
+
+    // Created on first use: switching blocking on or off, which happens on the main thread,
+    // touches only the settings
+    private val dir by lazy { File(appContext.filesDir, "blocklist").apply { mkdirs() } }
+    private val sp = appContext.getSharedPreferences("blocklist", Context.MODE_PRIVATE)
 
     var enabled: Boolean
         get() = sp.getBoolean("enabled", true)
@@ -340,7 +360,7 @@ private class BlocklistStore(context: Context) {
             val array = JSONArray(raw)
             (0 until array.length()).map {
                 val o = array.getJSONObject(it)
-                RemoteList(o.getString("url"), o.getInt("count"), o.getLong("updated"), o.optBoolean("enabled", true))
+                RemoteList(o.getString("url"), o.getInt("count"), o.getLong("updated"), o.getBoolean("enabled"))
             }
         }.getOrDefault(emptyList())
     }
@@ -357,7 +377,6 @@ private class BlocklistStore(context: Context) {
 
     fun loadListHashes(url: String): LongArray {
         val file = binFile(url)
-        if (!file.exists()) migrateText(url)?.let { return it }
         if (!file.exists()) return LongArray(0)
         return runCatching {
             FileInputStream(file).use { stream ->
@@ -371,7 +390,6 @@ private class BlocklistStore(context: Context) {
 
     fun deleteListFile(url: String) {
         binFile(url).delete()
-        textFile(url).delete()
         sp.edit().remove(etagKey(url)).remove(modifiedKey(url)).apply()
     }
 
@@ -420,16 +438,6 @@ private class BlocklistStore(context: Context) {
         }
     }
 
-    // Lists saved by older versions as plain text are converted once
-    private fun migrateText(url: String): LongArray? {
-        val text = textFile(url)
-        if (!text.exists()) return null
-        val result = text.readLines().map { DomainHash.of(it) }.toLongArray().sortUnique()
-        runCatching { write(url, result) }
-        text.delete()
-        return result
-    }
-
     private fun etagKey(url: String) = "etag_${hash(url)}"
     private fun modifiedKey(url: String) = "modified_${hash(url)}"
 
@@ -437,7 +445,6 @@ private class BlocklistStore(context: Context) {
         if (value == null) remove(key) else putString(key, value)
 
     private fun binFile(url: String) = File(dir, "list_${hash(url)}.bin")
-    private fun textFile(url: String) = File(dir, "list_${hash(url)}.txt")
 
     private fun hash(url: String) = MessageDigest.getInstance("SHA-256").digest(url.toByteArray())
         .take(8).joinToString("") { "%02x".format(it) }

@@ -40,6 +40,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -126,7 +127,7 @@ private fun AboutContent(modifier: Modifier, onOpenLicenses: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Image(
-            painterResource(R.drawable.app_logo),
+            remember { AppLogo.get(context) },
             contentDescription = null,
             modifier = Modifier
                 .size(104.dp)

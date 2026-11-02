@@ -3,9 +3,10 @@ package cc.skysparkle.sparkledns
 import java.io.ByteArrayOutputStream
 import kotlin.random.Random
 
+// IPv4 addresses are kept as plain numbers, so parsing a query allocates only its payload
 class UdpPacket(
-    val srcIp: ByteArray,
-    val dstIp: ByteArray,
+    val srcIp: Int,
+    val dstIp: Int,
     val srcPort: Int,
     val dstPort: Int,
     val payload: ByteArray,
@@ -29,8 +30,8 @@ object Packet {
         if (end <= ihl + 8) return null
 
         return UdpPacket(
-            srcIp = buf.copyOfRange(12, 16),
-            dstIp = buf.copyOfRange(16, 20),
+            srcIp = i32(buf, 12),
+            dstIp = i32(buf, 16),
             srcPort = u16(buf, ihl),
             dstPort = dstPort,
             payload = buf.copyOfRange(ihl + 8, end),
@@ -47,8 +48,8 @@ object Packet {
         p[6] = 0x40 // don't fragment
         p[8] = 64
         p[9] = 17
-        query.dstIp.copyInto(p, 12)
-        query.srcIp.copyInto(p, 16)
+        put32(p, 12, query.dstIp)
+        put32(p, 16, query.srcIp)
         put16(p, 10, checksum(p, 0, 20, 0))
 
         put16(p, 20, query.dstPort)
@@ -123,7 +124,9 @@ object DnsMessage {
 
     fun question(msg: ByteArray): Question? {
         if (msg.size < 12 || u16(msg, 4) < 1) return null
-        val name = StringBuilder()
+        // Sized up front, so the builder does not grow: a valid name has at most 253 characters,
+        // and never more than the message has bytes after the header
+        val name = StringBuilder(minOf(msg.size - 12, 253))
         var p = 12
         while (true) {
             if (p >= msg.size) return null
@@ -179,6 +182,8 @@ internal fun put32(b: ByteArray, off: Int, value: Int) {
 
 internal fun u32(b: ByteArray, off: Int): Long =
     ((u16(b, off).toLong()) shl 16) or u16(b, off + 2).toLong()
+
+internal fun i32(b: ByteArray, off: Int): Int = (u16(b, off) shl 16) or u16(b, off + 2)
 
 // Returns the offset right after a (possibly compressed) DNS name
 internal fun skipName(b: ByteArray, start: Int): Int? {

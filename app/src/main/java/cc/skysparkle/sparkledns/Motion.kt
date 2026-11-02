@@ -1,6 +1,5 @@
 package cc.skysparkle.sparkledns
 
-import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.tween
@@ -25,6 +24,4 @@ object Motion {
 
     val expandIn = fadeIn(enterFade) + expandVertically(size)
     val collapseOut = fadeOut(exitFade) + shrinkVertically(size)
-
-    fun sizeTransform() = SizeTransform(clip = false) { _, _ -> size }
 }

@@ -1,13 +1,11 @@
 package cc.skysparkle.sparkledns
 
+import android.content.Context
 import androidx.annotation.DrawableRes
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,21 +27,21 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
@@ -52,6 +50,28 @@ import java.util.Locale
 
 val CachedColor = Color(0xFF7FD1AE)
 val WarningColor = Color(0xFFFFB86B)
+
+// The 512 px logo, decoded once while the screens are in use. Home shows it each time the tab
+// opens, and decoding it there would cost the main thread a frame.
+object AppLogo {
+    @Volatile
+    private var bitmap: ImageBitmap? = null
+
+    // Started with the activity, so the first frame of Home usually finds the logo decoded
+    fun preload(context: Context) {
+        if (bitmap != null) return
+        val appContext = context.applicationContext
+        Thread({ runCatching { get(appContext) } }, "logo-load").start()
+    }
+
+    @Synchronized
+    fun get(context: Context): ImageBitmap =
+        bitmap ?: ImageBitmap.imageResource(context.resources, R.drawable.app_logo).also { bitmap = it }
+
+    fun clear() {
+        bitmap = null
+    }
+}
 
 // Icon on a soft circle of its own color
 @Composable
@@ -65,52 +85,6 @@ fun IconBadge(@DrawableRes icon: Int, tint: Color = MaterialTheme.colorScheme.pr
     ) {
         Icon(painterResource(icon), contentDescription = null, tint = tint, modifier = Modifier.size(size * 0.5f))
     }
-}
-
-@Composable
-fun SectionHeader(
-    title: String,
-    @DrawableRes icon: Int? = null,
-    modifier: Modifier = Modifier,
-    action: (@Composable () -> Unit)? = null,
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = 40.dp)
-            .padding(top = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (icon != null) {
-            Icon(
-                painterResource(icon),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(18.dp),
-            )
-            Spacer(Modifier.width(8.dp))
-        }
-        Text(
-            title,
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f),
-        )
-        action?.invoke()
-    }
-}
-
-@Composable
-fun Pill(text: String, color: Color) {
-    Text(
-        text,
-        style = MaterialTheme.typography.labelMedium,
-        color = color,
-        modifier = Modifier
-            .clip(RoundedCornerShape(50))
-            .background(color.copy(alpha = 0.14f))
-            .padding(horizontal = 10.dp, vertical = 3.dp),
-    )
 }
 
 @Composable
@@ -161,39 +135,14 @@ fun HintCard(
     }
 }
 
-@Composable
-fun StatColumn(value: String, label: String, modifier: Modifier = Modifier) {
-    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        // Numbers roll up when they change
-        AnimatedContent(
-            targetState = value,
-            transitionSpec = {
-                (slideInVertically(Motion.slide) { it / 2 } + fadeIn(Motion.enterFade)) togetherWith
-                    (slideOutVertically(Motion.slide) { -it / 2 } + fadeOut(Motion.exitFade)) using
-                    Motion.sizeTransform()
-            },
-            label = "stat",
-        ) { shown ->
-            Text(shown, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, maxLines = 1)
-        }
-        Text(
-            label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
-}
+private class Last<T>(var value: T?)
 
+// The last non-null value, so a card can keep showing its text while it animates out
 @Composable
-fun StatDivider() {
-    Box(
-        Modifier
-            .size(width = 1.dp, height = 32.dp)
-            .background(MaterialTheme.colorScheme.outlineVariant)
-    )
+fun <T : Any> rememberLast(value: T?): T? {
+    val last = remember { Last<T>(null) }
+    if (value != null) last.value = value
+    return last.value
 }
 
 // Runs [onChange] when the query log changes, at most once a second and only while the screen
@@ -209,13 +158,6 @@ fun OnQueryLogChange(onChange: () -> Unit) {
     }
 }
 
-@Composable
-fun rememberLiveStats(): QueryStats {
-    var stats by remember { mutableStateOf(QueryLog.stats()) }
-    OnQueryLogChange { stats = QueryLog.stats() }
-    return stats
-}
-
 // Called from composition only, i.e. on the main thread; rebuilt when the locale changes
 private var countFormat: Pair<Locale, NumberFormat>? = null
 
@@ -225,9 +167,6 @@ fun formatCount(value: Long): String {
         ?: NumberFormat.getIntegerInstance(locale).also { countFormat = locale to it }
     return format.format(value)
 }
-
-fun cachePercent(stats: QueryStats): String =
-    "${if (stats.total == 0L) 0 else stats.cached * 100 / stats.total}%"
 
 // Rows of one visual group share a background; only the outer corners are rounded
 fun groupedShape(first: Boolean, last: Boolean, radius: Dp = 16.dp) = RoundedCornerShape(
@@ -268,5 +207,29 @@ fun EmptyState(icon: Int, text: String) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
+    }
+}
+
+enum class StatsPeriod(val hours: Int, @StringRes val label: Int) {
+    DAY(24, R.string.period_24h),
+    WEEK(24 * 7, R.string.period_7d),
+}
+
+// Switches between the last 24 hours and the last 7 days
+@Composable
+fun PeriodChip(period: StatsPeriod, onChange: (StatsPeriod) -> Unit) {
+    val shape = RoundedCornerShape(18.dp)
+    Row(
+        modifier = Modifier
+            .clip(shape)
+            .border(1.dp, Palette.Track, shape)
+            .clickable { onChange(if (period == StatsPeriod.DAY) StatsPeriod.WEEK else StatsPeriod.DAY) }
+            .heightIn(min = 36.dp)
+            .padding(start = 14.dp, end = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(stringResource(period.label), color = Palette.Fg, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.width(4.dp))
+        Icon(painterResource(R.drawable.ic_expand), contentDescription = null, tint = Palette.Fg2, modifier = Modifier.size(16.dp))
     }
 }

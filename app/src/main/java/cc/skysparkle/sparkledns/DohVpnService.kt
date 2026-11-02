@@ -124,7 +124,14 @@ class DohVpnService : VpnService() {
             stopSelf()
             return
         }
-        session = Session(tun, DohClient(this, provider), ::onSessionFailed).also { it.start() }
+        val next = try {
+            Session(tun, DohClient(this, provider), ::onSessionFailed)
+        } catch (e: IOException) {
+            // A tunnel nobody reads would swallow every DNS lookup on the device
+            runCatching { tun.close() }
+            throw e
+        }
+        session = next.also { it.start() }
         runCatching { previous?.stop() }
 
         _active.value = provider
@@ -210,6 +217,10 @@ private class Session(
     private val pool = Executors.newFixedThreadPool(WORKERS)
     private val cache = DnsCache()
     private val output = FileOutputStream(tun.fileDescriptor)
+
+    // stop() closes the write end, which wakes the reader at once. Otherwise the reader would have
+    // to wake up on a timer to notice that the session ended, also while the device sleeps.
+    private val wakeup = ParcelFileDescriptor.createPipe()
     private val reader = Thread(::readLoop, "tun-reader")
 
     fun start() = reader.start()
@@ -217,6 +228,7 @@ private class Session(
     fun stop() {
         if (!alive.getAndSet(false)) return
         pool.shutdownNow()
+        runCatching { wakeup[1].close() }
         runCatching { tun.close() }
         closer.execute {
             try {
@@ -230,43 +242,58 @@ private class Session(
     private fun readLoop() {
         val input = FileInputStream(tun.fileDescriptor)
         val buf = ByteArray(MTU)
-        val pollFd = StructPollfd().apply {
+        val tunFd = StructPollfd().apply {
             fd = tun.fileDescriptor
             events = OsConstants.POLLIN.toShort()
         }
+        val wakeupFd = StructPollfd().apply {
+            fd = wakeup[0].fileDescriptor
+            events = OsConstants.POLLIN.toShort()
+        }
+        val fds = arrayOf(tunFd, wakeupFd)
 
         var badPackets = 0
 
-        while (alive.get()) {
-            val n = try {
-                if (Os.poll(arrayOf(pollFd), 500) <= 0) continue
-                input.read(buf)
-            } catch (e: ErrnoException) {
-                if (e.errno == OsConstants.EINTR) continue
-                readerFailed(e)
-                return
-            } catch (e: IOException) {
-                readerFailed(e)
-                return
-            }
-            if (n < 0) {
-                readerFailed(null)
-                return
-            }
-            try {
-                Packet.parseDnsQuery(buf, n)?.let(::dispatch)
-                badPackets = 0
-            } catch (e: RejectedExecutionException) {
-                readerFailed(e)
-                return
-            } catch (e: RuntimeException) {
-                // One packet the code cannot handle must not stop DNS for the whole device
-                Log.w(TAG, "Dropped a packet", e)
-                if (++badPackets >= MAX_BAD_PACKETS) {
+        try {
+            while (alive.get()) {
+                val n = try {
+                    // Sleeps until a packet arrives or stop() closes the pipe
+                    if (Os.poll(fds, -1) <= 0) continue
+                    if (wakeupFd.revents.toInt() != 0) {
+                        // Only stop() touches the pipe, so this ends the loop
+                        readerFailed(null)
+                        return
+                    }
+                    input.read(buf)
+                } catch (e: ErrnoException) {
+                    if (e.errno == OsConstants.EINTR) continue
+                    readerFailed(e)
+                    return
+                } catch (e: IOException) {
                     readerFailed(e)
                     return
                 }
+                if (n < 0) {
+                    readerFailed(null)
+                    return
+                }
+                try {
+                    Packet.parseDnsQuery(buf, n)?.let(::dispatch)
+                    badPackets = 0
+                } catch (e: RejectedExecutionException) {
+                    readerFailed(e)
+                    return
+                } catch (e: RuntimeException) {
+                    // One packet the code cannot handle must not stop DNS for the whole device
+                    Log.w(TAG, "Dropped a packet", e)
+                    if (++badPackets >= MAX_BAD_PACKETS) {
+                        readerFailed(e)
+                        return
+                    }
+                }
             }
+        } finally {
+            runCatching { wakeup[0].close() }
         }
     }
 

@@ -13,8 +13,8 @@ android {
         targetSdk = 36
         // Single source of truth: the About screen reads these through BuildConfig.
         // Kept as plain literals so F-Droid can detect new versions. Code = major * 10000 + minor * 100 + patch.
-        versionCode = 10101
-        versionName = "1.1.1"
+        versionCode = 10102
+        versionName = "1.1.2"
     }
 
     buildTypes {
@@ -47,6 +47,21 @@ android {
     dependenciesInfo {
         includeInApk = false
         includeInBundle = false
+    }
+
+    packaging {
+        resources {
+            // Library files the app never reads: Kotlin metadata for reflection, the coroutines debug
+            // agent, version markers for tooling and OkHttp's public suffix list, which only cookies use
+            excludes += listOf(
+                "/META-INF/*.version",
+                "/META-INF/*.kotlin_module",
+                "/kotlin/**",
+                "/kotlin-tooling-metadata.json",
+                "/DebugProbesKt.bin",
+                "/okhttp3/internal/publicsuffix/**",
+            )
+        }
     }
 
     testOptions {

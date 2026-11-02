@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.HorizontalDivider
@@ -29,11 +31,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -44,7 +48,6 @@ object Palette {
     val CardHigh = Color(0xFF1E2026)
     val Line = Color(0xFF24262C)
     val Track = Color(0xFF3A3C44)
-    val Muted = Color(0xFF5B5F6B)
     val Fg = Color(0xFFF2F3F5)
     val Fg2 = Color(0xFF9A9DA6)
     val Fg3 = Color(0xFF7E828C)
@@ -86,6 +89,24 @@ internal val AppColors = darkColorScheme(
 
 val CardShape = RoundedCornerShape(20.dp)
 
+// On tablets content stays this wide and sits in the middle, so rows do not stretch across the screen
+val MaxContentWidth = 560.dp
+
+// From this width Home and Activity show two columns side by side
+val WideLayoutWidth = 840.dp
+val MaxWideContentWidth = 1040.dp
+
+// Size of the app window in dp
+@Composable
+fun windowWidth(): Dp = LocalConfiguration.current.screenWidthDp.dp
+
+@Composable
+fun windowHeight(): Dp = LocalConfiguration.current.screenHeightDp.dp
+
+// Side padding that keeps content at most [max] wide and at least [min] away from the edges
+fun sidePadding(available: Dp, max: Dp = MaxContentWidth, min: Dp = 20.dp): Dp =
+    maxOf(min, (available - max) / 2)
+
 fun Modifier.appCard(): Modifier = clip(CardShape).background(Palette.Card)
 
 @Composable
@@ -105,7 +126,7 @@ fun AppSwitch(
 }
 
 @Composable
-fun appSwitchColors() = SwitchDefaults.colors(
+private fun appSwitchColors() = SwitchDefaults.colors(
     checkedThumbColor = Color.White,
     checkedTrackColor = Palette.Accent,
     checkedBorderColor = Palette.Accent,
@@ -174,17 +195,26 @@ fun PageHeader(
 // A page with a back header around content that is not built for one
 @Composable
 fun SubPage(title: String, onBack: () -> Unit, modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
-    Column(modifier) {
-        PageHeader(title, onBack)
-        Box(
+    Box(modifier, contentAlignment = Alignment.TopCenter) {
+        Column(
             Modifier
-                .weight(1f)
-                .fillMaxSize()
-                .navigationBarsPadding(),
-            content = content,
-        )
+                .fillMaxHeight()
+                .widthIn(max = MaxContentWidth + 32.dp)
+                .fillMaxWidth()
+        ) {
+            PageHeader(title, onBack)
+            Box(
+                Modifier
+                    .weight(1f)
+                    .fillMaxSize()
+                    .navigationBarsPadding(),
+                content = content,
+            )
+        }
     }
 }
+
+private val SearchTextStyle = TextStyle(color = Palette.Fg, fontSize = 14.sp)
 
 @Composable
 fun SearchField(
@@ -219,7 +249,7 @@ fun SearchField(
                 onValueChange = onValueChange,
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                textStyle = TextStyle(color = Palette.Fg, fontSize = 14.sp),
+                textStyle = SearchTextStyle,
                 cursorBrush = SolidColor(Palette.Accent),
             )
         }
