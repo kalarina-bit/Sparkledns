@@ -1,5 +1,5 @@
 • DNS läuft bei unerwarteten Paketen weiter; fällt der Tunnel aus, schaltet sich das VPN ab, statt DNS still zu blockieren
-• Anfragen erholen sich schneller nach einem Wechsel zwischen WLAN und Mobilfunk und in langsamen Netzen
+• Anfragen erholen sich schneller nach einem WLAN-Mobilfunk-Wechsel und in langsamen Netzen
 • Weniger Hintergrundarbeit: ausgeblendete Bildschirme werden nicht mehr aktualisiert
 • Blocklisten werden nur bei Änderungen neu geladen
 • Schärfere App-Symbole, kleinere App
