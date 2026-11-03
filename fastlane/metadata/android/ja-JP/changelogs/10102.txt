@@ -1,0 +1,1 @@
+• Android 14 以降では Quad9 に HTTP/3（QUIC）で接続

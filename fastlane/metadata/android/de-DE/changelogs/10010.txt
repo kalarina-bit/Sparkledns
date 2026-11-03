@@ -1,6 +1,6 @@
-• DNS funktioniert weiter, wenn ein unerwartetes Paket ankommt; fällt der Tunnel aus, schaltet sich das VPN ab, statt DNS still zu blockieren
+• DNS läuft bei unerwarteten Paketen weiter; fällt der Tunnel aus, schaltet sich das VPN ab, statt DNS still zu blockieren
 • Anfragen erholen sich schneller nach einem Wechsel zwischen WLAN und Mobilfunk und in langsamen Netzen
-• Weniger Arbeit im Hintergrund: ausgeblendete Bildschirme werden nicht mehr aktualisiert
-• Blocklisten werden nur noch erneut geladen, wenn sie sich geändert haben
+• Weniger Hintergrundarbeit: ausgeblendete Bildschirme werden nicht mehr aktualisiert
+• Blocklisten werden nur bei Änderungen neu geladen
 • Schärfere App-Symbole, kleinere App
-• Ein Doppeltipp auf „Verbinden“ verbindet nicht mehr doppelt; voller Speicher lässt die App nicht mehr abstürzen
+• Doppeltipp auf „Verbinden“ verbindet nicht doppelt; voller Speicher führt nicht mehr zum Absturz

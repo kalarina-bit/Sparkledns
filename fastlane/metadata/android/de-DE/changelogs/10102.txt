@@ -1,0 +1,1 @@
+• Quad9 verbindet sich unter Android 14 und neuer jetzt über HTTP/3 (QUIC)
