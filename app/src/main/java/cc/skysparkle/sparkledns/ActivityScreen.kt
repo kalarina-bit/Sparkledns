@@ -81,6 +81,28 @@ private val OtherColor = Palette.Track
 
 private class Slice(val label: String, val share: Float, val color: Color)
 
+// One row of the log: every query for a domain, shown by its newest one. A data class, so a
+// rebuilt list with the same groups counts as unchanged.
+private data class DomainGroup(val latest: QueryEntry, val types: List<Int>, val count: Int)
+
+// The log is newest first, so the first entry of a domain is its newest one and the groups come
+// out in the order their domains were last asked for. Names differ only in letter case when a
+// resolver randomizes it, so they are compared in lower case.
+private fun groupByDomain(entries: List<QueryEntry>): List<DomainGroup> {
+    class Builder(val latest: QueryEntry) {
+        val types = LinkedHashSet<Int>()
+        var count = 0
+    }
+    val groups = LinkedHashMap<String, Builder>()
+    for (entry in entries) {
+        val group = groups.getOrPut(entry.domain.lowercase(Locale.ROOT)) { Builder(entry) }
+        group.types += entry.type
+        group.count++
+    }
+    // Types in numeric order: A, then AAAA, then HTTPS
+    return groups.values.map { DomainGroup(it.latest, it.types.sorted(), it.count) }
+}
+
 @Composable
 fun ActivityScreen(bottomPadding: Dp, modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -101,12 +123,13 @@ fun ActivityScreen(bottomPadding: Dp, modifier: Modifier = Modifier) {
     val statsVersion by StatsStore.version.collectAsStateWithLifecycle()
     LaunchedEffect(period, statsVersion) { summary = StatsStore.summary(period.hours) }
 
-    // Filtered again only when the log, the filter or the search changes, and the list below is
-    // updated only when the result differs: new entries that the filter hides change nothing
+    // Filtered and grouped by domain again only when the log, the filter or the search changes,
+    // and the list below is updated only when the result differs: new entries that the filter
+    // hides change nothing
     val visible by remember {
         derivedStateOf(structuralEqualityPolicy()) {
             val term = search.trim()
-            entries.filter { e ->
+            val matching = entries.filter { e ->
                 val matchesFilter = when (filter) {
                     ActivityFilter.ALL -> true
                     ActivityFilter.BLOCKED -> e.status == QueryStatus.BLOCKED
@@ -115,6 +138,7 @@ fun ActivityScreen(bottomPadding: Dp, modifier: Modifier = Modifier) {
                 }
                 matchesFilter && (term.isEmpty() || e.domain.contains(term, ignoreCase = true))
             }
+            groupByDomain(matching)
         }
     }
     val canClear by remember { derivedStateOf { entries.isNotEmpty() } }
@@ -178,11 +202,19 @@ fun ActivityScreen(bottomPadding: Dp, modifier: Modifier = Modifier) {
                 )
             }
         }
-        itemsIndexed(visible, key = { _, entry -> entry.id }, contentType = { _, _ -> "query" }) { index, entry ->
+        // Keyed by domain, so a new query for a domain moves its row to the top instead of adding one
+        itemsIndexed(
+            visible,
+            key = { _, group -> "domain:" + group.latest.domain.lowercase(Locale.ROOT) },
+            contentType = { _, _ -> "query" },
+        ) { index, group ->
+            val entry = group.latest
             val blockedByMe = entry.domain in customSet
             QueryRow(
                 modifier = Modifier.animateItem(),
                 entry = entry,
+                types = group.types,
+                count = group.count,
                 first = index == 0,
                 blockedByMe = blockedByMe,
                 onBlock = { toggleBlock(entry.domain, unblock = false) },
@@ -442,6 +474,8 @@ private fun Donut(slices: List<Slice>, modifier: Modifier = Modifier) {
 private fun QueryRow(
     modifier: Modifier,
     entry: QueryEntry,
+    types: List<Int>,
+    count: Int,
     first: Boolean,
     blockedByMe: Boolean,
     onBlock: () -> Unit,
@@ -461,6 +495,9 @@ private fun QueryRow(
         QueryStatus.BLOCKED -> stringResource(if (blockedByMe) R.string.bl_my else R.string.tab_blocklist)
         QueryStatus.FAILED -> stringResource(R.string.status_failed)
     }
+    // "A, AAAA, HTTPS · ×3 · 256 ms"; the status and time are those of the newest query
+    val typeNames = types.joinToString(", ") { DnsMessage.typeName(it) }
+    val summary = if (count > 1) "$typeNames · ×$count · $detail" else "$typeNames · $detail"
 
     Box(modifier.fillMaxWidth()) {
         Column {
@@ -492,7 +529,7 @@ private fun QueryRow(
                         overflow = TextOverflow.Ellipsis,
                     )
                     Text(
-                        "${DnsMessage.typeName(entry.type)} · $detail",
+                        summary,
                         color = Palette.Fg3,
                         fontSize = 12.sp,
                         maxLines = 1,
