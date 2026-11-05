@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Main repository on git.skysparkle.cc
+    url: https://git.skysparkle.cc/kalarina/Sparkledns
+    about: This GitHub repository is a mirror. Issues are welcome here and on Gitea.
