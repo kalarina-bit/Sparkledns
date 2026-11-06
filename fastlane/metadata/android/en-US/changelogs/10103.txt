@@ -1,0 +1,2 @@
+• Recent activity shows one row per domain with all requested types (A, AAAA, HTTPS) and the number of queries
+• Company dominance names other sites instead of grouping them all as Other

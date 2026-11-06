@@ -1,0 +1,2 @@
+• Die letzte Aktivität zeigt eine Zeile pro Domain mit allen abgefragten Typen (A, AAAA, HTTPS) und der Anzahl der Anfragen
+• Der Anteil der Konzerne nennt jetzt auch andere Websites, statt alle unter Andere zusammenzufassen

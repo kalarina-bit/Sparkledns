@@ -1,0 +1,2 @@
+• Naujausia veikla rodo vieną eilutę kiekvienam domenui su visais užklaustais tipais (A, AAAA, HTTPS) ir užklausų skaičiumi
+• Įmonių dalyje kitos svetainės dabar rodomos pavadinimais, o ne sujungiamos į „Kitos“
