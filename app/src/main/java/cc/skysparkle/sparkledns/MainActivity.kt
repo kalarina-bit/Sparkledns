@@ -25,10 +25,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -54,7 +56,13 @@ class MainActivity : ComponentActivity() {
         AppLogo.preload(this)
         enableEdgeToEdge()
         setContent {
-            MaterialTheme(colorScheme = AppColors) { AppShell() }
+            MaterialTheme(colorScheme = AppColors) {
+                // There is no Surface at the root, so text and icons without an explicit color
+                // would fall back to black and disappear on the dark background
+                CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
+                    AppShell()
+                }
+            }
         }
     }
 }
