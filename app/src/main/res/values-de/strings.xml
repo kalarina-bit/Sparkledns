@@ -100,7 +100,7 @@
     <string name="tab_activity">Aktivität</string>
     <string name="tab_settings">Einstellungen</string>
     <string name="companies_title">Anteil der Konzerne</string>
-    <string name="companies_desc">Welcher Anteil deiner Anfragen an die größten Konzerne geht.</string>
+    <string name="companies_desc">Welcher Anteil deiner Anfragen an die größten Konzerne und andere Websites geht.</string>
     <string name="companies_other">Andere</string>
     <string name="recent_title">Letzte Anfragen</string>
     <string name="filter">Filter</string>

@@ -100,7 +100,7 @@
     <string name="tab_activity">活动</string>
     <string name="tab_settings">设置</string>
     <string name="companies_title">公司占比</string>
-    <string name="companies_desc">你的请求中发往大公司的比例。</string>
+    <string name="companies_desc">你的请求中发往大公司和其他网站的比例。</string>
     <string name="companies_other">其他</string>
     <string name="recent_title">最近活动</string>
     <string name="filter">筛选</string>

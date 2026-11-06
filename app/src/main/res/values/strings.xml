@@ -101,7 +101,7 @@
     <string name="tab_activity">Activity</string>
     <string name="tab_settings">Settings</string>
     <string name="companies_title">Company dominance</string>
-    <string name="companies_desc">Share of your requests that go to the biggest companies.</string>
+    <string name="companies_desc">Share of your requests that go to the biggest companies and other sites.</string>
     <string name="companies_other">Other</string>
     <string name="recent_title">Recent activity</string>
     <string name="filter">Filter</string>

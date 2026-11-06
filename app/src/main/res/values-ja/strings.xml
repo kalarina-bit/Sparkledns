@@ -100,7 +100,7 @@
     <string name="tab_activity">アクティビティ</string>
     <string name="tab_settings">設定</string>
     <string name="companies_title">企業の占有率</string>
-    <string name="companies_desc">リクエストのうち大手企業に送られる割合です。</string>
+    <string name="companies_desc">リクエストのうち大手企業やその他のサイトに送られる割合です。</string>
     <string name="companies_other">その他</string>
     <string name="recent_title">最近のアクティビティ</string>
     <string name="filter">フィルター</string>

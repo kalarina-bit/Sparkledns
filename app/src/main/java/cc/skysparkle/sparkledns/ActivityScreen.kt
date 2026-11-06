@@ -238,7 +238,7 @@ fun ActivityScreen(bottomPadding: Dp, modifier: Modifier = Modifier) {
             ) {
                 ActivityHeader(period) { period = it }
                 ActivityStats(summary, Modifier.padding(top = 20.dp))
-                CompanyCard(summary, Modifier.padding(top = 20.dp))
+                CompanyCard(summary, entries, Modifier.padding(top = 20.dp))
             }
             LazyColumn(
                 modifier = Modifier
@@ -255,7 +255,7 @@ fun ActivityScreen(bottomPadding: Dp, modifier: Modifier = Modifier) {
         ) {
             item(key = "header") { ActivityHeader(period) { period = it } }
             item(key = "stats") { ActivityStats(summary, Modifier.padding(top = 20.dp)) }
-            item(key = "companies") { CompanyCard(summary, Modifier.padding(top = 20.dp)) }
+            item(key = "companies") { CompanyCard(summary, entries, Modifier.padding(top = 20.dp)) }
             log()
         }
     }
@@ -366,9 +366,9 @@ private fun LogSearch(
 private const val MIN_COMPANY_REQUESTS = 50L
 
 @Composable
-private fun CompanyCard(summary: StatsSummary, modifier: Modifier = Modifier) {
+private fun CompanyCard(summary: StatsSummary, recent: List<QueryEntry>, modifier: Modifier = Modifier) {
     val other = stringResource(R.string.companies_other)
-    val slices = remember(summary, other) { companySlices(summary, other) }
+    val slices = remember(summary, recent, other) { companySlices(summary, recent, other) }
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -430,17 +430,32 @@ private fun percentLabel(share: Float): String {
     return if (percent < 1f) "<1%" else "${Math.round(percent)}%"
 }
 
-// The four companies with most requests, then everything else; empty slices are left out
-private fun companySlices(summary: StatsSummary, otherLabel: String): List<Slice> {
+// Shares of the known companies over the period. The statistics keep no domains, so the share
+// left over is split by the names of the recent queries to other domains, from the log in memory.
+// Then the four largest slices and everything else; empty slices are left out.
+private fun companySlices(summary: StatsSummary, recent: List<QueryEntry>, otherLabel: String): List<Slice> {
     if (summary.total == 0L) return emptyList()
-    val top = Company.entries
-        .map { it to summary.companies[it.ordinal] }
-        .filter { it.second > 0 }
-        .sortedByDescending { it.second }
-        .take(SliceColors.size)
-    val slices = top.mapIndexed { index, (company, count) ->
-        Slice(company.label, count.toFloat() / summary.total, SliceColors[index])
+    val shares = HashMap<String, Float>()
+    for (company in Company.entries) {
+        val count = summary.companies[company.ordinal]
+        if (count > 0) shares[company.label] = count.toFloat() / summary.total
     }
+    val unknownShare = (1f - shares.values.sum()).coerceAtLeast(0f)
+    val names = HashMap<String, Int>()
+    var unknownCount = 0
+    for (entry in recent) {
+        if (Companies.of(entry.domain) != null) continue
+        unknownCount++
+        Companies.nameOf(entry.domain)?.let { names.merge(it, 1, Int::plus) }
+    }
+    // Queries without a name (local names, reverse lookups) stay in the rest
+    if (unknownCount > 0) {
+        for ((name, count) in names) shares.merge(name, unknownShare * count / unknownCount, Float::plus)
+    }
+    val slices = shares.entries
+        .sortedByDescending { it.value }
+        .take(SliceColors.size)
+        .mapIndexed { index, (label, share) -> Slice(label, share, SliceColors[index]) }
     val rest = (1f - slices.sumOf { it.share.toDouble() }.toFloat()).coerceAtLeast(0f)
     return if (rest >= 0.005f) slices + Slice(otherLabel, rest, OtherColor) else slices
 }

@@ -100,7 +100,7 @@
     <string name="tab_activity">Veikla</string>
     <string name="tab_settings">Nustatymai</string>
     <string name="companies_title">Įmonių dalis</string>
-    <string name="companies_desc">Kokia jūsų užklausų dalis tenka didžiausioms įmonėms.</string>
+    <string name="companies_desc">Kokia jūsų užklausų dalis tenka didžiausioms įmonėms ir kitoms svetainėms.</string>
     <string name="companies_other">Kitos</string>
     <string name="recent_title">Naujausios užklausos</string>
     <string name="filter">Filtras</string>

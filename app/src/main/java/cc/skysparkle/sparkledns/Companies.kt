@@ -1,5 +1,6 @@
 package cc.skysparkle.sparkledns
 
+import java.util.Locale
 import java.util.TreeMap
 
 // The position of each company is saved in StatsStore: add new ones at the end only
@@ -20,6 +21,12 @@ enum class Company(val label: String) {
 // Matches the domain and every parent of it against a small built-in table.
 object Companies {
     private const val GOOGLE_PREFIX = "google."
+
+    // Second-level labels that belong to a country's suffix: example.co.uk, example.com.br
+    private val COUNTRY_SECOND_LEVELS = setOf("co", "com", "net", "org", "gov", "edu", "ac", "or", "ne", "go")
+
+    // Names that are not public sites: reverse lookups and local networks
+    private val PRIVATE_TLDS = setOf("arpa", "local", "lan", "home", "internal", "localhost")
 
     // Hashes of the domains, sorted, with the company of each at the same index: this runs for
     // every query, and parent domains are looked up by hash without copying the name
@@ -92,5 +99,17 @@ object Companies {
             start = dot + 1
         }
         return null
+    }
+
+    // A readable name for a domain of no known company, taken from its main label:
+    // "cdn.example.co.uk" gives "Example". Null for IP addresses, local names and bare labels.
+    fun nameOf(name: String): String? {
+        val labels = name.lowercase(Locale.ROOT).split('.').filter { it.isNotEmpty() }
+        if (labels.size < 2) return null
+        val tld = labels.last()
+        if (tld in PRIVATE_TLDS || tld.all { it.isDigit() }) return null
+        var index = labels.size - 2
+        if (tld.length == 2 && labels.size >= 3 && labels[index] in COUNTRY_SECOND_LEVELS) index--
+        return labels[index].replaceFirstChar { it.titlecase(Locale.ROOT) }
     }
 }

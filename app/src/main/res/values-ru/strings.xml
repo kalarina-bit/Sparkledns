@@ -100,7 +100,7 @@
     <string name="tab_activity">Активность</string>
     <string name="tab_settings">Настройки</string>
     <string name="companies_title">Доля компаний</string>
-    <string name="companies_desc">Какая часть ваших запросов уходит крупнейшим компаниям.</string>
+    <string name="companies_desc">Какая часть ваших запросов уходит крупнейшим компаниям и другим сайтам.</string>
     <string name="companies_other">Другие</string>
     <string name="recent_title">Последние запросы</string>
     <string name="filter">Фильтр</string>
