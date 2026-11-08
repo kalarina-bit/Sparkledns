@@ -29,6 +29,9 @@
 > [!TIP]
 > If you find SparkleDNS useful, please consider giving it a ⭐ — it helps others discover the project.
 
+> [!IMPORTANT]
+> **SparkleDNS is coming to Google Play!** The app is now in closed testing there ahead of the public release. Ideas, wishes and suggestions for improvement are very welcome — send them wherever is easiest for you: an issue on [Gitea](https://git.skysparkle.cc/kalarina/Sparkledns/issues) or [GitHub](https://github.com/kalarina-bit/Sparkledns/issues), or an email to [cuken107@proton.me](mailto:cuken107@proton.me).
+
 ## ✨ Features
 
 - 🔌 **One-tap connect/disconnect**, with a Quick Settings tile
