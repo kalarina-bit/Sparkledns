@@ -9,6 +9,9 @@
   A local VPN that captures only DNS traffic and sends every query to the DoH server you choose (RFC 8484). Everything else goes through your normal connection.
 </p>
 
+> [!IMPORTANT]
+> **SparkleDNS is coming to Google Play!** The app is now in closed testing there ahead of the public release. Ideas, wishes and suggestions for improvement are very welcome — send them wherever is easiest for you: an issue on [Gitea](https://git.skysparkle.cc/kalarina/Sparkledns/issues) or [GitHub](https://github.com/kalarina-bit/Sparkledns/issues), or an email to [cuken107@proton.me](mailto:cuken107@proton.me).
+
 <p align="center">
   <a href="https://github.com/kalarina-bit/Sparkledns/releases/latest"><img src="https://img.shields.io/github/v/release/kalarina-bit/Sparkledns?style=for-the-badge&label=release&labelColor=1b1b1b&color=2e7d32" alt="Latest release"></a>
 </p>
@@ -28,9 +31,6 @@
 
 > [!TIP]
 > If you find SparkleDNS useful, please consider giving it a ⭐ — it helps others discover the project.
-
-> [!IMPORTANT]
-> **SparkleDNS is coming to Google Play!** The app is now in closed testing there ahead of the public release. Ideas, wishes and suggestions for improvement are very welcome — send them wherever is easiest for you: an issue on [Gitea](https://git.skysparkle.cc/kalarina/Sparkledns/issues) or [GitHub](https://github.com/kalarina-bit/Sparkledns/issues), or an email to [cuken107@proton.me](mailto:cuken107@proton.me).
 
 ## ✨ Features
 
