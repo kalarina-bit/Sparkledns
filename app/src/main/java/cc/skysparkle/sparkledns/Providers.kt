@@ -44,6 +44,12 @@ object Providers {
             policy = "https://ffmuc.net/dns-privacy/",
             donate = "https://spende.ffmuc.net/",
         ),
+        DohProvider(
+            "dnsforge", "dnsforge.de", "https://blank.dnsforge.de/dns-query",
+            listOf("78.47.71.194", "138.199.149.249"),
+            policy = "https://adminforge.de/datenschutz/",
+            donate = "https://adminforge.de/unterstuetzen/",
+        ),
     )
 
     // The project's own server stays the default whatever order the list uses
