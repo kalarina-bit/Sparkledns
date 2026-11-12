@@ -1,0 +1,6 @@
+• A notification tells you when protection stops, when the server address is invalid or when "Block connections without VPN" keeps the server unreachable
+• Bootstrap addresses now also work over HTTP/3
+• Blocklist rules with a path no longer block whole sites
+• Turning protection off from the quick settings tile needs an unlocked phone
+• App language can be set in Android settings
+• Updated libraries
