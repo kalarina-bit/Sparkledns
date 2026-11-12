@@ -20,6 +20,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
+import java.nio.LongBuffer
 import java.nio.channels.FileChannel
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
@@ -28,7 +29,8 @@ import java.util.concurrent.TimeUnit
 data class RemoteList(val url: String, val count: Int, val updated: Long, val enabled: Boolean = true)
 
 // Blocks a domain together with all its subdomains. Changes apply instantly, no reconnect needed.
-// Domains are kept as sorted 64-bit hashes: about 8 bytes per entry, so million-entry lists fit easily.
+// Domains are kept as sorted 64-bit hashes in files that are memory-mapped, not read into the heap:
+// lists with millions of entries cost page cache, not app memory, so low-end phones cope too.
 object Blocklist {
     const val ALL_LISTS = "*"
 
@@ -60,7 +62,7 @@ object Blocklist {
     // Downloaded lists and own domains are kept apart, so editing a few own domains
     // does not rebuild a set that can hold millions of entries
     @Volatile
-    private var listHashes = LongArray(0)
+    private var listHashes: LongBuffer = EMPTY_SET
 
     @Volatile
     private var customHashes = LongArray(0)
@@ -223,7 +225,12 @@ object Blocklist {
     }
 
     private fun reloadListHashes(store: BlocklistStore) {
-        listHashes = mergeSorted(_lists.value.filter { it.enabled }.map { store.loadListHashes(it.url) })
+        try {
+            listHashes = store.mergedHashes(_lists.value.filter { it.enabled })
+        } catch (e: IOException) {
+            // Out of storage: the lists in use stay active until the next change
+            Log.w("SparkleDNS", "Cannot merge blocklists", e)
+        }
         _total.value = unionSize(listHashes, customHashes)
     }
 
@@ -236,13 +243,13 @@ object Blocklist {
 
 // True when the name or one of its parent domains is in either sorted hash set. Runs for every
 // query, so trailing dots are skipped by index rather than trimmed off a copy of the name.
-internal fun isBlockedIn(name: String, lists: LongArray, custom: LongArray): Boolean {
-    if (lists.isEmpty() && custom.isEmpty()) return false
+internal fun isBlockedIn(name: String, lists: LongBuffer, custom: LongArray): Boolean {
+    if (lists.limit() == 0 && custom.isEmpty()) return false
     val end = nameEnd(name)
     var start = 0
     while (true) {
         val hash = DomainHash.of(name, start, end)
-        if (lists.binarySearch(hash) >= 0 || custom.binarySearch(hash) >= 0) return true
+        if (lists.containsSorted(hash) || custom.binarySearch(hash) >= 0) return true
         val dot = name.indexOf('.', start)
         if (dot < 0 || dot >= end) return false
         start = dot + 1
@@ -256,37 +263,59 @@ internal fun nameEnd(name: String): Int {
     return end
 }
 
-// Number of distinct entries in both sorted sets; the custom set is small
-internal fun unionSize(lists: LongArray, custom: LongArray): Int =
-    lists.size + custom.count { lists.binarySearch(it) < 0 }
+internal val EMPTY_SET: LongBuffer = LongBuffer.wrap(LongArray(0))
 
-// Merges sorted, duplicate-free arrays in linear time instead of sorting their concatenation
-internal fun mergeSorted(parts: List<LongArray>): LongArray {
-    var arrays = parts.filter { it.isNotEmpty() }.map { if (it.isSortedUnique()) it else it.copyOf().sortUnique() }
-    if (arrays.isEmpty()) return LongArray(0)
-    while (arrays.size > 1) {
-        arrays = arrays.chunked(2).map { if (it.size == 2) mergeTwo(it[0], it[1]) else it[0] }
-    }
-    return arrays[0]
-}
-
-private fun mergeTwo(a: LongArray, b: LongArray): LongArray {
-    val out = LongArray(a.size + b.size)
-    var i = 0
-    var j = 0
-    var n = 0
-    while (i < a.size && j < b.size) {
-        val x = a[i]
-        val y = b[j]
+// Binary search by absolute index, so several threads can read the same buffer at once
+internal fun LongBuffer.containsSorted(value: Long): Boolean {
+    var low = 0
+    var high = limit() - 1
+    while (low <= high) {
+        val mid = (low + high) ushr 1
+        val v = get(mid)
         when {
-            x < y -> { out[n++] = x; i++ }
-            x > y -> { out[n++] = y; j++ }
-            else -> { out[n++] = x; i++; j++ }
+            v < value -> low = mid + 1
+            v > value -> high = mid - 1
+            else -> return true
         }
     }
-    while (i < a.size) out[n++] = a[i++]
-    while (j < b.size) out[n++] = b[j++]
-    return if (n == out.size) out else out.copyOf(n)
+    return false
+}
+
+// Number of distinct entries in both sorted sets; the custom set is small
+internal fun unionSize(lists: LongBuffer, custom: LongArray): Int =
+    lists.limit() + custom.count { !lists.containsSorted(it) }
+
+// Merges sorted, duplicate-free sets in one pass and hands each value to [emit] once, in order.
+// Only the read positions are kept in memory, so inputs and output can be files of any size.
+internal fun mergeSortedInto(parts: List<LongBuffer>, emit: (Long) -> Unit): Int {
+    val sets = parts.filter { it.limit() > 0 }
+    val pos = IntArray(sets.size)
+    var count = 0
+    while (true) {
+        var min = 0L
+        var found = false
+        for (i in sets.indices) {
+            if (pos[i] < sets[i].limit()) {
+                val v = sets[i].get(pos[i])
+                if (!found || v < min) {
+                    min = v
+                    found = true
+                }
+            }
+        }
+        if (!found) return count
+        for (i in sets.indices) if (pos[i] < sets[i].limit() && sets[i].get(pos[i]) == min) pos[i]++
+        emit(min)
+        count++
+    }
+}
+
+// In-memory variant for small sets; inputs that are not sorted yet are sorted first
+internal fun mergeSorted(parts: List<LongArray>): LongArray {
+    val sorted = parts.map { LongBuffer.wrap(if (it.isSortedUnique()) it else it.copyOf().sortUnique()) }
+    val out = LongList()
+    mergeSortedInto(sorted) { out.add(it) }
+    return out.toArray()
 }
 
 private fun LongArray.isSortedUnique(): Boolean {
@@ -320,6 +349,20 @@ private class LongList {
     }
 
     fun toArray(): LongArray = data.copyOf(size)
+
+    // Sorts the filled part in place and drops duplicates, without copying; returns the new size
+    fun sortUnique(): Int {
+        if (size < 2) return size
+        java.util.Arrays.sort(data, 0, size)
+        var n = 1
+        for (i in 1 until size) if (data[i] != data[n - 1]) data[n++] = data[i]
+        size = n
+        return n
+    }
+
+    fun writeTo(out: DataOutputStream) {
+        for (i in 0 until size) out.writeLong(data[i])
+    }
 }
 
 // Sorts in place and drops duplicates
@@ -375,17 +418,42 @@ private class BlocklistStore(context: Context) {
         sp.edit().putString("lists", array.toString()).commit()
     }
 
-    fun loadListHashes(url: String): LongArray {
-        val file = binFile(url)
-        if (!file.exists()) return LongArray(0)
+    fun loadListHashes(url: String): LongBuffer = map(binFile(url)) ?: EMPTY_SET
+
+    // One list is used as it is; several are merged into one file, which is reused at the next
+    // start as long as the switched-on lists have not changed
+    fun mergedHashes(lists: List<RemoteList>): LongBuffer {
+        if (lists.size < 2) {
+            mergedFile.delete()
+            return lists.firstOrNull()?.let { loadListHashes(it.url) } ?: EMPTY_SET
+        }
+        val signature = hash(lists.sortedBy { it.url }.joinToString("\n") { "${it.url} ${it.count} ${it.updated}" })
+        if (sp.getString(MERGED_KEY, null) == signature) map(mergedFile)?.let { return it }
+
+        val parts = lists.map { loadListHashes(it.url) }
+        val tmp = File.createTempFile("merged_", ".tmp", dir)
+        try {
+            DataOutputStream(BufferedOutputStream(FileOutputStream(tmp), 64 * 1024)).use { out ->
+                mergeSortedInto(parts) { out.writeLong(it) }
+            }
+            if (!tmp.renameTo(mergedFile)) throw IOException("Cannot save lists")
+        } finally {
+            tmp.delete()
+        }
+        sp.edit().putString(MERGED_KEY, signature).commit()
+        return map(mergedFile) ?: EMPTY_SET
+    }
+
+    // The mapping stays valid after the file is replaced or deleted, so readers are never cut off
+    private fun map(file: File): LongBuffer? {
+        if (!file.exists()) return null
         return runCatching {
             FileInputStream(file).use { stream ->
                 val channel = stream.channel
-                val result = LongArray((channel.size() / 8).toInt())
-                channel.map(FileChannel.MapMode.READ_ONLY, 0, result.size * 8L).asLongBuffer().get(result)
-                result
+                val bytes = channel.size() / 8 * 8
+                if (bytes == 0L) EMPTY_SET else channel.map(FileChannel.MapMode.READ_ONLY, 0, bytes).asLongBuffer()
             }
-        }.getOrDefault(LongArray(0))
+        }.getOrNull()
     }
 
     fun deleteListFile(url: String) {
@@ -415,22 +483,23 @@ private class BlocklistStore(context: Context) {
                     parsed.add(DomainHash.of(domain))
                 }
             }
-            val result = parsed.toArray().sortUnique()
-            if (result.isEmpty()) throw IOException("No domains found")
-            write(url, result)
+            // Sorted inside the download buffer: a list with millions of entries is never copied
+            val count = parsed.sortUnique()
+            if (count == 0) throw IOException("No domains found")
+            write(url, parsed)
             sp.edit()
                 .putOrRemove(etagKey(url), response.header("ETag"))
                 .putOrRemove(modifiedKey(url), response.header("Last-Modified"))
                 .apply()
-            return RemoteList(url, result.size, System.currentTimeMillis())
+            return RemoteList(url, count, System.currentTimeMillis())
         }
     }
 
-    private fun write(url: String, data: LongArray) {
+    private fun write(url: String, data: LongList) {
         val tmp = File.createTempFile("list_", ".tmp", dir)
         try {
             DataOutputStream(BufferedOutputStream(FileOutputStream(tmp), 64 * 1024)).use { out ->
-                data.forEach { out.writeLong(it) }
+                data.writeTo(out)
             }
             if (!tmp.renameTo(binFile(url))) throw IOException("Cannot save list")
         } finally {
@@ -445,12 +514,14 @@ private class BlocklistStore(context: Context) {
         if (value == null) remove(key) else putString(key, value)
 
     private fun binFile(url: String) = File(dir, "list_${hash(url)}.bin")
+    private val mergedFile get() = File(dir, "merged.bin")
 
     private fun hash(url: String) = MessageDigest.getInstance("SHA-256").digest(url.toByteArray())
         .take(8).joinToString("") { "%02x".format(it) }
 
     companion object {
         const val MAX_LIST_DOMAINS = 4_000_000
+        private const val MERGED_KEY = "merged"
 
         val client: OkHttpClient by lazy {
             Http.client.newBuilder()

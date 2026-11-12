@@ -49,14 +49,18 @@ object AutoUpdate {
 class BlocklistUpdateJob : JobService() {
     override fun onStartJob(params: JobParameters): Boolean {
         Thread({
-            val ok = try {
-                Blocklist.updateAllNow(applicationContext)
+            // A failed download is retried later with the system's back-off
+            val retry = try {
+                !Blocklist.updateAllNow(applicationContext)
             } catch (e: Exception) {
                 Log.w("SparkleDNS", "Blocklist update failed", e)
+                true
+            } catch (e: OutOfMemoryError) {
+                // Must not take the VPN down with it; retrying would only run out of memory again
+                Log.e("SparkleDNS", "Blocklist update ran out of memory", e)
                 false
             }
-            // A failed run is retried later with the system's back-off
-            jobFinished(params, !ok)
+            jobFinished(params, retry)
         }, "blocklist-update").start()
         return true
     }
