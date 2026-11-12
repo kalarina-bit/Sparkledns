@@ -5,6 +5,7 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.net.http.HttpEngine
 import android.net.http.HttpException
+import android.net.http.NetworkException
 import android.net.http.UploadDataProvider
 import android.net.http.UploadDataSink
 import android.net.http.UrlRequest
@@ -74,7 +75,10 @@ class DohClient(context: Context, provider: DohProvider) {
     private fun createTransport(context: Context, provider: DohProvider): Transport {
         if (provider.http3 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             try {
-                return Http3Transport(context, provider)
+                val http3 = Http3Transport(context, provider)
+                // HttpEngine resolves the host with system DNS and cannot use fixed addresses
+                return if (provider.bootstrap.isEmpty()) http3
+                else BootstrapFallbackTransport(http3) { OkHttpTransport(context, provider) }
             } catch (e: Throwable) {
                 Log.w(TAG, "HttpEngine unavailable, falling back to HTTP/2", e)
             }
@@ -87,6 +91,38 @@ private interface Transport {
     val lastProtocol: String?
     fun query(message: ByteArray): ByteArray
     fun shutdown()
+}
+
+private class UnresolvedHostException(cause: Throwable) : IOException("Host not resolved", cause)
+
+// HTTP/3 first; once the network fails to resolve the server's name, the rest of the session
+// goes over OkHttp, which connects to the bootstrap addresses instead
+private class BootstrapFallbackTransport(
+    private val http3: Transport,
+    createFallback: () -> Transport,
+) : Transport {
+    private val fallback = lazy(createFallback)
+    @Volatile private var useFallback = false
+
+    override val lastProtocol: String?
+        get() = if (useFallback) fallback.value.lastProtocol else http3.lastProtocol
+
+    override fun query(message: ByteArray): ByteArray {
+        if (!useFallback) {
+            try {
+                return http3.query(message)
+            } catch (e: UnresolvedHostException) {
+                Log.w(TAG, "Server name not resolved over HTTP/3, using bootstrap addresses")
+                useFallback = true
+            }
+        }
+        return fallback.value.query(message)
+    }
+
+    override fun shutdown() {
+        http3.shutdown()
+        if (fallback.isInitialized()) fallback.value.shutdown()
+    }
 }
 
 private class OkHttpTransport(context: Context, private val provider: DohProvider) : Transport {
@@ -140,7 +176,11 @@ private class OkHttpTransport(context: Context, private val provider: DohProvide
             if (!response.isSuccessful) throw IOException("HTTP ${response.code}")
             val body = response.body ?: throw IOException("Empty response")
             if (body.contentLength() > MAX_DNS_SIZE) throw IOException("Response too large")
-            return body.bytes()
+            // Without Content-Length the size is only known while reading: stop one byte past the limit
+            val source = body.source()
+            source.request(MAX_DNS_SIZE + 1L)
+            if (source.buffer.size > MAX_DNS_SIZE) throw IOException("Response too large")
+            return source.buffer.readByteArray()
         }
     }
 
@@ -220,7 +260,11 @@ private class Http3Transport(context: Context, private val provider: DohProvider
             }
 
             override fun onFailed(request: UrlRequest, info: UrlResponseInfo?, error: HttpException) {
-                result.completeExceptionally(IOException(error.message, error))
+                val unresolved = error is NetworkException &&
+                    error.errorCode == NetworkException.ERROR_HOSTNAME_NOT_RESOLVED
+                result.completeExceptionally(
+                    if (unresolved) UnresolvedHostException(error) else IOException(error.message, error)
+                )
             }
 
             override fun onCanceled(request: UrlRequest, info: UrlResponseInfo?) {

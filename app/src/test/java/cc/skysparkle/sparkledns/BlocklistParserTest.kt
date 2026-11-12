@@ -1,5 +1,6 @@
 package cc.skysparkle.sparkledns
 
+import okio.Buffer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -50,5 +51,23 @@ class BlocklistParserTest {
         assertEquals(DomainHash.of("example.com"), DomainHash.of(name, name.indexOf("example")))
         assertEquals(DomainHash.of(name), DomainHash.of(name, 0))
         assertEquals(DomainHash.of("b.example"), DomainHash.of(name, 2, name.indexOf(".com")))
+    }
+
+    @Test
+    fun rulesWithAPathAreSkippedNotTurnedIntoTheWholeDomain() {
+        assertNull(BlocklistParser.parseLine("||example.com/ads/"))
+        assertNull(BlocklistParser.parseLine("|http://example.com/x|"))
+        assertNull(BlocklistParser.parseLine("https://example.com/banner.js"))
+        assertEquals("example.com", BlocklistParser.parseLine("||example.com/^"))
+        assertEquals("example.com", BlocklistParser.parseLine("https://example.com/"))
+    }
+
+    @Test
+    fun overlongLinesAreSkippedAndTheRestIsRead() {
+        val long = "x".repeat(BlocklistParser.MAX_LINE_BYTES.toInt() * 3)
+        val source = Buffer().writeUtf8("a.example\r\n$long\nb.example\nc.example")
+        val lines = mutableListOf<String>()
+        BlocklistParser.readLimitedLines(source) { lines += it.trim() }
+        assertEquals(listOf("a.example", "b.example", "c.example"), lines)
     }
 }

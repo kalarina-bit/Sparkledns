@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okio.BufferedSource
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.BufferedOutputStream
@@ -475,13 +476,11 @@ private class BlocklistStore(context: Context) {
             if (!response.isSuccessful) throw IOException("HTTP ${response.code}")
             val body = response.body ?: throw IOException("Empty response")
             val parsed = LongList()
-            body.charStream().buffered().useLines { lines ->
-                lines.forEach { line ->
-                    val domain = BlocklistParser.parseLine(line) ?: return@forEach
-                    // Far above the largest common lists; keeps a wrong URL from exhausting memory
-                    if (parsed.size >= MAX_LIST_DOMAINS) throw IOException("List too large")
-                    parsed.add(DomainHash.of(domain))
-                }
+            BlocklistParser.readLimitedLines(body.source()) { line ->
+                val domain = BlocklistParser.parseLine(line) ?: return@readLimitedLines
+                // Far above the largest common lists; keeps a wrong URL from exhausting memory
+                if (parsed.size >= MAX_LIST_DOMAINS) throw IOException("List too large")
+                parsed.add(DomainHash.of(domain))
             }
             // Sorted inside the download buffer: a list with millions of entries is never copied
             val count = parsed.sortUnique()
@@ -521,6 +520,7 @@ private class BlocklistStore(context: Context) {
 
     companion object {
         const val MAX_LIST_DOMAINS = 4_000_000
+
         private const val MERGED_KEY = "merged"
 
         val client: OkHttpClient by lazy {
@@ -533,6 +533,59 @@ private class BlocklistStore(context: Context) {
 
 // Understands hosts files, plain domain lists, AdBlock rules (||domain^) and dnsmasq / unbound syntax
 object BlocklistParser {
+    /** A list larger than this is refused; the biggest common lists are well below it. */
+    const val MAX_LIST_BYTES = 256L * 1024 * 1024
+
+    /** Longer lines (no blocklist entry is that long) are skipped, not read into memory. */
+    const val MAX_LINE_BYTES = 4096L
+
+    /**
+     * Reads [source] line by line within [MAX_LIST_BYTES] in total and [MAX_LINE_BYTES] per
+     * line, so a wrong URL (a binary file, a page with no line breaks) cannot fill the memory.
+     */
+    fun readLimitedLines(source: BufferedSource, onLine: (String) -> Unit) {
+        var total = 0L
+        fun consumed(bytes: Long) {
+            total += bytes
+            if (total > MAX_LIST_BYTES) throw IOException("List too large")
+        }
+        while (true) {
+            val newline = source.indexOf('\n'.code.toByte(), 0, MAX_LINE_BYTES + 1)
+            when {
+                newline >= 0 -> {
+                    onLine(source.readUtf8(newline))
+                    source.skip(1)
+                    consumed(newline + 1)
+                }
+                source.exhausted() -> return
+                source.request(MAX_LINE_BYTES + 1) -> {
+                    // Overlong line: drop it piece by piece up to its end
+                    while (true) {
+                        // Only what is already buffered: the next line may start right after the break
+                        val end = source.buffer.indexOf('\n'.code.toByte())
+                        if (end >= 0) {
+                            source.skip(end + 1)
+                            consumed(end + 1)
+                            break
+                        }
+                        val chunk = source.buffer.size
+                        if (chunk == 0L) return
+                        source.skip(chunk)
+                        consumed(chunk)
+                        if (!source.request(1)) return
+                    }
+                }
+                else -> {
+                    // Last line without a line break
+                    val rest = source.buffer.size
+                    onLine(source.readUtf8())
+                    consumed(rest)
+                    return
+                }
+            }
+        }
+    }
+
     private val WHITESPACE = Regex("\\s+")
     private val IGNORED = setOf(
         "localhost", "localhost.localdomain", "local", "broadcasthost",
@@ -548,6 +601,8 @@ object BlocklistParser {
         // Fast path for AdBlock-style lists such as HaGeZi: ||domain^
         if (line.startsWith("||")) {
             val end = line.indexOfAny(charArrayOf('^', '$', '/'), 2)
+            // ||example.com/ads/ blocks one path in a browser; as DNS it would block the whole site
+            if (end >= 0 && line[end] == '/' && hasPath(line.substring(end))) return null
             return normalize(if (end >= 0) line.substring(2, end) else line.substring(2))
         }
         if (DNSMASQ.any { line.startsWith(it) }) return normalize(line.substringAfter("=/").substringBefore('/'))
@@ -557,8 +612,16 @@ object BlocklistParser {
         val parts = line.substringBefore('#').trim().split(WHITESPACE)
         val candidate = if (parts.size >= 2 && looksLikeIp(parts[0])) parts[1] else parts[0]
         if (candidate.lowercase() in IGNORED) return null
+        // A URL with a path (|http://example.com/x|) stands for one page, not for the domain
+        val afterScheme = candidate.substringAfter("://")
+        val slash = afterScheme.indexOf('/')
+        if (slash >= 0 && hasPath(afterScheme.substring(slash))) return null
         return normalize(candidate)
     }
+
+    // "/", "/^" or "/|" only end the host; anything longer is a path
+    private fun hasPath(fromSlash: String): Boolean =
+        fromSlash.trimEnd('^', '|').length > 1
 
     fun normalize(input: String): String? {
         var s = input.trim().lowercase()
