@@ -131,4 +131,11 @@
     <string name="turn_on">オンにする</string>
     <string name="downloading">ダウンロード中…</string>
     <string name="change_server">サーバーを変更</string>
+    <string name="alert_channel">保護に関する警告</string>
+    <string name="alert_stopped_title">DNS 保護が停止しました</string>
+    <string name="alert_stopped_text">トンネルが動作しなくなったため、DNS は暗号化されていません。SparkleDNS を開いて再接続してください。</string>
+    <string name="alert_bad_url_title">DNS 保護を開始できません</string>
+    <string name="alert_bad_url_text">サーバーのアドレスが有効な HTTPS URL ではありません。SparkleDNS を開いてサーバーを確認してください。</string>
+    <string name="alert_lockdown_title">DNS サーバーに接続できません</string>
+    <string name="alert_lockdown_text">「VPN なしの接続をブロック」がオンのため、SparkleDNS は DNS サーバーに接続できず、名前解決に失敗します。Android の VPN 設定でオフにしてください。</string>
 </resources>

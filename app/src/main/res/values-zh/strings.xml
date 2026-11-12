@@ -131,4 +131,11 @@
     <string name="turn_on">开启</string>
     <string name="downloading">正在下载…</string>
     <string name="change_server">更换服务器</string>
+    <string name="alert_channel">保护警告</string>
+    <string name="alert_stopped_title">DNS 保护已停止</string>
+    <string name="alert_stopped_text">隧道已停止工作，DNS 不再加密。请打开 SparkleDNS 重新连接。</string>
+    <string name="alert_bad_url_title">DNS 保护未启动</string>
+    <string name="alert_bad_url_text">服务器地址不是有效的 HTTPS 网址。请打开 SparkleDNS 检查服务器。</string>
+    <string name="alert_lockdown_title">无法连接 DNS 服务器</string>
+    <string name="alert_lockdown_text">已开启“屏蔽未使用 VPN 的连接”，SparkleDNS 无法连接 DNS 服务器，解析会失败。请在 Android 的 VPN 设置中关闭该选项。</string>
 </resources>

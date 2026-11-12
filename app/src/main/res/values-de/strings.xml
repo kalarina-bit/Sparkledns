@@ -131,4 +131,11 @@
     <string name="turn_on">Einschalten</string>
     <string name="downloading">Wird geladen…</string>
     <string name="change_server">Server wechseln</string>
+    <string name="alert_channel">Schutzwarnungen</string>
+    <string name="alert_stopped_title">DNS-Schutz beendet</string>
+    <string name="alert_stopped_text">Der Tunnel funktioniert nicht mehr, DNS ist nicht mehr verschlüsselt. Öffne SparkleDNS, um dich erneut zu verbinden.</string>
+    <string name="alert_bad_url_title">DNS-Schutz nicht gestartet</string>
+    <string name="alert_bad_url_text">Die Serveradresse ist keine gültige HTTPS-URL. Öffne SparkleDNS und prüfe den Server.</string>
+    <string name="alert_lockdown_title">DNS-Server nicht erreichbar</string>
+    <string name="alert_lockdown_text">„Verbindungen ohne VPN blockieren“ ist aktiv, daher erreicht SparkleDNS den DNS-Server nicht und Anfragen schlagen fehl. Schalte es in den VPN-Einstellungen von Android aus.</string>
 </resources>

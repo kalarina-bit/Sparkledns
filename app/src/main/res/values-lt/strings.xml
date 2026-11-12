@@ -131,4 +131,11 @@
     <string name="turn_on">Įjungti</string>
     <string name="downloading">Atsisiunčiama…</string>
     <string name="change_server">Keisti serverį</string>
+    <string name="alert_channel">Apsaugos įspėjimai</string>
+    <string name="alert_stopped_title">DNS apsauga išjungta</string>
+    <string name="alert_stopped_text">Tunelis nustojo veikti, DNS nebešifruojamas. Atidarykite SparkleDNS, kad prisijungtumėte iš naujo.</string>
+    <string name="alert_bad_url_title">DNS apsauga nepaleista</string>
+    <string name="alert_bad_url_text">Serverio adresas nėra tinkamas HTTPS adresas. Atidarykite SparkleDNS ir patikrinkite serverį.</string>
+    <string name="alert_lockdown_title">DNS serveris nepasiekiamas</string>
+    <string name="alert_lockdown_text">Įjungta „Blokuoti ryšius be VPN“, todėl SparkleDNS negali pasiekti DNS serverio ir užklausos nepavyksta. Išjunkite tai Android VPN nustatymuose.</string>
 </resources>

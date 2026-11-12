@@ -131,4 +131,11 @@
     <string name="turn_on">Включить</string>
     <string name="downloading">Загрузка…</string>
     <string name="change_server">Сменить сервер</string>
+    <string name="alert_channel">Предупреждения о защите</string>
+    <string name="alert_stopped_title">Защита DNS отключена</string>
+    <string name="alert_stopped_text">Туннель перестал работать, DNS больше не шифруется. Откройте SparkleDNS, чтобы подключиться снова.</string>
+    <string name="alert_bad_url_title">Защита DNS не запущена</string>
+    <string name="alert_bad_url_text">Адрес сервера не является корректным HTTPS-адресом. Откройте SparkleDNS и проверьте сервер.</string>
+    <string name="alert_lockdown_title">DNS-сервер недоступен</string>
+    <string name="alert_lockdown_text">Включено «Блокировать соединения без VPN», поэтому SparkleDNS не может связаться с DNS-сервером и запросы не проходят. Отключите это в настройках VPN Android.</string>
 </resources>

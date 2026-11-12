@@ -132,4 +132,11 @@
     <string name="turn_on">Turn on</string>
     <string name="downloading">Downloading…</string>
     <string name="change_server">Change server</string>
+    <string name="alert_channel">Protection alerts</string>
+    <string name="alert_stopped_title">DNS protection stopped</string>
+    <string name="alert_stopped_text">The tunnel stopped working, so DNS is no longer encrypted. Open SparkleDNS to connect again.</string>
+    <string name="alert_bad_url_title">DNS protection not started</string>
+    <string name="alert_bad_url_text">The server address is not a valid HTTPS URL. Open SparkleDNS and check the server.</string>
+    <string name="alert_lockdown_title">DNS server unreachable</string>
+    <string name="alert_lockdown_text">\"Block connections without VPN\" is on, so SparkleDNS cannot reach the DNS server and lookups fail. Turn it off in Android VPN settings.</string>
 </resources>

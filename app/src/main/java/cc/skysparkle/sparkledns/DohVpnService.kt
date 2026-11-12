@@ -20,6 +20,7 @@ import android.system.StructPollfd
 import android.util.Log
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
@@ -34,7 +35,11 @@ private const val WORKERS = 16
 private const val TAG = "SparkleDNS"
 private const val CHANNEL_ID = "vpn_status"
 private const val NOTIFICATION_ID = 1
+// Separate channel with normal importance: losing protection must not go unnoticed
+private const val ALERT_CHANNEL_ID = "vpn_alerts"
+private const val ALERT_NOTIFICATION_ID = 2
 private const val MAX_BAD_PACKETS = 100
+private const val READER_JOIN_MS = 1000L
 
 // Android's resolver retries after 5 s, so an older lookup no longer has anyone waiting for it
 private const val QUEUE_TIMEOUT_MS = 5000L
@@ -96,6 +101,16 @@ class DohVpnService : VpnService() {
         val provider = prefs.resolve()
         val excluded = prefs.excludedApps
 
+        // The app checks the address before connecting, but always-on VPN and a restart by the
+        // system start the service directly. A tunnel with a broken URL would fail every lookup.
+        if (provider.url.toHttpUrlOrNull()?.isHttps != true) {
+            Log.e(TAG, "Server address is not a valid HTTPS URL, not starting")
+            stopSession()
+            showAlert(R.string.alert_bad_url_title, R.string.alert_bad_url_text)
+            stopSelf()
+            return
+        }
+
         val builder = Builder()
             .setSession(provider.displayName(this))
             .addAddress(TUN_ADDRESS, 32)
@@ -138,6 +153,14 @@ class DohVpnService : VpnService() {
         _activeExcluded.value = excluded
         showNotification(provider)
         DnsTileService.refresh(this)
+        getSystemService(NotificationManager::class.java)?.cancel(ALERT_NOTIFICATION_ID)
+
+        // With "Block connections without VPN" the app, excluded from its own tunnel, cannot reach
+        // the DoH server, so every lookup would fail
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && isLockdownEnabled) {
+            Log.w(TAG, "Lockdown mode is on, the DoH server is not reachable")
+            showAlert(R.string.alert_lockdown_title, R.string.alert_lockdown_text)
+        }
     }
 
     private fun stopSession() {
@@ -157,8 +180,32 @@ class DohVpnService : VpnService() {
             if (session !== failed) return@post
             Log.e(TAG, "Tunnel stopped working, disconnecting")
             stopSession()
+            // DNS goes unencrypted from here on; the user has to know
+            showAlert(R.string.alert_stopped_title, R.string.alert_stopped_text)
             stopSelf()
         }
+    }
+
+    private fun showAlert(titleRes: Int, textRes: Int) {
+        val manager = getSystemService(NotificationManager::class.java) ?: return
+        manager.createNotificationChannel(
+            NotificationChannel(ALERT_CHANNEL_ID, getString(R.string.alert_channel), NotificationManager.IMPORTANCE_DEFAULT)
+        )
+        val openApp = PendingIntent.getActivity(
+            this, 2,
+            Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+            PendingIntent.FLAG_IMMUTABLE,
+        )
+        val text = getString(textRes)
+        val notification = Notification.Builder(this, ALERT_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(getString(titleRes))
+            .setContentText(text)
+            .setStyle(Notification.BigTextStyle().bigText(text))
+            .setContentIntent(openApp)
+            .setAutoCancel(true)
+            .build()
+        runCatching { manager.notify(ALERT_NOTIFICATION_ID, notification) }
     }
 
     private fun showNotification(provider: DohProvider) {
@@ -196,7 +243,7 @@ class DohVpnService : VpnService() {
 
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+                startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SYSTEM_EXEMPTED)
             } else {
                 startForeground(NOTIFICATION_ID, notification)
             }
@@ -229,6 +276,9 @@ private class Session(
         if (!alive.getAndSet(false)) return
         pool.shutdownNow()
         runCatching { wakeup[1].close() }
+        // The pipe wakes the reader at once; let it leave before its descriptor is closed and
+        // possibly reused by something else
+        if (Thread.currentThread() !== reader) runCatching { reader.join(READER_JOIN_MS) }
         runCatching { tun.close() }
         closer.execute {
             try {
