@@ -1,6 +1,6 @@
 plugins {
-    id("com.android.application") version "9.2.1" apply false
+    alias(libs.plugins.android.application) apply false
     // Not applied to modules: only pins the Kotlin version used by AGP's built-in Kotlin
-    id("org.jetbrains.kotlin.android") version "2.4.0" apply false
-    id("org.jetbrains.kotlin.plugin.compose") version "2.4.0" apply false
+    alias(libs.plugins.kotlin.android) apply false
+    alias(libs.plugins.kotlin.compose) apply false
 }
