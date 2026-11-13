@@ -19,7 +19,7 @@ object Providers {
     // Servers ship with the app; new ones arrive with app updates
     val builtIn = listOf(
         DohProvider(
-            "skysparkle", "SkySparkle", "https://blog.skysparkle.cc/dns-query",
+            "skysparkle", "SkySparkle", "https://skysparkle.cc/dns-query",
             http3 = true, policy = "https://skysparkle.cc/privacy?lang=en",
         ),
         DohProvider(
