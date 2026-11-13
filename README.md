@@ -85,6 +85,16 @@ Requires JDK 17+ and Android SDK 36.
 
 Bug reports, DoH server and blocklist suggestions, translation fixes and pull requests are welcome in the [issue tracker](https://git.skysparkle.cc/kalarina/Sparkledns/issues). Please read [CONTRIBUTING.md](CONTRIBUTING.md) first — it explains what fits the project and how to send changes. To open an issue or a pull request, [create an account](https://git.skysparkle.cc/user/sign_up) on this Gitea.
 
+## 💙 Sponsor
+
+<p align="center">
+  <a href="https://skysparkle.cc"><img src="assets/skysparkle.svg" width="72" alt="Skysparkle"></a>
+</p>
+
+<p align="center">
+  SparkleDNS is sponsored and supported by <a href="https://skysparkle.cc"><b>Skysparkle</b></a> — independent encrypted DNS from Lithuania and the app’s default DoH server.
+</p>
+
 ## 📄 License
 
 [GNU General Public License v3.0 only](LICENSE).
