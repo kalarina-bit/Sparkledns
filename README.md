@@ -29,7 +29,6 @@
 <p align="center">
   <img src="assets/screenshots/1-private-dns-left.png" width="160" alt="Private DNS in one tap"><img src="assets/screenshots/2-private-dns-right.png" width="160" alt="You're protected">
   <img src="assets/screenshots/3-see-every-request.png" width="160" alt="See every request">
-  <img src="assets/screenshots/4-block-ads-and-trackers.png" width="160" alt="Block ads and trackers">
 </p>
 
 > [!TIP]
