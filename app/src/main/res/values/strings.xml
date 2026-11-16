@@ -139,4 +139,24 @@
     <string name="alert_bad_url_text">The server address is not a valid HTTPS URL. Open SparkleDNS and check the server.</string>
     <string name="alert_lockdown_title">DNS server unreachable</string>
     <string name="alert_lockdown_text">\"Block connections without VPN\" is on, so SparkleDNS cannot reach the DNS server and lookups fail. Turn it off in Android VPN settings.</string>
+    <string name="key_label">Access key</string>
+    <string name="key_hint">Paste the key or the whole address from your account at skysparkle.cc</string>
+    <string name="key_invalid">This doesn\'t look like a key. Copy it again from the Keys page.</string>
+    <string name="key_get">Get a free key</string>
+    <string name="key_needed">The SkySparkle server needs a personal access key. It is free: create an account at skysparkle.cc and add the key.</string>
+    <string name="key_add">Add key</string>
+    <string name="alert_no_key_text">The SkySparkle server needs an access key. Open SparkleDNS and add your key in Settings.</string>
+    <string name="onb_welcome_title">Welcome to SparkleDNS</string>
+    <string name="onb_welcome_text">Private DNS for your whole phone, without big-tech servers.</string>
+    <string name="onb_point_encrypt">Encrypts every DNS lookup with DNS-over-HTTPS</string>
+    <string name="onb_point_block">Blocks ads and trackers in all apps</string>
+    <string name="onb_point_independent">Uses only independent servers, never Google or Cloudflare</string>
+    <string name="onb_key_title">Get your access key</string>
+    <string name="onb_key_text">The SkySparkle server works with a personal key. The free plan has limits; paid plans have none.</string>
+    <string name="onb_key_step1">Create a free account at skysparkle.cc</string>
+    <string name="onb_key_step2">Open Keys and create a key for this phone</string>
+    <string name="onb_key_step3">Copy the key or the address and paste it below</string>
+    <string name="onb_next">Next</string>
+    <string name="onb_done">Start</string>
+    <string name="onb_skip">Skip, I\'ll choose another server</string>
 </resources>

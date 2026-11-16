@@ -21,6 +21,16 @@ class Prefs(context: Context) {
         get() = sp.getBoolean(KEY_HTTP3, false)
         set(value) = sp.edit().putBoolean(KEY_HTTP3, value).apply()
 
+    // Access key for the Skysparkle server, created in the account at skysparkle.cc
+    var skysparkleKey: String
+        get() = sp.getString(KEY_SKYSPARKLE, null) ?: ""
+        set(value) = sp.edit().putString(KEY_SKYSPARKLE, value).apply()
+
+    // The first-launch guide was finished or skipped
+    var onboardingDone: Boolean
+        get() = sp.getBoolean(KEY_ONBOARDING, false)
+        set(value) = sp.edit().putBoolean(KEY_ONBOARDING, value).apply()
+
     var excludedApps: Set<String>
         get() = sp.getStringSet(KEY_EXCLUDED, null)?.toSet() ?: emptySet()
         set(value) = sp.edit().putStringSet(KEY_EXCLUDED, value).apply()
@@ -48,12 +58,14 @@ class Prefs(context: Context) {
         get() = sp.getString(KEY_PRIVATE_DNS, null) ?: ""
         set(value) = sp.edit().putString(KEY_PRIVATE_DNS, value).apply()
 
-    fun resolve(): DohProvider =
-        if (providerId == Providers.CUSTOM_ID) {
+    // Without a key the Skysparkle entry has an empty address, so it cannot connect
+    fun resolve(): DohProvider = when (providerId) {
+        Providers.CUSTOM_ID ->
             DohProvider(Providers.CUSTOM_ID, "Custom", customUrl.trim(), parseIps(customBootstrap), customHttp3)
-        } else {
-            Providers.byId(providerId)
+        else -> Providers.byId(providerId).let {
+            if (it.id == Providers.DEFAULT_ID) it.copy(url = SkysparkleKey.url(skysparkleKey)) else it
         }
+    }
 
     private companion object {
         const val KEY_PROVIDER = "provider"
@@ -61,6 +73,8 @@ class Prefs(context: Context) {
         const val KEY_BOOTSTRAP = "custom_bootstrap"
         const val KEY_HTTP3 = "custom_http3"
         const val KEY_EXCLUDED = "excluded_apps"
+        const val KEY_SKYSPARKLE = "skysparkle_key"
+        const val KEY_ONBOARDING = "onboarding_done"
         const val KEY_HINTS = "dismissed_hints"
         const val KEY_PRIVATE_DNS = "dismissed_private_dns"
         const val KEY_UPDATE_INTERVAL = "update_interval"

@@ -138,4 +138,24 @@
     <string name="alert_bad_url_text">Адрес сервера не является корректным HTTPS-адресом. Откройте SparkleDNS и проверьте сервер.</string>
     <string name="alert_lockdown_title">DNS-сервер недоступен</string>
     <string name="alert_lockdown_text">Включено «Блокировать соединения без VPN», поэтому SparkleDNS не может связаться с DNS-сервером и запросы не проходят. Отключите это в настройках VPN Android.</string>
+    <string name="key_label">Ключ доступа</string>
+    <string name="key_hint">Вставьте ключ или весь адрес из аккаунта на skysparkle.cc</string>
+    <string name="key_invalid">Это не похоже на ключ. Скопируйте его ещё раз на странице «Ключи».</string>
+    <string name="key_get">Получить бесплатный ключ</string>
+    <string name="key_needed">Серверу SkySparkle нужен личный ключ доступа. Это бесплатно: создайте аккаунт на skysparkle.cc и добавьте ключ.</string>
+    <string name="key_add">Добавить ключ</string>
+    <string name="alert_no_key_text">Серверу SkySparkle нужен ключ доступа. Откройте SparkleDNS и добавьте ключ в разделе «Настройки».</string>
+    <string name="onb_welcome_title">Добро пожаловать в SparkleDNS</string>
+    <string name="onb_welcome_text">Приватный DNS для всего телефона, без серверов крупных корпораций.</string>
+    <string name="onb_point_encrypt">Шифрует каждый DNS-запрос через DNS-over-HTTPS</string>
+    <string name="onb_point_block">Блокирует рекламу и трекеры во всех приложениях</string>
+    <string name="onb_point_independent">Только независимые серверы, без Google и Cloudflare</string>
+    <string name="onb_key_title">Получите ключ доступа</string>
+    <string name="onb_key_text">Сервер SkySparkle работает по личному ключу. У бесплатного тарифа есть ограничения, у платных — нет.</string>
+    <string name="onb_key_step1">Создайте бесплатный аккаунт на skysparkle.cc</string>
+    <string name="onb_key_step2">Откройте «Ключи» и создайте ключ для этого телефона</string>
+    <string name="onb_key_step3">Скопируйте ключ или адрес и вставьте ниже</string>
+    <string name="onb_next">Далее</string>
+    <string name="onb_done">Начать</string>
+    <string name="onb_skip">Пропустить, выберу другой сервер</string>
 </resources>

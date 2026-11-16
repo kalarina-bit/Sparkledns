@@ -138,4 +138,24 @@
     <string name="alert_bad_url_text">Serverio adresas nėra tinkamas HTTPS adresas. Atidarykite SparkleDNS ir patikrinkite serverį.</string>
     <string name="alert_lockdown_title">DNS serveris nepasiekiamas</string>
     <string name="alert_lockdown_text">Įjungta „Blokuoti ryšius be VPN“, todėl SparkleDNS negali pasiekti DNS serverio ir užklausos nepavyksta. Išjunkite tai Android VPN nustatymuose.</string>
+    <string name="key_label">Prieigos raktas</string>
+    <string name="key_hint">Įklijuokite raktą arba visą adresą iš savo paskyros skysparkle.cc</string>
+    <string name="key_invalid">Tai nepanašu į raktą. Nukopijuokite jį dar kartą puslapyje „Raktai“.</string>
+    <string name="key_get">Gauti nemokamą raktą</string>
+    <string name="key_needed">SkySparkle serveriui reikia asmeninio prieigos rakto. Tai nemokama: susikurkite paskyrą skysparkle.cc ir pridėkite raktą.</string>
+    <string name="key_add">Pridėti raktą</string>
+    <string name="alert_no_key_text">SkySparkle serveriui reikia prieigos rakto. Atidarykite SparkleDNS ir pridėkite raktą skiltyje „Nustatymai“.</string>
+    <string name="onb_welcome_title">Sveiki atvykę į SparkleDNS</string>
+    <string name="onb_welcome_text">Privatus DNS visam telefonui, be didžiųjų technologijų įmonių serverių.</string>
+    <string name="onb_point_encrypt">Šifruoja kiekvieną DNS užklausą per DNS-over-HTTPS</string>
+    <string name="onb_point_block">Blokuoja reklamas ir sekiklius visose programėlėse</string>
+    <string name="onb_point_independent">Tik nepriklausomi serveriai, jokio Google ar Cloudflare</string>
+    <string name="onb_key_title">Gaukite prieigos raktą</string>
+    <string name="onb_key_text">SkySparkle serveris veikia su asmeniniu raktu. Nemokamas planas turi apribojimų, mokami – ne.</string>
+    <string name="onb_key_step1">Susikurkite nemokamą paskyrą skysparkle.cc</string>
+    <string name="onb_key_step2">Atidarykite „Raktai“ ir sukurkite raktą šiam telefonui</string>
+    <string name="onb_key_step3">Nukopijuokite raktą arba adresą ir įklijuokite žemiau</string>
+    <string name="onb_next">Toliau</string>
+    <string name="onb_done">Pradėti</string>
+    <string name="onb_skip">Praleisti, pasirinksiu kitą serverį</string>
 </resources>

@@ -106,7 +106,10 @@ class DohVpnService : VpnService() {
         if (provider.url.toHttpUrlOrNull()?.isHttps != true) {
             Log.e(TAG, "Server address is not a valid HTTPS URL, not starting")
             stopSession()
-            showAlert(R.string.alert_bad_url_title, R.string.alert_bad_url_text)
+            showAlert(
+                R.string.alert_bad_url_title,
+                if (provider.id == Providers.DEFAULT_ID) R.string.alert_no_key_text else R.string.alert_bad_url_text,
+            )
             stopSelf()
             return
         }

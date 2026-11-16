@@ -71,6 +71,7 @@ fun SettingsScreen(
     var customUrl by remember { mutableStateOf(prefs.customUrl) }
     var customBootstrap by remember { mutableStateOf(prefs.customBootstrap) }
     var customHttp3 by remember { mutableStateOf(prefs.customHttp3) }
+    var keyInput by remember { mutableStateOf(prefs.skysparkleKey) }
     var testResult by rememberSaveable(stateSaver = TestResultSaver) { mutableStateOf<TestResult?>(null) }
     var shownResult by rememberSaveable(stateSaver = TestResultSaver) { mutableStateOf<TestResult?>(null) } // kept while the card animates out
     var testing by remember { mutableStateOf(false) }
@@ -78,8 +79,9 @@ fun SettingsScreen(
 
     val isCustom = selected == Providers.CUSTOM_ID
     val customValid = remember(customUrl) { customUrl.trim().toHttpUrlOrNull()?.isHttps == true }
-    val canConnect = !isCustom || customValid
-    val selectedProvider = remember(selected, customUrl, customBootstrap, customHttp3) { prefs.resolve() }
+    val keyValid = remember(keyInput) { SkysparkleKey.parse(keyInput) != null }
+    val selectedProvider = remember(selected, customUrl, customBootstrap, customHttp3, keyInput) { prefs.resolve() }
+    val canConnect = selectedProvider.url.toHttpUrlOrNull()?.isHttps == true
 
     // Picking a server never touches a live connection; switching is an explicit action
     val pendingSwitch = active?.let { it != selectedProvider && canConnect } == true
@@ -123,6 +125,21 @@ fun SettingsScreen(
                     onDonate = provider.donate?.let { url -> { openUrl(context, url) } },
                     onClick = { select(provider.id) },
                 )
+                if (provider.id == Providers.DEFAULT_ID) {
+                    AnimatedVisibility(visible = selected == Providers.DEFAULT_ID, enter = Motion.expandIn, exit = Motion.collapseOut) {
+                        KeyField(
+                            value = keyInput,
+                            valid = keyValid,
+                            onChange = {
+                                keyInput = it
+                                // Saved as the bare key, also when the whole address was pasted
+                                prefs.skysparkleKey = SkysparkleKey.parse(it) ?: it.trim()
+                                testResult = null
+                            },
+                            onGetKey = { openUrl(context, SkysparkleKey.SIGNUP_URL) },
+                        )
+                    }
+                }
             }
             ListDivider()
             ServerRow(
@@ -248,6 +265,35 @@ fun SettingsScreen(
                 subtitle = "${stringResource(R.string.about_version)} ${BuildConfig.VERSION_NAME}",
                 onClick = onOpenAbout,
             )
+        }
+    }
+}
+
+// Access key for the Skysparkle server, with a link to the account page where keys are made
+@Composable
+internal fun KeyField(value: String, valid: Boolean, onChange: (String) -> Unit, onGetKey: () -> Unit, modifier: Modifier = Modifier) {
+    val showError = value.isNotBlank() && !valid
+    Column(
+        modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = onChange,
+            label = { Text(stringResource(R.string.key_label)) },
+            singleLine = true,
+            isError = showError,
+            shape = RoundedCornerShape(14.dp),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Text(
+            stringResource(if (showError) R.string.key_invalid else R.string.key_hint),
+            color = if (showError) Palette.Blocked else Palette.Fg3,
+            fontSize = 12.sp,
+        )
+        OutlinedButton(onClick = onGetKey, shape = RoundedCornerShape(14.dp)) {
+            Text(stringResource(R.string.key_get))
         }
     }
 }

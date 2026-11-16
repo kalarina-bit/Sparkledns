@@ -138,4 +138,24 @@
     <string name="alert_bad_url_text">服务器地址不是有效的 HTTPS 网址。请打开 SparkleDNS 检查服务器。</string>
     <string name="alert_lockdown_title">无法连接 DNS 服务器</string>
     <string name="alert_lockdown_text">已开启“屏蔽未使用 VPN 的连接”，SparkleDNS 无法连接 DNS 服务器，解析会失败。请在 Android 的 VPN 设置中关闭该选项。</string>
+    <string name="key_label">访问密钥</string>
+    <string name="key_hint">粘贴 skysparkle.cc 账户中的密钥或完整地址</string>
+    <string name="key_invalid">这看起来不像密钥。请在“密钥”页面重新复制。</string>
+    <string name="key_get">获取免费密钥</string>
+    <string name="key_needed">SkySparkle 服务器需要个人访问密钥。完全免费：在 skysparkle.cc 创建账户并添加密钥。</string>
+    <string name="key_add">添加密钥</string>
+    <string name="alert_no_key_text">SkySparkle 服务器需要访问密钥。请打开 SparkleDNS，在“设置”中添加密钥。</string>
+    <string name="onb_welcome_title">欢迎使用 SparkleDNS</string>
+    <string name="onb_welcome_text">为整部手机提供私密 DNS，不使用大型科技公司的服务器。</string>
+    <string name="onb_point_encrypt">通过 DNS-over-HTTPS 加密每一次 DNS 查询</string>
+    <string name="onb_point_block">在所有应用中拦截广告和跟踪器</string>
+    <string name="onb_point_independent">只使用独立服务器，不用 Google 或 Cloudflare</string>
+    <string name="onb_key_title">获取访问密钥</string>
+    <string name="onb_key_text">SkySparkle 服务器使用个人密钥。免费套餐有限制，付费套餐没有。</string>
+    <string name="onb_key_step1">在 skysparkle.cc 创建免费账户</string>
+    <string name="onb_key_step2">打开“密钥”，为这部手机创建密钥</string>
+    <string name="onb_key_step3">复制密钥或地址，粘贴到下方</string>
+    <string name="onb_next">下一步</string>
+    <string name="onb_done">开始</string>
+    <string name="onb_skip">跳过，我选择其他服务器</string>
 </resources>
