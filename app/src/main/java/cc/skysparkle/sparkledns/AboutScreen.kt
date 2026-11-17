@@ -30,6 +30,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -53,7 +54,8 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 
 private const val PRIVACY_POLICY = "https://skysparkle.cc/privacy?lang=en"
-private const val SOURCE_CODE = "https://git.skysparkle.cc/kalarina/Sparkledns"
+private const val SOURCE_CODE = "https://github.com/kalarina-bit/Sparkledns"
+private const val DONATE = "https://ko-fi.com/skysparkle"
 
 private const val APACHE_2 = "Apache License 2.0"
 private const val APACHE_2_URL = "https://www.apache.org/licenses/LICENSE-2.0"
@@ -156,6 +158,8 @@ private fun AboutContent(modifier: Modifier, onOpenLicenses: () -> Unit) {
             }
         }
 
+        SupportCard(onDonate = { openUrl(context, DONATE) })
+
         OutlinedButton(onClick = { openUrl(context, PRIVACY_POLICY) }, modifier = Modifier.fillMaxWidth()) {
             Icon(painterResource(R.drawable.ic_policy), contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
@@ -188,6 +192,43 @@ private fun AboutContent(modifier: Modifier, onOpenLicenses: () -> Unit) {
                 color = MaterialTheme.colorScheme.primary,
                 textDecoration = TextDecoration.Underline,
             )
+        }
+    }
+}
+
+// The server costs money every month; the card asks for help without getting in the way
+@Composable
+private fun SupportCard(onDonate: () -> Unit) {
+    val context = LocalContext.current
+    Card(Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Image(
+                remember { AppLogo.get(context) },
+                contentDescription = null,
+                modifier = Modifier.size(48.dp),
+            )
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.support_title), style = MaterialTheme.typography.titleMedium)
+                Text(
+                    stringResource(R.string.support_text),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        Button(
+            onClick = onDonate,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+        ) {
+            Icon(painterResource(R.drawable.ic_donate), contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.support_button))
         }
     }
 }

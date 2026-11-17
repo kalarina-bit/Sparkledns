@@ -159,4 +159,7 @@
     <string name="onb_next">Next</string>
     <string name="onb_done">Start</string>
     <string name="onb_skip">Skip, I\'ll choose another server</string>
+    <string name="support_title">Support SparkleDNS</string>
+    <string name="support_text">SparkleDNS is free, open source and has no ads. Donations pay for the Skysparkle server and keep the app going.</string>
+    <string name="support_button">Donate on Ko-fi</string>
 </resources>

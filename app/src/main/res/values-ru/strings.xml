@@ -158,4 +158,7 @@
     <string name="onb_next">Далее</string>
     <string name="onb_done">Начать</string>
     <string name="onb_skip">Пропустить, выберу другой сервер</string>
+    <string name="support_title">Поддержать SparkleDNS</string>
+    <string name="support_text">SparkleDNS бесплатное, с открытым кодом и без рекламы. Пожертвования оплачивают сервер Skysparkle и помогают приложению развиваться.</string>
+    <string name="support_button">Пожертвовать через Ko-fi</string>
 </resources>
