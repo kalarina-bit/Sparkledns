@@ -25,14 +25,14 @@ import java.security.SecureRandom
 // Sign-in with a Skysparkle account: the app gets its access key without copying it by hand.
 //
 // OAuth for native apps (RFC 8252) with PKCE (RFC 7636): the account page opens in the browser,
-// so the password never passes through the app. After "Connect" the site sends the browser to
-// https://app.skysparkle.cc/app/callback?code=…&state=…, a verified App Link that only this app
-// (signed with our key) receives, and the app trades the one-time code for a new key. Only this
-// app knows the verifier, so even a code that leaked somewhere else is useless.
+// so the password never passes through the app. After "Connect" the site opens
+// https://skysparkle.cc/app/callback?code=…&state=… through an intent:// link that names this
+// package, so Android delivers it only to this app, and the app trades the one-time code for a
+// new key. Only this app knows the verifier, so even a code that leaked somewhere is useless.
 object SkysparkleSignIn {
     private const val CONNECT_URL = "https://skysparkle.cc/app/connect"
     private const val TOKEN_URL = "https://skysparkle.cc/api/app/token"
-    private const val CALLBACK_HOST = "app.skysparkle.cc"
+    private const val CALLBACK_HOST = "skysparkle.cc"
     private const val CALLBACK_PATH = "/app/callback"
 
     // The browser step must be finished within this time (the site keeps codes for 5 minutes)
