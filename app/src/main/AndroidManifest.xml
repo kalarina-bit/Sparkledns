@@ -38,12 +38,15 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- End of the Skysparkle sign-in: the site sends the browser back with a one-time code -->
-            <intent-filter>
+            <!-- End of the Skysparkle sign-in: the site sends the browser back with a one-time code.
+                 A verified App Link (app.skysparkle.cc/.well-known/assetlinks.json names this app's
+                 signing key), so no other app can catch the code. A separate subdomain, because
+                 Chrome keeps links to the site you are already on inside the browser -->
+            <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="cc.skysparkle.sparkledns" android:host="connect" />
+                <data android:scheme="https" android:host="app.skysparkle.cc" android:path="/app/callback" />
             </intent-filter>
         </activity>
 
