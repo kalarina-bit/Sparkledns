@@ -199,17 +199,13 @@ private fun AboutContent(modifier: Modifier, onOpenLicenses: () -> Unit) {
 // The server costs money every month; the card asks for help without getting in the way
 @Composable
 private fun SupportCard(onDonate: () -> Unit) {
-    val context = LocalContext.current
     Card(Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Image(
-                remember { AppLogo.get(context) },
-                contentDescription = null,
-                modifier = Modifier.size(48.dp),
-            )
+            // The logo is already at the top of the screen
+            IconBadge(R.drawable.ic_donate, size = 48.dp)
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
                 Text(stringResource(R.string.support_title), style = MaterialTheme.typography.titleMedium)
