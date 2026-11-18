@@ -1,5 +1,6 @@
 package cc.skysparkle.sparkledns
 
+import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -21,12 +22,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -93,6 +97,13 @@ fun SettingsScreen(
         testResult = null
     }
 
+    // Signed in from the key field: the key is already saved, show it and select the server
+    SignInResult { key ->
+        keyInput = key
+        selected = Providers.DEFAULT_ID
+        testResult = null
+    }
+
     fun runTest() {
         val provider = prefs.resolve()
         testing = true
@@ -136,7 +147,6 @@ fun SettingsScreen(
                                 prefs.skysparkleKey = SkysparkleKey.parse(it) ?: it.trim()
                                 testResult = null
                             },
-                            onGetKey = { openUrl(context, SkysparkleKey.SIGNUP_URL) },
                         )
                     }
                 }
@@ -269,14 +279,30 @@ fun SettingsScreen(
     }
 }
 
-// Access key for the Skysparkle server, with a link to the account page where keys are made
+// Access key for the Skysparkle server: sign in to get it automatically, or paste one by hand
 @Composable
-internal fun KeyField(value: String, valid: Boolean, onChange: (String) -> Unit, onGetKey: () -> Unit, modifier: Modifier = Modifier) {
+internal fun KeyField(value: String, valid: Boolean, onChange: (String) -> Unit, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val signIn by SkysparkleSignIn.state.collectAsStateWithLifecycle()
+    val working = signIn == SkysparkleSignIn.State.Waiting || signIn == SkysparkleSignIn.State.Exchanging
     val showError = value.isNotBlank() && !valid
     Column(
         modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
+        Button(
+            onClick = { SkysparkleSignIn.start(context) },
+            enabled = !working,
+            shape = RoundedCornerShape(14.dp),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            if (working) {
+                CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = LocalContentColor.current)
+                Spacer(Modifier.width(10.dp))
+            }
+            Text(stringResource(if (working) R.string.sign_in_working else if (valid) R.string.sign_in_again else R.string.sign_in))
+        }
+        Text(stringResource(R.string.key_or_paste), color = Palette.Fg3, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
         OutlinedTextField(
             value = value,
             onValueChange = onChange,
@@ -292,8 +318,26 @@ internal fun KeyField(value: String, valid: Boolean, onChange: (String) -> Unit,
             color = if (showError) Palette.Blocked else Palette.Fg3,
             fontSize = 12.sp,
         )
-        OutlinedButton(onClick = onGetKey, shape = RoundedCornerShape(14.dp)) {
-            Text(stringResource(R.string.key_get))
+    }
+}
+
+// Result of the Skysparkle sign-in, shown once on the screen that started it
+@Composable
+internal fun SignInResult(onKey: (String) -> Unit) {
+    val context = LocalContext.current
+    val signIn by SkysparkleSignIn.state.collectAsStateWithLifecycle()
+    LaunchedEffect(signIn) {
+        when (val s = signIn) {
+            is SkysparkleSignIn.State.Done -> {
+                onKey(s.key)
+                Toast.makeText(context, R.string.sign_in_done, Toast.LENGTH_SHORT).show()
+                SkysparkleSignIn.consume()
+            }
+            is SkysparkleSignIn.State.Failed -> {
+                Toast.makeText(context, s.message, Toast.LENGTH_LONG).show()
+                SkysparkleSignIn.consume()
+            }
+            else -> Unit
         }
     }
 }

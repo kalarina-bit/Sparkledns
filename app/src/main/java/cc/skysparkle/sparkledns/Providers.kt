@@ -63,7 +63,6 @@ object Providers {
 // keys; the server answers only /dns/<key>, there is no shared public address.
 object SkysparkleKey {
     const val BASE_URL = "https://skysparkle.cc/dns/"
-    const val SIGNUP_URL = "https://skysparkle.cc/login#register"
     private val KEY = Regex("^[A-Za-z0-9_-]{24}$")
     private val IN_URL = Regex("/dns/([A-Za-z0-9_-]{24})(?:[/?#].*)?$")
 

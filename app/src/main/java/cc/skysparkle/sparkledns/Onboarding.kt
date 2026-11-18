@@ -66,6 +66,12 @@ fun OnboardingScreen(onDone: () -> Unit) {
         onDone()
     }
 
+    // Signed in from the guide: the key is saved, nothing is left to do here
+    SignInResult { key ->
+        keyInput = key
+        finish(useKey = true)
+    }
+
     BackHandler(enabled = page > 0) { page-- }
 
     Box(
@@ -129,7 +135,6 @@ fun OnboardingScreen(onDone: () -> Unit) {
                                 value = keyInput,
                                 valid = keyValid,
                                 onChange = { keyInput = it },
-                                onGetKey = { openUrl(context, SkysparkleKey.SIGNUP_URL) },
                             )
                         }
                     }

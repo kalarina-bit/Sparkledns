@@ -57,6 +57,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AppLogo.preload(this)
+        // Opened by the browser at the end of the Skysparkle sign-in (not again after rotation)
+        if (savedInstanceState == null) handleSignIn(intent)
         enableEdgeToEdge()
         setContent {
             MaterialTheme(colorScheme = AppColors) {
@@ -68,6 +70,27 @@ class MainActivity : ComponentActivity() {
                     if (onboarded) AppShell() else OnboardingScreen(onDone = { onboarded = true })
                 }
             }
+        }
+    }
+
+    // singleTask: the sign-in callback reaches the running activity instead of opening a second one
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleSignIn(intent)
+    }
+
+    // Back from the browser without finishing the sign-in. A real callback arrives in
+    // onNewIntent, which always runs before this
+    override fun onResume() {
+        super.onResume()
+        SkysparkleSignIn.cancelWaiting()
+    }
+
+    private fun handleSignIn(intent: Intent?) {
+        val uri = intent?.data
+        if (intent?.action == Intent.ACTION_VIEW && SkysparkleSignIn.isCallback(uri)) {
+            SkysparkleSignIn.handle(this, uri!!)
         }
     }
 }
