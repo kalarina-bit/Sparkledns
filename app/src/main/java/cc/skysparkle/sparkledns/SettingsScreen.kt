@@ -14,6 +14,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -287,15 +288,17 @@ internal fun KeyField(key: String, modifier: Modifier = Modifier) {
         modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        if (hasKey) {
+        // The line keeps its text while it animates out
+        val shownKey = rememberLast(key.takeIf { hasKey }).orEmpty()
+        AnimatedVisibility(visible = hasKey, enter = Motion.expandIn, exit = Motion.collapseOut) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    stringResource(R.string.key_status, key.take(4)),
+                    stringResource(R.string.key_status, shownKey.take(4)),
                     color = Palette.Fg2,
                     fontSize = 13.sp,
                     modifier = Modifier.weight(1f),
                 )
-                TextButton(onClick = { copyKeyAddress(context, key) }) {
+                TextButton(onClick = { copyKeyAddress(context, shownKey) }) {
                     Text(stringResource(R.string.key_copy))
                 }
             }
@@ -304,21 +307,29 @@ internal fun KeyField(key: String, modifier: Modifier = Modifier) {
     }
 }
 
-// Starts the browser sign-in; shows progress while the app waits for it
+// Starts the browser sign-in; shows progress while the app waits for it. Filled while there is
+// no key yet; once there is one, signing in again is a rare action and must not compete with
+// the filled "Switch to" button below the server list
 @Composable
 internal fun SignInButton(again: Boolean, modifier: Modifier = Modifier, shape: Shape = RoundedCornerShape(14.dp)) {
     val context = LocalContext.current
     val signIn by SkysparkleSignIn.state.collectAsStateWithLifecycle()
     val working = signIn == SkysparkleSignIn.State.Waiting || signIn == SkysparkleSignIn.State.Exchanging
-    Button(onClick = { SkysparkleSignIn.start(context) }, enabled = !working, shape = shape, modifier = modifier) {
+    val onClick = { SkysparkleSignIn.start(context) }
+    val content: @Composable RowScope.() -> Unit = {
         if (working) {
             CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = LocalContentColor.current)
             Spacer(Modifier.width(10.dp))
         }
         Text(
             stringResource(if (working) R.string.sign_in_working else if (again) R.string.sign_in_again else R.string.sign_in),
-            fontWeight = FontWeight.Bold,
+            fontWeight = if (again) null else FontWeight.Bold,
         )
+    }
+    if (again) {
+        OutlinedButton(onClick = onClick, enabled = !working, shape = shape, modifier = modifier, content = content)
+    } else {
+        Button(onClick = onClick, enabled = !working, shape = shape, modifier = modifier, content = content)
     }
 }
 
