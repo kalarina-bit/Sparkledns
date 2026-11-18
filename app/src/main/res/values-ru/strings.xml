@@ -138,13 +138,12 @@
     <string name="alert_bad_url_text">Адрес сервера не является корректным HTTPS-адресом. Откройте SparkleDNS и проверьте сервер.</string>
     <string name="alert_lockdown_title">DNS-сервер недоступен</string>
     <string name="alert_lockdown_text">Включено «Блокировать соединения без VPN», поэтому SparkleDNS не может связаться с DNS-сервером и запросы не проходят. Отключите это в настройках VPN Android.</string>
-    <string name="key_label">Ключ доступа</string>
-    <string name="key_hint">Вставьте ключ или весь адрес из аккаунта на skysparkle.cc</string>
-    <string name="key_invalid">Это не похоже на ключ. Скопируйте его ещё раз на странице «Ключи».</string>
     <string name="sign_in">Войти через Skysparkle</string>
     <string name="sign_in_again">Войти заново</string>
     <string name="sign_in_working">Выполняется вход…</string>
-    <string name="key_or_paste">Или вставьте ключ из аккаунта вручную</string>
+    <string name="key_status">Ключ добавлен: %1$s…</string>
+    <string name="key_copy">Скопировать адрес</string>
+    <string name="key_copied">Адрес скопирован. Вставьте его в браузер или на другом устройстве.</string>
     <string name="sign_in_done">Вход выполнен. Ключ добавлен.</string>
     <string name="sign_in_failed">Не удалось войти. Попробуйте ещё раз.</string>
     <string name="sign_in_expired">Вход занял слишком много времени. Начните заново.</string>
@@ -152,7 +151,7 @@
     <string name="sign_in_suspended">Этот аккаунт Skysparkle заблокирован.</string>
     <string name="sign_in_network">Нет связи с skysparkle.cc. Проверьте интернет и попробуйте ещё раз.</string>
     <string name="key_needed">Серверу SkySparkle нужен личный ключ доступа. Это бесплатно: войдите через Skysparkle, и приложение получит ключ само.</string>
-    <string name="key_add">Добавить ключ</string>
+    <string name="key_add">Войти</string>
     <string name="alert_no_key_text">Серверу SkySparkle нужен ключ доступа. Откройте SparkleDNS и войдите через Skysparkle в разделе «Настройки».</string>
     <string name="onb_welcome_title">Добро пожаловать в SparkleDNS</string>
     <string name="onb_welcome_text">Приватный DNS для всего телефона, без серверов крупных корпораций.</string>

@@ -139,13 +139,12 @@
     <string name="alert_bad_url_text">The server address is not a valid HTTPS URL. Open SparkleDNS and check the server.</string>
     <string name="alert_lockdown_title">DNS server unreachable</string>
     <string name="alert_lockdown_text">\"Block connections without VPN\" is on, so SparkleDNS cannot reach the DNS server and lookups fail. Turn it off in Android VPN settings.</string>
-    <string name="key_label">Access key</string>
-    <string name="key_hint">Paste the key or the whole address from your account at skysparkle.cc</string>
-    <string name="key_invalid">This doesn\'t look like a key. Copy it again from the Keys page.</string>
     <string name="sign_in">Sign in with Skysparkle</string>
     <string name="sign_in_again">Sign in again</string>
     <string name="sign_in_working">Signing in…</string>
-    <string name="key_or_paste">Or paste a key from your account by hand</string>
+    <string name="key_status">Key added: %1$s…</string>
+    <string name="key_copy">Copy address</string>
+    <string name="key_copied">Address copied. Paste it in a browser or on another device.</string>
     <string name="sign_in_done">Signed in. The key has been added.</string>
     <string name="sign_in_failed">Sign-in failed. Please try again.</string>
     <string name="sign_in_expired">The sign-in took too long. Please start again.</string>
@@ -153,7 +152,7 @@
     <string name="sign_in_suspended">This Skysparkle account is suspended.</string>
     <string name="sign_in_network">No connection to skysparkle.cc. Check the internet and try again.</string>
     <string name="key_needed">The SkySparkle server needs a personal access key. It is free: sign in with Skysparkle and the app gets the key by itself.</string>
-    <string name="key_add">Add key</string>
+    <string name="key_add">Sign in</string>
     <string name="alert_no_key_text">The SkySparkle server needs an access key. Open SparkleDNS and sign in with Skysparkle in Settings.</string>
     <string name="onb_welcome_title">Welcome to SparkleDNS</string>
     <string name="onb_welcome_text">Private DNS for your whole phone, without big-tech servers.</string>

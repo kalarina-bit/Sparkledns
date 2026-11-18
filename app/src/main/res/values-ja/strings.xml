@@ -138,13 +138,12 @@
     <string name="alert_bad_url_text">サーバーのアドレスが有効な HTTPS URL ではありません。SparkleDNS を開いてサーバーを確認してください。</string>
     <string name="alert_lockdown_title">DNS サーバーに接続できません</string>
     <string name="alert_lockdown_text">「VPN なしの接続をブロック」がオンのため、SparkleDNS は DNS サーバーに接続できず、名前解決に失敗します。Android の VPN 設定でオフにしてください。</string>
-    <string name="key_label">アクセスキー</string>
-    <string name="key_hint">skysparkle.cc のアカウントからキーまたはアドレス全体を貼り付けてください</string>
-    <string name="key_invalid">キーの形式ではありません。「キー」ページからもう一度コピーしてください。</string>
     <string name="sign_in">Skysparkle でサインイン</string>
     <string name="sign_in_again">もう一度サインイン</string>
     <string name="sign_in_working">サインイン中…</string>
-    <string name="key_or_paste">またはアカウントのキーを手動で貼り付け</string>
+    <string name="key_status">キーを追加済み：%1$s…</string>
+    <string name="key_copy">アドレスをコピー</string>
+    <string name="key_copied">アドレスをコピーしました。ブラウザや他のデバイスに貼り付けてください。</string>
     <string name="sign_in_done">サインインしました。キーを追加しました。</string>
     <string name="sign_in_failed">サインインに失敗しました。もう一度お試しください。</string>
     <string name="sign_in_expired">サインインに時間がかかりすぎました。最初からやり直してください。</string>
@@ -152,7 +151,7 @@
     <string name="sign_in_suspended">この Skysparkle アカウントは停止されています。</string>
     <string name="sign_in_network">skysparkle.cc に接続できません。インターネット接続を確認して、もう一度お試しください。</string>
     <string name="key_needed">SkySparkle サーバーには個人用のアクセスキーが必要です。無料です：Skysparkle でサインインすると、アプリが自動でキーを取得します。</string>
-    <string name="key_add">キーを追加</string>
+    <string name="key_add">サインイン</string>
     <string name="alert_no_key_text">SkySparkle サーバーにはアクセスキーが必要です。SparkleDNS を開き、「設定」で Skysparkle にサインインしてください。</string>
     <string name="onb_welcome_title">SparkleDNS へようこそ</string>
     <string name="onb_welcome_text">大手 IT 企業のサーバーを使わない、スマホ全体のプライベート DNS。</string>

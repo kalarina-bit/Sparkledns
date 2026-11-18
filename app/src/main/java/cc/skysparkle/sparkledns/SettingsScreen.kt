@@ -1,5 +1,11 @@
 package cc.skysparkle.sparkledns
 
+import android.content.ClipData
+import android.content.ClipDescription
+import android.content.ClipboardManager
+import android.content.Context
+import android.os.Build
+import android.os.PersistableBundle
 import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedVisibility
@@ -29,6 +35,7 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -41,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -83,7 +91,6 @@ fun SettingsScreen(
 
     val isCustom = selected == Providers.CUSTOM_ID
     val customValid = remember(customUrl) { customUrl.trim().toHttpUrlOrNull()?.isHttps == true }
-    val keyValid = remember(keyInput) { SkysparkleKey.parse(keyInput) != null }
     val selectedProvider = remember(selected, customUrl, customBootstrap, customHttp3, keyInput) { prefs.resolve() }
     val canConnect = selectedProvider.url.toHttpUrlOrNull()?.isHttps == true
 
@@ -138,16 +145,7 @@ fun SettingsScreen(
                 )
                 if (provider.id == Providers.DEFAULT_ID) {
                     AnimatedVisibility(visible = selected == Providers.DEFAULT_ID, enter = Motion.expandIn, exit = Motion.collapseOut) {
-                        KeyField(
-                            value = keyInput,
-                            valid = keyValid,
-                            onChange = {
-                                keyInput = it
-                                // Saved as the bare key, also when the whole address was pasted
-                                prefs.skysparkleKey = SkysparkleKey.parse(it) ?: it.trim()
-                                testResult = null
-                            },
-                        )
+                        KeyField(key = keyInput)
                     }
                 }
             }
@@ -279,45 +277,61 @@ fun SettingsScreen(
     }
 }
 
-// Access key for the Skysparkle server: sign in to get it automatically, or paste one by hand
+// Access key for the Skysparkle server. It comes only from signing in; the address can be
+// copied to use the same key in a browser or on another device
 @Composable
-internal fun KeyField(value: String, valid: Boolean, onChange: (String) -> Unit, modifier: Modifier = Modifier) {
+internal fun KeyField(key: String, modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val signIn by SkysparkleSignIn.state.collectAsStateWithLifecycle()
-    val working = signIn == SkysparkleSignIn.State.Waiting || signIn == SkysparkleSignIn.State.Exchanging
-    val showError = value.isNotBlank() && !valid
+    val hasKey = SkysparkleKey.parse(key) != null
     Column(
         modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Button(
-            onClick = { SkysparkleSignIn.start(context) },
-            enabled = !working,
-            shape = RoundedCornerShape(14.dp),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            if (working) {
-                CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = LocalContentColor.current)
-                Spacer(Modifier.width(10.dp))
+        if (hasKey) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    stringResource(R.string.key_status, key.take(4)),
+                    color = Palette.Fg2,
+                    fontSize = 13.sp,
+                    modifier = Modifier.weight(1f),
+                )
+                TextButton(onClick = { copyKeyAddress(context, key) }) {
+                    Text(stringResource(R.string.key_copy))
+                }
             }
-            Text(stringResource(if (working) R.string.sign_in_working else if (valid) R.string.sign_in_again else R.string.sign_in))
         }
-        Text(stringResource(R.string.key_or_paste), color = Palette.Fg3, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
-        OutlinedTextField(
-            value = value,
-            onValueChange = onChange,
-            label = { Text(stringResource(R.string.key_label)) },
-            singleLine = true,
-            isError = showError,
-            shape = RoundedCornerShape(14.dp),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done),
-            modifier = Modifier.fillMaxWidth(),
-        )
+        SignInButton(again = hasKey, modifier = Modifier.fillMaxWidth())
+    }
+}
+
+// Starts the browser sign-in; shows progress while the app waits for it
+@Composable
+internal fun SignInButton(again: Boolean, modifier: Modifier = Modifier, shape: Shape = RoundedCornerShape(14.dp)) {
+    val context = LocalContext.current
+    val signIn by SkysparkleSignIn.state.collectAsStateWithLifecycle()
+    val working = signIn == SkysparkleSignIn.State.Waiting || signIn == SkysparkleSignIn.State.Exchanging
+    Button(onClick = { SkysparkleSignIn.start(context) }, enabled = !working, shape = shape, modifier = modifier) {
+        if (working) {
+            CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = LocalContentColor.current)
+            Spacer(Modifier.width(10.dp))
+        }
         Text(
-            stringResource(if (showError) R.string.key_invalid else R.string.key_hint),
-            color = if (showError) Palette.Blocked else Palette.Fg3,
-            fontSize = 12.sp,
+            stringResource(if (working) R.string.sign_in_working else if (again) R.string.sign_in_again else R.string.sign_in),
+            fontWeight = FontWeight.Bold,
         )
+    }
+}
+
+// The key is personal, so the clipboard is told to hide it from previews (Android 13+),
+// and Android 13+ confirms the copy itself
+private fun copyKeyAddress(context: Context, key: String) {
+    val clip = ClipData.newPlainText("SkySparkle", SkysparkleKey.url(key))
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        clip.description.extras = PersistableBundle().apply { putBoolean(ClipDescription.EXTRA_IS_SENSITIVE, true) }
+    }
+    context.getSystemService(ClipboardManager::class.java).setPrimaryClip(clip)
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+        Toast.makeText(context, R.string.key_copied, Toast.LENGTH_SHORT).show()
     }
 }
 

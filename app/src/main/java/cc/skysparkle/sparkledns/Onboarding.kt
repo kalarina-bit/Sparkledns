@@ -129,14 +129,6 @@ fun OnboardingScreen(onDone: () -> Unit) {
                         Step(1, stringResource(R.string.onb_key_step1))
                         Step(2, stringResource(R.string.onb_key_step2))
                         Step(3, stringResource(R.string.onb_key_step3))
-                        Spacer(Modifier.height(4.dp))
-                        Column(Modifier.fillMaxWidth().appCard().padding(top = 16.dp)) {
-                            KeyField(
-                                value = keyInput,
-                                valid = keyValid,
-                                onChange = { keyInput = it },
-                            )
-                        }
                     }
                 }
             }
@@ -148,12 +140,16 @@ fun OnboardingScreen(onDone: () -> Unit) {
                     modifier = Modifier.fillMaxWidth().height(52.dp),
                 ) { Text(stringResource(R.string.onb_next), fontWeight = FontWeight.Bold) }
             } else {
-                Button(
-                    onClick = { finish(useKey = true) },
-                    enabled = keyValid,
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.fillMaxWidth().height(52.dp),
-                ) { Text(stringResource(R.string.onb_done), fontWeight = FontWeight.Bold) }
+                // The key comes only from signing in; a successful sign-in closes the guide by itself
+                if (keyValid) {
+                    Button(
+                        onClick = { finish(useKey = true) },
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier.fillMaxWidth().height(52.dp),
+                    ) { Text(stringResource(R.string.onb_done), fontWeight = FontWeight.Bold) }
+                } else {
+                    SignInButton(again = false, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth().height(52.dp))
+                }
                 TextButton(onClick = { finish(useKey = false) }, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.onb_skip), color = Palette.Fg3)
                 }
