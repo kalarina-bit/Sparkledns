@@ -85,8 +85,9 @@ object SkysparkleSignIn {
         val verifier = p.getString(P_VERIFIER, null)
         val fresh = System.currentTimeMillis() - p.getLong(P_AT, 0) < PENDING_TTL_MS
         if (state == null || verifier == null || !fresh || uri.getQueryParameter("state") != state) {
-            // A link that this app did not start, or an old one: ignore it
-            if (state == null || !fresh) _state.value = State.Idle
+            // A link that this app did not start, an old one, or a second tap on "Open SparkleDNS"
+            // while the first code is still being exchanged: ignore it, keep any progress shown
+            cancelWaiting()
             return
         }
         p.edit().clear().apply()
@@ -149,6 +150,10 @@ object SkysparkleSignIn {
         } catch (e: IOException) {
             Log.w("SparkleDNS", "Key exchange failed", e)
             Result.Error(R.string.sign_in_network)
+        } catch (e: RuntimeException) {
+            // Runs in a scope without an exception handler: anything that escaped would crash the app
+            Log.w("SparkleDNS", "Key exchange failed", e)
+            Result.Error(R.string.sign_in_failed)
         }
     }
 
