@@ -2,10 +2,15 @@
   <img src="assets/icon-rounded.png" width="112" alt="SparkleDNS icon">
 </p>
 
-<h1 align="center">SparkleDNS</h1>
+<h1 align="center">SparkleDNS: Private DNS &amp; DoH</h1>
 
 <p align="center">
-  <b>Encrypt DNS requests without routing all your traffic through a VPN.</b>
+  <b>Encrypted DNS over HTTPS, tracker blocklists, live query log and per-app rules</b>
+</p>
+
+<p align="center">
+  SparkleDNS is a DNS over HTTPS (DoH) client for Android. It encrypts your DNS queries, blocks trackers and unwanted domains with blocklists, and shows every DNS request your phone makes.<br>
+  Only DNS goes through it: the rest of your traffic stays on your normal connection.
 </p>
 
 <p align="center">
