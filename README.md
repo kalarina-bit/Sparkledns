@@ -5,9 +5,7 @@
 <h1 align="center">SparkleDNS</h1>
 
 <p align="center">
-  <b>A lightweight DNS-over-HTTPS client for Android.</b><br>
-  A local VPN that captures only DNS traffic and sends every query to the DoH server you choose (RFC 8484).<br>
-  Everything else goes through your normal connection.
+  <b>Encrypt DNS requests without routing all your traffic through a VPN.</b>
 </p>
 
 <p align="center">
