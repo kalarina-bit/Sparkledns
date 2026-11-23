@@ -6,27 +6,21 @@
 
 <p align="center">
   <b>A lightweight DNS-over-HTTPS client for Android.</b><br>
-  A local VPN that captures only DNS traffic and sends every query to the DoH server you choose (RFC 8484). Everything else goes through your normal connection.
+  A local VPN that captures only DNS traffic and sends every query to the DoH server you choose (RFC 8484).<br>
+  Everything else goes through your normal connection.
 </p>
 
 <p align="center">
-  <a href="https://ko-fi.com/skysparkle"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support me on Ko-fi"></a>
-</p>
-
-> [!IMPORTANT]
-> **SparkleDNS is coming to Google Play!** The app is now in closed testing there ahead of the public release. Ideas, wishes and suggestions for improvement are very welcome — send them wherever is easiest for you: an [issue on GitHub](https://github.com/kalarina-bit/Sparkledns/issues), or an email to [cuken107@proton.me](mailto:cuken107@proton.me).
-
-> [!NOTE]
-> **Looking for designers!** SparkleDNS is looking for volunteer designers to help with icons, logos, animations, cover art (store graphics) and UI design. This is unpaid help for an open-source project. If you're interested, write to [cuken107@proton.me](mailto:cuken107@proton.me).
-
-<p align="center">
-  <a href="https://github.com/kalarina-bit/Sparkledns/releases/latest"><img src="https://img.shields.io/github/v/release/kalarina-bit/Sparkledns?style=for-the-badge&label=release&labelColor=1b1b1b&color=2e7d32" alt="Latest release"></a>
+  <a href="https://github.com/kalarina-bit/Sparkledns/releases/latest"><img src="https://img.shields.io/github/v/release/kalarina-bit/Sparkledns?style=flat-square&label=release&labelColor=1b1b1b&color=2e7d32" alt="Latest release"></a>
+  <a href="https://f-droid.org/packages/cc.skysparkle.sparkledns/"><img src="https://img.shields.io/f-droid/v/cc.skysparkle.sparkledns?style=flat-square&label=f-droid&labelColor=1b1b1b&color=1976d2" alt="F-Droid version"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-1b1b1b?style=flat-square" alt="License: GPL-3.0"></a>
 </p>
 
 <p align="center">
-  <a href="https://f-droid.org/packages/cc.skysparkle.sparkledns/"><img src="assets/get-it-on%20(1).png" height="56" alt="Get it on F-Droid"></a>
+  <a href="https://play.google.com/store/apps/details?id=cc.skysparkle.sparkledns"><img src="assets/badge_google_play.png" height="56" alt="Get it on Google Play"></a>
+  <a href="https://f-droid.org/packages/cc.skysparkle.sparkledns/"><img src="assets/badge_fdroid.png" height="56" alt="Get it on F-Droid"></a>
   <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/kalarina-bit/Sparkledns"><img src="assets/badge_obtainium.png" height="56" alt="Get it on Obtainium"></a>
-  <a href="https://github.com/kalarina-bit/Sparkledns/releases/latest"><img src="assets/get-it-on-github.png" height="56" alt="Get it on GitHub"></a>
+  <a href="https://github.com/kalarina-bit/Sparkledns/releases/latest"><img src="assets/badge_github.png" height="56" alt="Get it on GitHub"></a>
 </p>
 
 <p align="center">
@@ -35,26 +29,28 @@
   <img src="assets/screenshots/4-block-trackers-and-malware.png" width="160" alt="Block trackers and malware">
 </p>
 
-> [!TIP]
-> If you find SparkleDNS useful, please consider giving it a ⭐ — it helps others discover the project.
-
 ## ✨ Features
 
-- 🔌 **One-tap connect/disconnect**, with a Quick Settings tile
-- 🔄 **Switch servers on the fly** — the tunnel restarts automatically
-- 🚀 **Built-in server test** showing protocol and latency
-- 📊 **Activity** — 24-hour and 7-day charts, share of the biggest companies, and a live log with filters and one-tap blocking. Numbers stay on the device
-- 📱 **Per-app DNS** — chosen apps bypass the tunnel
-- 🚫 **Custom blocklists** — your own domains plus hosts/domain/AdBlock lists by URL (HaGeZi Pro, Pro++ and TIF presets), updated automatically every day or week, on Wi-Fi only if you like
-- 🔓 **No analytics, no Google Play Services**
+| | |
+|---|---|
+| 🔌 **One-tap connect** | Connect and disconnect from the app or a Quick Settings tile |
+| 🔄 **Switch servers on the fly** | The tunnel restarts automatically |
+| 🚀 **Server test** | Shows the protocol and latency of each server |
+| 📊 **Activity** | 24-hour and 7-day charts, share of the biggest companies, and a live log with filters and one-tap blocking. Numbers stay on the device |
+| 📱 **Per-app DNS** | Chosen apps bypass the tunnel |
+| 🚫 **Custom blocklists** | Your own domains plus hosts/domain/AdBlock lists by URL (HaGeZi Pro, Pro++ and TIF presets), updated every day or week, on Wi-Fi only if you like |
+| 🔓 **Private by design** | No analytics, no ads, no Google Play Services |
 
-## <img src="assets/icon-install.png" width="32" alt=""> Installation
+## <img src="assets/icon-install.png" width="28" alt=""> Installation
 
-- **[F-Droid](https://f-droid.org/packages/cc.skysparkle.sparkledns/)** — install and update through the F-Droid client.
-- **[Obtainium](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/kalarina-bit/Sparkledns)** — installs the APK straight from GitHub releases and keeps it up to date.
-- **Manually** — download the latest APK from [GitHub Releases](https://github.com/kalarina-bit/Sparkledns/releases/latest), allow installs from unknown sources for the app you open it with (Settings → Apps → Special access → Install unknown apps), then open the `.apk` and confirm.
+| Source | How it works |
+|---|---|
+| **[Google Play](https://play.google.com/store/apps/details?id=cc.skysparkle.sparkledns)** | Install and update through the Play Store. |
+| **[F-Droid](https://f-droid.org/packages/cc.skysparkle.sparkledns/)** | Install and update through the F-Droid client. |
+| **[Obtainium](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/kalarina-bit/Sparkledns)** | Installs the APK straight from GitHub releases and keeps it up to date. |
+| **[GitHub Releases](https://github.com/kalarina-bit/Sparkledns/releases/latest)** | Download the APK, allow installs from unknown sources for the app you open it with (Settings → Apps → Special access → Install unknown apps), then open the `.apk` and confirm. |
 
-## <img src="assets/icon-verify.png" width="32" alt=""> Verifying a download
+## <img src="assets/icon-verify.png" width="28" alt=""> Verifying a download
 
 Every official APK is signed with the same key. Check it before installing:
 
@@ -70,7 +66,7 @@ The SHA-256 fingerprint of the signing certificate must be:
 
 `apksigner` prints the same value in lowercase without colons. On Android you can check it with [AppVerifier](https://github.com/soupslurpr/AppVerifier) (app ID `cc.skysparkle.sparkledns`).
 
-## <img src="assets/icon-structure.png" width="32" alt=""> Building from source
+## <img src="assets/icon-structure.png" width="28" alt=""> Building from source
 
 Requires JDK 17+ and Android SDK 36.
 
@@ -78,15 +74,23 @@ Requires JDK 17+ and Android SDK 36.
 ./gradlew assembleRelease
 ```
 
-### Releasing
+<details>
+<summary><b>Releasing</b></summary>
 
 1. Bump `versionName` and `versionCode` in `app/build.gradle.kts` (`versionCode = major * 10000 + minor * 100 + patch`).
 2. Add `fastlane/metadata/android/<locale>/changelogs/<versionCode>.txt`.
 3. Tag the commit as `v<versionName>` (for example `v1.0.9`) — F-Droid detects new releases from these tags, so upload the signed APK to the release right away.
 
+</details>
+
 ## 🤝 Contributing
 
 Bug reports, DoH server and blocklist suggestions, translation fixes and pull requests are welcome in the [issue tracker](https://github.com/kalarina-bit/Sparkledns/issues). Please read [CONTRIBUTING.md](CONTRIBUTING.md) first — it explains what fits the project and how to send changes.
+
+Ideas and wishes are welcome too — open an [issue](https://github.com/kalarina-bit/Sparkledns/issues) or write to [cuken107@proton.me](mailto:cuken107@proton.me).
+
+> [!NOTE]
+> **Looking for designers!** Volunteer help with icons, logos, animations, store graphics and UI design is very welcome. This is unpaid help for an open-source project — if you're interested, write to [cuken107@proton.me](mailto:cuken107@proton.me).
 
 ## 💙 Sponsor
 
@@ -95,14 +99,13 @@ Bug reports, DoH server and blocklist suggestions, translation fixes and pull re
 </p>
 
 <p align="center">
-  SparkleDNS is sponsored and supported by <a href="https://skysparkle.cc"><b>Skysparkle</b></a> — independent encrypted DNS from Lithuania and the app’s default DoH server.
+  SparkleDNS is sponsored and supported by <a href="https://skysparkle.cc"><b>Skysparkle</b></a> — independent encrypted DNS from Lithuania and the app’s default DoH server.<br>
+  <sub>Want to help keep the servers running? You can chip in on <a href="https://ko-fi.com/skysparkle">Ko-fi</a>.</sub>
 </p>
 
-## ☕ Support
-
-SparkleDNS is free, open source and has no ads. If it is useful to you, you can support the project on [Ko-fi](https://ko-fi.com/skysparkle) — donations pay for the Skysparkle server and the time spent on the apps.
-
-<a href="https://ko-fi.com/skysparkle"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support me on Ko-fi"></a>
+<p align="center">
+  If you find SparkleDNS useful, a ⭐ helps others discover the project.
+</p>
 
 ## 📄 License
 
