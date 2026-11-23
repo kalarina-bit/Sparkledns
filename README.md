@@ -86,6 +86,7 @@ Requires JDK 17+ and Android SDK 36.
 ## 🤝 Contributing
 
 Bug reports, DoH server and blocklist suggestions, translation fixes and pull requests are welcome in the [issue tracker](https://github.com/kalarina-bit/Sparkledns/issues). Please read [CONTRIBUTING.md](CONTRIBUTING.md) first — it explains what fits the project and how to send changes.
+
 ## 💙 Sponsor
 
 <p align="center">
