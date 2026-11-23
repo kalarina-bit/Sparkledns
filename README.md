@@ -86,12 +86,6 @@ Requires JDK 17+ and Android SDK 36.
 ## 🤝 Contributing
 
 Bug reports, DoH server and blocklist suggestions, translation fixes and pull requests are welcome in the [issue tracker](https://github.com/kalarina-bit/Sparkledns/issues). Please read [CONTRIBUTING.md](CONTRIBUTING.md) first — it explains what fits the project and how to send changes.
-
-Ideas and wishes are welcome too — open an [issue](https://github.com/kalarina-bit/Sparkledns/issues) or write to [cuken107@proton.me](mailto:cuken107@proton.me).
-
-> [!NOTE]
-> **Looking for designers!** Volunteer help with icons, logos, animations, store graphics and UI design is very welcome. This is unpaid help for an open-source project — if you're interested, write to [cuken107@proton.me](mailto:cuken107@proton.me).
-
 ## 💙 Sponsor
 
 <p align="center">
