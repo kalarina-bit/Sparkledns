@@ -78,7 +78,7 @@ Bug reports, server and blocklist suggestions, translations and pull requests ar
 
 ## Sponsor
 
-<a href="https://skysparkle.cc"><img src="assets/skysparkle.svg" width="20" alt=""></a> Sponsored by **[Skysparkle](https://skysparkle.cc)** — independent encrypted DNS from Lithuania and the app's default server. Help keep the servers running on [Ko-fi](https://ko-fi.com/skysparkle).
+<a href="https://skysparkle.cc"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/skysparkle-dark.svg"><img src="assets/skysparkle.svg" width="20" alt=""></picture></a> Sponsored by **[Skysparkle](https://skysparkle.cc)** — independent encrypted DNS from Lithuania and the app's default server. Help keep the servers running on [Ko-fi](https://ko-fi.com/skysparkle).
 
 ## License
 
