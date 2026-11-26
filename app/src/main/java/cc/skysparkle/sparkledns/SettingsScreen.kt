@@ -141,7 +141,7 @@ fun SettingsScreen(
                         server = server,
                         selected = isSelected,
                         onClick = {
-                            select("custom:${server.id}")
+                            // Only toggle expansion, no auto-select
                             expandedServerId = if (isExpanded) null else server.id
                         },
                     )
@@ -149,6 +149,7 @@ fun SettingsScreen(
                     AnimatedVisibility(visible = isExpanded, enter = Motion.expandIn, exit = Motion.collapseOut) {
                         CustomServerEditForm(
                             server = server,
+                            isSelected = isSelected,
                             prefs = prefs,
                             onUpdate = { updated ->
                                 prefs.updateCustomServer(server.id, updated)
@@ -160,8 +161,9 @@ fun SettingsScreen(
                                 selected = prefs.providerId
                                 expandedServerId = null
                             },
-                            onTest = ::runTest,
-                            testing = testing,
+                            onSelect = {
+                                select("custom:${server.id}")
+                            },
                         )
                     }
                 }
@@ -176,7 +178,6 @@ fun SettingsScreen(
                         )
                         prefs.addCustomServer(newServer)
                         customServers = prefs.customServers
-                        select("custom:${newServer.id}")
                         expandedServerId = newServer.id
                     }
                 )
@@ -193,7 +194,6 @@ fun SettingsScreen(
                     )
                     prefs.addCustomServer(newServer)
                     customServers = prefs.customServers
-                    select("custom:${newServer.id}")
                     expandedServerId = newServer.id
                 },
                 shape = RoundedCornerShape(16.dp),
@@ -432,11 +432,11 @@ private fun AddCustomServerRow(onClick: () -> Unit) {
 @Composable
 private fun CustomServerEditForm(
     server: CustomDohServer,
+    isSelected: Boolean,
     prefs: Prefs,
     onUpdate: (CustomDohServer) -> Unit,
     onDelete: () -> Unit,
-    onTest: () -> Unit,
-    testing: Boolean,
+    onSelect: () -> Unit,
 ) {
     var name by remember(server) { mutableStateOf(server.name) }
     var url by remember(server) { mutableStateOf(server.url) }
@@ -517,28 +517,36 @@ private fun CustomServerEditForm(
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(
-                onClick = onTest,
-                enabled = !testing && urlValid,
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.weight(1f).height(44.dp),
-            ) {
-                Icon(painterResource(R.drawable.ic_speed), contentDescription = null, modifier = Modifier.size(16.dp))
-                Spacer(Modifier.width(6.dp))
-                Text(stringResource(if (testing) R.string.testing else R.string.test), maxLines = 1)
+            // Show "Switch" button only when server is NOT selected
+            if (!isSelected) {
+                Button(
+                    onClick = onSelect,
+                    enabled = urlValid,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.weight(1f).height(44.dp),
+                ) {
+                    Icon(painterResource(R.drawable.ic_swap), contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(stringResource(R.string.switch_to, name.trim()), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
             }
 
+            // Delete button - always visible, big and clear
             OutlinedButton(
                 onClick = onDelete,
                 shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.size(44.dp),
-                contentPadding = PaddingValues(0.dp),
+                modifier = if (isSelected) Modifier.fillMaxWidth().height(44.dp) else Modifier.weight(1f).height(44.dp),
             ) {
                 Icon(
                     painterResource(R.drawable.ic_delete),
-                    contentDescription = stringResource(R.string.delete_server),
+                    contentDescription = null,
                     tint = Palette.Blocked,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    stringResource(R.string.delete_server),
+                    color = Palette.Blocked,
                 )
             }
         }
