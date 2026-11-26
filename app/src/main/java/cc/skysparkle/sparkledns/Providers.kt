@@ -1,6 +1,9 @@
 package cc.skysparkle.sparkledns
 
 import android.content.Context
+import org.json.JSONArray
+import org.json.JSONObject
+import java.util.UUID
 
 data class DohProvider(
     val id: String,
@@ -11,6 +14,62 @@ data class DohProvider(
     val policy: String? = null,
     val donate: String? = null,
 )
+
+data class CustomDohServer(
+    val id: String,
+    val name: String,
+    val url: String,
+    val bootstrap: List<String>,
+    val http3: Boolean
+) {
+    fun toDohProvider(): DohProvider =
+        DohProvider(
+            id = "custom:$id",
+            name = name,
+            url = url,
+            bootstrap = bootstrap,
+            http3 = http3
+        )
+
+    fun toJson(): JSONObject = JSONObject().apply {
+        put("id", id)
+        put("name", name)
+        put("url", url)
+        put("http3", http3)
+        put("bootstrap", JSONArray(bootstrap))
+    }
+
+    companion object {
+        fun fromJson(json: JSONObject): CustomDohServer {
+            val bootstrapArray = json.getJSONArray("bootstrap")
+            val bootstrap = mutableListOf<String>()
+            for (i in 0 until bootstrapArray.length()) {
+                bootstrap.add(bootstrapArray.getString(i))
+            }
+
+            return CustomDohServer(
+                id = json.getString("id"),
+                name = json.getString("name"),
+                url = json.getString("url"),
+                bootstrap = bootstrap,
+                http3 = json.getBoolean("http3")
+            )
+        }
+
+        fun create(
+            name: String,
+            url: String,
+            bootstrap: List<String>,
+            http3: Boolean
+        ): CustomDohServer = CustomDohServer(
+            id = UUID.randomUUID().toString(),
+            name = name,
+            url = url,
+            bootstrap = bootstrap,
+            http3 = http3
+        )
+    }
+}
 
 object Providers {
     const val CUSTOM_ID = "custom"
