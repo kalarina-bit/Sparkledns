@@ -527,7 +527,11 @@ private fun CustomServerEditForm(
                 ) {
                     Icon(painterResource(R.drawable.ic_swap), contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text(stringResource(R.string.switch_to, name.trim()), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(
+                        stringResource(R.string.switch_to, name.trim()),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
             }
 
@@ -547,6 +551,8 @@ private fun CustomServerEditForm(
                 Text(
                     stringResource(R.string.delete_server),
                     color = Palette.Blocked,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }
