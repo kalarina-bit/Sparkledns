@@ -20,12 +20,14 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -68,18 +70,16 @@ fun SettingsScreen(
     val active by DohVpnService.active.collectAsStateWithLifecycle()
 
     var selected by remember { mutableStateOf(prefs.providerId) }
-    var customUrl by remember { mutableStateOf(prefs.customUrl) }
-    var customBootstrap by remember { mutableStateOf(prefs.customBootstrap) }
-    var customHttp3 by remember { mutableStateOf(prefs.customHttp3) }
+    var customServers by remember { mutableStateOf(prefs.customServers) }
+    var editingServer by remember { mutableStateOf<CustomDohServer?>(null) }
     var testResult by rememberSaveable(stateSaver = TestResultSaver) { mutableStateOf<TestResult?>(null) }
-    var shownResult by rememberSaveable(stateSaver = TestResultSaver) { mutableStateOf<TestResult?>(null) } // kept while the card animates out
+    var shownResult by rememberSaveable(stateSaver = TestResultSaver) { mutableStateOf<TestResult?>(null) }
     var testing by remember { mutableStateOf(false) }
     val excludedCount = remember { prefs.excludedApps.size }
 
-    val isCustom = selected == Providers.CUSTOM_ID
-    val customValid = remember(customUrl) { customUrl.trim().toHttpUrlOrNull()?.isHttps == true }
-    val canConnect = !isCustom || customValid
-    val selectedProvider = remember(selected, customUrl, customBootstrap, customHttp3) { prefs.resolve() }
+    val isCustomServer = selected.startsWith("custom:")
+    val canConnect = true
+    val selectedProvider = remember(selected, customServers) { prefs.resolve() }
 
     // Picking a server never touches a live connection; switching is an explicit action
     val pendingSwitch = active?.let { it != selectedProvider && canConnect } == true
@@ -124,59 +124,54 @@ fun SettingsScreen(
                     onClick = { select(provider.id) },
                 )
             }
-            ListDivider()
-            ServerRow(
-                title = stringResource(R.string.custom),
-                subtitle = if (customUrl.trim() == "https://" || customUrl.isBlank()) "DNS-over-HTTPS (RFC 8484)" else hostOf(customUrl),
-                selected = isCustom,
-                onClick = { select(Providers.CUSTOM_ID) },
-            )
-            AnimatedVisibility(visible = isCustom, enter = Motion.expandIn, exit = Motion.collapseOut) {
-                Column(
-                    Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    OutlinedTextField(
-                        value = customUrl,
-                        onValueChange = { customUrl = it; prefs.customUrl = it },
-                        label = { Text(stringResource(R.string.custom_url)) },
-                        singleLine = true,
-                        isError = !customValid,
-                        shape = RoundedCornerShape(14.dp),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Next),
-                        modifier = Modifier.fillMaxWidth(),
+        }
+
+        // Custom servers section
+        if (customServers.isNotEmpty()) {
+            SectionLabel(stringResource(R.string.custom_servers), Modifier.padding(top = 8.dp))
+            Column(Modifier.fillMaxWidth().appCard()) {
+                customServers.forEachIndexed { index, server ->
+                    if (index > 0) ListDivider()
+                    CustomServerRow(
+                        server = server,
+                        selected = selected == "custom:${server.id}",
+                        onClick = {
+                            select("custom:${server.id}")
+                        },
+                        onEdit = { editingServer = server },
                     )
-                    if (!customValid) {
-                        Text(stringResource(R.string.invalid_url), color = Palette.Blocked, fontSize = 12.sp)
-                    }
-                    OutlinedTextField(
-                        value = customBootstrap,
-                        onValueChange = { customBootstrap = it; prefs.customBootstrap = it },
-                        label = { Text(stringResource(R.string.custom_bootstrap)) },
-                        singleLine = true,
-                        shape = RoundedCornerShape(14.dp),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .toggleable(
-                                value = customHttp3,
-                                role = Role.Switch,
-                                onValueChange = { customHttp3 = it; prefs.customHttp3 = it },
-                            )
-                            .padding(vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Column(Modifier.weight(1f)) {
-                            Text(stringResource(R.string.http3), color = Palette.Fg, fontSize = 15.sp)
-                            Text(stringResource(R.string.http3_note), color = Palette.Fg3, fontSize = 12.sp)
-                        }
-                        Spacer(Modifier.width(12.dp))
-                        AppSwitch(checked = customHttp3, onCheckedChange = null)
-                    }
                 }
+                ListDivider()
+                AddCustomServerRow(
+                    onClick = {
+                        val newServer = CustomDohServer.create(
+                            name = context.getString(R.string.default_custom_server_name, customServers.size + 1),
+                            url = "https://",
+                            bootstrap = emptyList(),
+                            http3 = false
+                        )
+                        editingServer = newServer
+                    }
+                )
+            }
+        } else {
+            // Show "Add server" button when no custom servers
+            OutlinedButton(
+                onClick = {
+                    val newServer = CustomDohServer.create(
+                        name = context.getString(R.string.default_custom_server_name, 1),
+                        url = "https://",
+                        bootstrap = emptyList(),
+                        http3 = false
+                    )
+                    editingServer = newServer
+                },
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+            ) {
+                Icon(painterResource(R.drawable.ic_add), contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(stringResource(R.string.add_custom_server))
             }
         }
 
@@ -230,6 +225,34 @@ fun SettingsScreen(
                     onDismiss = { testResult = null },
                 )
             }
+        }
+
+        // Custom server edit dialog
+        editingServer?.let { server ->
+            CustomServerEditDialog(
+                server = server,
+                onDismiss = { editingServer = null },
+                onSave = { updated ->
+                    if (customServers.any { it.id == updated.id }) {
+                        // Update existing
+                        prefs.updateCustomServer(updated.id, updated)
+                        customServers = prefs.customServers
+                    } else {
+                        // Add new
+                        prefs.addCustomServer(updated)
+                        customServers = prefs.customServers
+                        select("custom:${updated.id}")
+                    }
+                },
+                onDelete = if (customServers.any { it.id == server.id }) {
+                    { id ->
+                        prefs.deleteCustomServer(id)
+                        customServers = prefs.customServers
+                        selected = prefs.providerId
+                        editingServer = null
+                    }
+                } else null
+            )
         }
 
         SectionLabel(stringResource(R.string.settings_general), Modifier.padding(top = 8.dp))
@@ -330,4 +353,246 @@ private fun NavRow(@DrawableRes icon: Int, title: String, subtitle: String, onCl
         }
         Chevron()
     }
+}
+@Composable
+private fun CustomServerRow(
+    server: CustomDohServer,
+    selected: Boolean,
+    onClick: () -> Unit,
+    onEdit: () -> Unit,
+) {
+    val highlight by animateColorAsState(
+        if (selected) Palette.Accent.copy(alpha = 0.06f) else Color.Transparent,
+        animationSpec = Motion.color,
+        label = "highlight",
+    )
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .drawBehind { drawRect(highlight) }
+            .clickable(onClick = onEdit)
+            .heightIn(min = 60.dp)
+            .padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                server.name,
+                color = Palette.Fg,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            val subtitle = hostOf(server.url) + if (server.http3) " · HTTP/3" else ""
+            Text(subtitle, color = Palette.Fg3, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        Spacer(Modifier.width(4.dp))
+        IconButton(
+            onClick = onClick,
+            modifier = Modifier.size(40.dp)
+        ) {
+            if (selected) {
+                Icon(
+                    painterResource(R.drawable.ic_check),
+                    contentDescription = null,
+                    tint = Palette.Accent,
+                    modifier = Modifier.size(22.dp),
+                )
+            } else {
+                Spacer(Modifier.size(22.dp))
+            }
+        }
+        Spacer(Modifier.width(6.dp))
+    }
+}
+
+@Composable
+private fun AddCustomServerRow(onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .heightIn(min = 56.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            painterResource(R.drawable.ic_add),
+            contentDescription = null,
+            tint = Palette.Accent,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(Modifier.width(12.dp))
+        Text(
+            stringResource(R.string.add_custom_server),
+            color = Palette.Accent,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Medium,
+        )
+    }
+}
+
+@Composable
+private fun CustomServerEditDialog(
+    server: CustomDohServer?,
+    onDismiss: () -> Unit,
+    onSave: (CustomDohServer) -> Unit,
+    onDelete: ((String) -> Unit)? = null,
+) {
+    if (server == null) return
+
+    var name by remember(server) { mutableStateOf(server.name) }
+    var url by remember(server) { mutableStateOf(server.url) }
+    var bootstrap by remember(server) { mutableStateOf(server.bootstrap.joinToString(", ")) }
+    var http3 by remember(server) { mutableStateOf(server.http3) }
+    var testResult by rememberSaveable(stateSaver = TestResultSaver) { mutableStateOf<TestResult?>(null) }
+    var testing by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val urlValid = remember(url) { url.trim().toHttpUrlOrNull()?.isHttps == true }
+    val canSave = name.isNotBlank() && urlValid
+
+    fun runTest() {
+        val provider = DohProvider(
+            id = "test",
+            name = name,
+            url = url.trim(),
+            bootstrap = parseIps(bootstrap),
+            http3 = http3
+        )
+        testing = true
+        testResult = null
+        scope.launch {
+            val result = withContext(Dispatchers.IO) { testProvider(context, provider) }
+            testResult = result
+            testing = false
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.edit_custom_server)) },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.verticalScroll(rememberScrollState())
+            ) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text(stringResource(R.string.server_name)) },
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                OutlinedTextField(
+                    value = url,
+                    onValueChange = { url = it },
+                    label = { Text(stringResource(R.string.custom_url)) },
+                    singleLine = true,
+                    isError = !urlValid,
+                    shape = RoundedCornerShape(14.dp),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Next),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                if (!urlValid) {
+                    Text(stringResource(R.string.invalid_url), color = Palette.Blocked, fontSize = 12.sp)
+                }
+
+                OutlinedTextField(
+                    value = bootstrap,
+                    onValueChange = { bootstrap = it },
+                    label = { Text(stringResource(R.string.custom_bootstrap)) },
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .toggleable(
+                            value = http3,
+                            role = Role.Switch,
+                            onValueChange = { http3 = it },
+                        )
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(stringResource(R.string.http3), color = Palette.Fg, fontSize = 15.sp)
+                        Text(stringResource(R.string.http3_note), color = Palette.Fg3, fontSize = 12.sp)
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    AppSwitch(checked = http3, onCheckedChange = null)
+                }
+
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(
+                        onClick = ::runTest,
+                        enabled = !testing && urlValid,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.weight(1f).height(44.dp),
+                    ) {
+                        Text(stringResource(if (testing) R.string.testing else R.string.test), maxLines = 1)
+                    }
+
+                    if (onDelete != null) {
+                        OutlinedButton(
+                            onClick = { onDelete(server.id) },
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.size(44.dp),
+                            contentPadding = PaddingValues(0.dp),
+                        ) {
+                            Icon(
+                                painterResource(R.drawable.ic_delete),
+                                contentDescription = stringResource(R.string.delete_server),
+                                tint = Palette.Blocked,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                }
+
+                testResult?.let { result ->
+                    Text(
+                        result.text,
+                        color = if (result.ok) CachedColor else Palette.Blocked,
+                        fontSize = 13.sp,
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val updated = CustomDohServer(
+                        id = server.id,
+                        name = name.trim(),
+                        url = url.trim(),
+                        bootstrap = parseIps(bootstrap),
+                        http3 = http3
+                    )
+                    onSave(updated)
+                    onDismiss()
+                },
+                enabled = canSave,
+                shape = RoundedCornerShape(12.dp),
+            ) {
+                Text(stringResource(R.string.done))
+            }
+        },
+        dismissButton = {
+            OutlinedButton(
+                onClick = onDismiss,
+                shape = RoundedCornerShape(12.dp),
+            ) {
+                Text(stringResource(R.string.cancel))
+            }
+        },
+    )
 }
