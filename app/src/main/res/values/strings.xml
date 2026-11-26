@@ -132,4 +132,10 @@
     <string name="turn_on">Turn on</string>
     <string name="downloading">Downloading…</string>
     <string name="change_server">Change server</string>
+    <string name="custom_servers">Custom Servers</string>
+    <parameter name="add_custom_server">Add Server</string>
+    <string name="edit_custom_server">Edit Server</string>
+    <string name="server_name">Server Name</string>
+    <string name="delete_server">Delete Server</string>
+    <string name="default_custom_server_name">Custom Server %d</string>
 </resources>

@@ -131,4 +131,10 @@
     <string name="turn_on">Включить</string>
     <string name="downloading">Загрузка…</string>
     <string name="change_server">Сменить сервер</string>
+    <string name="custom_servers">Собственные сервера</string>
+    <string name="add_custom_server">Добавить сервер</string>
+    <string name="edit_custom_server">Редактировать сервер</string>
+    <string name="server_name">Название сервера</string>
+    <string name="delete_server">Удалить сервер</string>
+    <string name="default_custom_server_name">Свой сервер %d</string>
 </resources>
