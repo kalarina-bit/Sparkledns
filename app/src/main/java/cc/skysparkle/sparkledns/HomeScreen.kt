@@ -143,7 +143,8 @@ fun HomeScreen(
 
     // The server is picked in Settings; this screen is composed anew each time it is shown
     val selected = remember { prefs.resolve() }
-    val canConnect = selected.id != Providers.CUSTOM_ID || selected.url.toHttpUrlOrNull()?.isHttps == true
+    val canConnect = selected.url.toHttpUrlOrNull()?.isHttps == true
+    val needsKey = selected.id == Providers.DEFAULT_ID && !canConnect
     val shown = active ?: selected
     val usesHttp3 = shown.http3 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
 
@@ -223,6 +224,14 @@ fun HomeScreen(
             onToggle = ::toggle,
             onOpenServers = onOpenServers,
         )
+        if (needsKey && !running) {
+            HintCard(
+                text = stringResource(R.string.key_needed),
+                icon = R.drawable.ic_alert,
+                tint = Palette.Accent,
+                action = { TextButton(onClick = onOpenServers) { Text(stringResource(R.string.key_add)) } },
+            )
+        }
         PrivateDnsWarning(privateDnsHost, prefs)
     }
     val stats: @Composable () -> Unit = {

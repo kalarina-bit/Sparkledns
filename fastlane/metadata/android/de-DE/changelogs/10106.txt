@@ -1,0 +1,2 @@
+• Der SkySparkle-Server funktioniert jetzt mit einem persönlichen Schlüssel: Erstelle einen kostenlosen Schlüssel auf skysparkle.cc und gib ihn in den Einstellungen ein
+• Neue Einführung beim ersten Start erklärt, wie du einen Schlüssel bekommst

@@ -1,0 +1,6 @@
+• Eine Benachrichtigung meldet, wenn der Schutz endet, die Serveradresse ungültig ist oder „Verbindungen ohne VPN blockieren“ den Server unerreichbar macht
+• Bootstrap-Adressen funktionieren jetzt auch über HTTP/3
+• Blocklistenregeln mit Pfad sperren nicht mehr ganze Websites
+• Ausschalten über die Schnelleinstellung nur bei entsperrtem Handy
+• App-Sprache in den Android-Einstellungen wählbar
+• Aktualisierte Bibliotheken

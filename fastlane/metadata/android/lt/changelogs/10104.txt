@@ -1,0 +1,6 @@
+• Pranešimas, kai apsauga išsijungia, serverio adresas netinkamas arba „Blokuoti ryšius be VPN“ neleidžia pasiekti serverio
+• Bootstrap adresai dabar veikia ir per HTTP/3
+• Blokavimo sąrašų taisyklės su keliu nebeblokuoja visų svetainių
+• Išjungti apsaugą iš sparčiųjų nustatymų galima tik atrakinus telefoną
+• Programėlės kalbą galima pasirinkti Android nustatymuose
+• Atnaujintos bibliotekos

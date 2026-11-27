@@ -33,9 +33,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -54,15 +57,40 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AppLogo.preload(this)
+        // Opened by the browser at the end of the Skysparkle sign-in (not again after rotation)
+        if (savedInstanceState == null) handleSignIn(intent)
         enableEdgeToEdge()
         setContent {
             MaterialTheme(colorScheme = AppColors) {
                 // There is no Surface at the root, so text and icons without an explicit color
                 // would fall back to black and disappear on the dark background
                 CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
-                    AppShell()
+                    // First launch: the guide explains the access key before the app opens
+                    var onboarded by rememberSaveable { mutableStateOf(Prefs(this@MainActivity).onboardingDone) }
+                    if (onboarded) AppShell() else OnboardingScreen(onDone = { onboarded = true })
                 }
             }
+        }
+    }
+
+    // singleTask: the sign-in callback reaches the running activity instead of opening a second one
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleSignIn(intent)
+    }
+
+    // Back from the browser without finishing the sign-in. A real callback arrives in
+    // onNewIntent, which always runs before this
+    override fun onResume() {
+        super.onResume()
+        SkysparkleSignIn.cancelWaiting()
+    }
+
+    private fun handleSignIn(intent: Intent?) {
+        val uri = intent?.data
+        if (intent?.action == Intent.ACTION_VIEW && SkysparkleSignIn.isCallback(uri)) {
+            SkysparkleSignIn.handle(this, uri!!)
         }
     }
 }

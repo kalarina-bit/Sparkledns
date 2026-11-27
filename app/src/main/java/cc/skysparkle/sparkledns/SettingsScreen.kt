@@ -1,5 +1,12 @@
 package cc.skysparkle.sparkledns
 
+import android.content.ClipData
+import android.content.ClipDescription
+import android.content.ClipboardManager
+import android.content.Context
+import android.os.Build
+import android.os.PersistableBundle
+import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -7,6 +14,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,8 +30,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -40,6 +50,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -89,6 +100,13 @@ fun SettingsScreen(
         testResult = null
     }
 
+    // Signed in from the key field: the key is already saved, show it and select the server
+    SignInResult { key ->
+        keyInput = key
+        selected = Providers.DEFAULT_ID
+        testResult = null
+    }
+
     fun runTest() {
         val provider = prefs.resolve()
         testing = true
@@ -121,6 +139,11 @@ fun SettingsScreen(
                     onDonate = provider.donate?.let { url -> { openUrl(context, url) } },
                     onClick = { select(provider.id) },
                 )
+                if (provider.id == Providers.DEFAULT_ID) {
+                    AnimatedVisibility(visible = selected == Providers.DEFAULT_ID, enter = Motion.expandIn, exit = Motion.collapseOut) {
+                        KeyField(key = keyInput)
+                    }
+                }
             }
         }
 
@@ -244,6 +267,95 @@ fun SettingsScreen(
                 subtitle = "${stringResource(R.string.about_version)} ${BuildConfig.VERSION_NAME}",
                 onClick = onOpenAbout,
             )
+        }
+    }
+}
+
+// Access key for the Skysparkle server. It comes only from signing in; the address can be
+// copied to use the same key in a browser or on another device
+@Composable
+internal fun KeyField(key: String, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val hasKey = SkysparkleKey.parse(key) != null
+    Column(
+        modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        // The line keeps its text while it animates out
+        val shownKey = rememberLast(key.takeIf { hasKey }).orEmpty()
+        AnimatedVisibility(visible = hasKey, enter = Motion.expandIn, exit = Motion.collapseOut) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    stringResource(R.string.key_status, shownKey.take(4)),
+                    color = Palette.Fg2,
+                    fontSize = 13.sp,
+                    modifier = Modifier.weight(1f),
+                )
+                TextButton(onClick = { copyKeyAddress(context, shownKey) }) {
+                    Text(stringResource(R.string.key_copy))
+                }
+            }
+        }
+        SignInButton(again = hasKey, modifier = Modifier.fillMaxWidth())
+    }
+}
+
+// Starts the browser sign-in; shows progress while the app waits for it. Filled while there is
+// no key yet; once there is one, signing in again is a rare action and must not compete with
+// the filled "Switch to" button below the server list
+@Composable
+internal fun SignInButton(again: Boolean, modifier: Modifier = Modifier, shape: Shape = RoundedCornerShape(14.dp)) {
+    val context = LocalContext.current
+    val signIn by SkysparkleSignIn.state.collectAsStateWithLifecycle()
+    val working = signIn == SkysparkleSignIn.State.Waiting || signIn == SkysparkleSignIn.State.Exchanging
+    val onClick = { SkysparkleSignIn.start(context) }
+    val content: @Composable RowScope.() -> Unit = {
+        if (working) {
+            CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = LocalContentColor.current)
+            Spacer(Modifier.width(10.dp))
+        }
+        Text(
+            stringResource(if (working) R.string.sign_in_working else if (again) R.string.sign_in_again else R.string.sign_in),
+            fontWeight = if (again) null else FontWeight.Bold,
+        )
+    }
+    if (again) {
+        OutlinedButton(onClick = onClick, enabled = !working, shape = shape, modifier = modifier, content = content)
+    } else {
+        Button(onClick = onClick, enabled = !working, shape = shape, modifier = modifier, content = content)
+    }
+}
+
+// The key is personal, so the clipboard is told to hide it from previews (Android 13+),
+// and Android 13+ confirms the copy itself
+private fun copyKeyAddress(context: Context, key: String) {
+    val clip = ClipData.newPlainText("SkySparkle", SkysparkleKey.url(key))
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        clip.description.extras = PersistableBundle().apply { putBoolean(ClipDescription.EXTRA_IS_SENSITIVE, true) }
+    }
+    context.getSystemService(ClipboardManager::class.java).setPrimaryClip(clip)
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+        Toast.makeText(context, R.string.key_copied, Toast.LENGTH_SHORT).show()
+    }
+}
+
+// Result of the Skysparkle sign-in, shown once on the screen that started it
+@Composable
+internal fun SignInResult(onKey: (String) -> Unit) {
+    val context = LocalContext.current
+    val signIn by SkysparkleSignIn.state.collectAsStateWithLifecycle()
+    LaunchedEffect(signIn) {
+        when (val s = signIn) {
+            is SkysparkleSignIn.State.Done -> {
+                onKey(s.key)
+                Toast.makeText(context, R.string.sign_in_done, Toast.LENGTH_SHORT).show()
+                SkysparkleSignIn.consume()
+            }
+            is SkysparkleSignIn.State.Failed -> {
+                Toast.makeText(context, s.message, Toast.LENGTH_LONG).show()
+                SkysparkleSignIn.consume()
+            }
+            else -> Unit
         }
     }
 }

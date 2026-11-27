@@ -59,6 +59,15 @@ class DnsTileService : TileService() {
                 return
             }
         }
+        // Turning protection off needs an unlocked phone, like other security toggles
+        if (running && isLocked) {
+            unlockAndRun { toggle(running) }
+            return
+        }
+        toggle(running)
+    }
+
+    private fun toggle(running: Boolean) {
         val action = if (running) DohVpnService.ACTION_STOP else DohVpnService.ACTION_START
         try {
             startService(Intent(this, DohVpnService::class.java).setAction(action))

@@ -4,7 +4,7 @@ Thanks for wanting to help! This guide explains where to contribute, what fits t
 
 ## Where to contribute
 
-Issues and pull requests go to the repository on [Gitea](https://git.skysparkle.cc/kalarina/Sparkledns).
+Issues and pull requests go to the repository on [GitHub](https://github.com/kalarina-bit/Sparkledns).
 
 ## Ways to help
 

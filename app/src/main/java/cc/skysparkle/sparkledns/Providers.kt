@@ -77,8 +77,9 @@ object Providers {
 
     // Servers ship with the app; new ones arrive with app updates
     val builtIn = listOf(
+        // The address is personal: Prefs.resolve() adds the access key from skysparkle.cc
         DohProvider(
-            "skysparkle", "SkySparkle", "https://blog.skysparkle.cc/dns-query",
+            "skysparkle", "SkySparkle", SkysparkleKey.BASE_URL,
             http3 = true, policy = "https://skysparkle.cc/privacy?lang=en",
         ),
         DohProvider(
@@ -103,12 +104,35 @@ object Providers {
             policy = "https://ffmuc.net/dns-privacy/",
             donate = "https://spende.ffmuc.net/",
         ),
+        DohProvider(
+            "dnsforge", "dnsforge.de", "https://blank.dnsforge.de/dns-query",
+            listOf("78.47.71.194", "138.199.149.249"),
+            policy = "https://adminforge.de/datenschutz/",
+            donate = "https://adminforge.de/unterstuetzen/",
+        ),
     )
 
     // The project's own server stays the default whatever order the list uses
     val default: DohProvider = builtIn.firstOrNull { it.id == DEFAULT_ID } ?: builtIn.first()
 
     fun byId(id: String): DohProvider = builtIn.firstOrNull { it.id == id } ?: default
+}
+
+// Personal access keys for the Skysparkle server. Each account at skysparkle.cc creates its own
+// keys; the server answers only /dns/<key>, there is no shared public address.
+object SkysparkleKey {
+    const val BASE_URL = "https://skysparkle.cc/dns/"
+    private val KEY = Regex("^[A-Za-z0-9_-]{24}$")
+    private val IN_URL = Regex("/dns/([A-Za-z0-9_-]{24})(?:[/?#].*)?$")
+
+    // Accepts the key itself or the whole address copied from the account page
+    fun parse(input: String): String? {
+        val text = input.trim()
+        if (KEY.matches(text)) return text
+        return IN_URL.find(text)?.groupValues?.get(1)
+    }
+
+    fun url(key: String): String = parse(key)?.let { BASE_URL + it } ?: ""
 }
 
 fun parseIps(raw: String): List<String> =

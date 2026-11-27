@@ -1,0 +1,2 @@
+• The SkySparkle server now works with a personal key: create a free key at skysparkle.cc and enter it in Settings
+• New first-launch guide that explains how to get a key

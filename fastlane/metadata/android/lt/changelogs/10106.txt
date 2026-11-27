@@ -1,0 +1,2 @@
+• SkySparkle serveris dabar veikia su asmeniniu raktu: susikurkite nemokamą raktą skysparkle.cc ir įveskite jį nustatymuose
+• Naujas pirmojo paleidimo gidas paaiškina, kaip gauti raktą

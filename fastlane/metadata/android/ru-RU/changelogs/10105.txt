@@ -1,0 +1,1 @@
+• Сервер SkySparkle теперь работает по адресу skysparkle.cc/dns-query
