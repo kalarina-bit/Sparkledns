@@ -82,9 +82,6 @@ fun SettingsScreen(
     val canConnect = true
     val selectedProvider = remember(selected, customServers) { prefs.resolve() }
 
-    // Picking a server never touches a live connection; switching is an explicit action
-    val pendingSwitch = active?.let { it != selectedProvider && canConnect } == true
-    var busy by rememberVpnBusy(active)
 
     fun select(id: String) {
         selected = id
@@ -217,32 +214,6 @@ fun SettingsScreen(
                 Icon(painterResource(R.drawable.ic_speed), contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
                 Text(stringResource(if (testing) R.string.testing else R.string.test), maxLines = 1)
-            }
-
-            // The button keeps its label while it animates out
-            val switchName = rememberLast(if (pendingSwitch) selectedProvider.displayName(context) else null).orEmpty()
-            AnimatedVisibility(visible = pendingSwitch, modifier = Modifier.weight(1f)) {
-                Button(
-                    onClick = {
-                        if (!busy) {
-                            busy = true
-                            sendAction(context, DohVpnService.ACTION_START)
-                        }
-                    },
-                    enabled = !busy,
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp),
-                ) {
-                    Icon(painterResource(R.drawable.ic_swap), contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        stringResource(R.string.switch_to, switchName),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
             }
         }
 
