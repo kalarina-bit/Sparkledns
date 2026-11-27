@@ -32,6 +32,17 @@
 > [!TIP]
 > If you find SparkleDNS useful, please consider giving it a ⭐ — it helps others discover the project.
 
+## 🔀 About this fork
+
+This fork adds support for **multiple custom DoH servers** with an improved UX:
+
+- ✏️ **Inline server management** — add, edit, and delete custom servers without leaving the main screen
+- 🎯 **Quick server switching** — tap to select any of your custom servers instantly
+- 💾 **Persistent storage** — all custom servers are saved and survive app restarts
+- 🧹 **Clean migration** — seamlessly migrates existing single custom server to the new format
+
+The implementation preserves all original functionality while making it easier to manage multiple DoH providers.
+
 ## ✨ Features
 
 - 🔌 **One-tap connect/disconnect**, with a Quick Settings tile
