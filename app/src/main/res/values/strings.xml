@@ -132,6 +132,12 @@
     <string name="turn_on">Turn on</string>
     <string name="downloading">Downloading…</string>
     <string name="change_server">Change server</string>
+    <string name="custom_servers">Custom Servers</string>
+    <string name="add_custom_server">Add Server</string>
+    <string name="edit_custom_server">Edit Server</string>
+    <string name="server_name">Server Name</string>
+    <string name="delete_server">Delete Server</string>
+    <string name="default_custom_server_name">Custom Server %d</string>
     <string name="alert_channel">Protection alerts</string>
     <string name="alert_stopped_title">DNS protection stopped</string>
     <string name="alert_stopped_text">The tunnel stopped working, so DNS is no longer encrypted. Open SparkleDNS to connect again.</string>

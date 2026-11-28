@@ -28,6 +28,7 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -36,7 +37,7 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -81,23 +82,17 @@ fun SettingsScreen(
     val active by DohVpnService.active.collectAsStateWithLifecycle()
 
     var selected by remember { mutableStateOf(prefs.providerId) }
-    var customUrl by remember { mutableStateOf(prefs.customUrl) }
-    var customBootstrap by remember { mutableStateOf(prefs.customBootstrap) }
-    var customHttp3 by remember { mutableStateOf(prefs.customHttp3) }
-    var keyInput by remember { mutableStateOf(prefs.skysparkleKey) }
+    var customServers by remember { mutableStateOf(prefs.customServers) }
+    var expandedServerId by remember { mutableStateOf<String?>(null) }
     var testResult by rememberSaveable(stateSaver = TestResultSaver) { mutableStateOf<TestResult?>(null) }
-    var shownResult by rememberSaveable(stateSaver = TestResultSaver) { mutableStateOf<TestResult?>(null) } // kept while the card animates out
+    var shownResult by rememberSaveable(stateSaver = TestResultSaver) { mutableStateOf<TestResult?>(null) }
     var testing by remember { mutableStateOf(false) }
     val excludedCount = remember { prefs.excludedApps.size }
 
-    val isCustom = selected == Providers.CUSTOM_ID
-    val customValid = remember(customUrl) { customUrl.trim().toHttpUrlOrNull()?.isHttps == true }
-    val selectedProvider = remember(selected, customUrl, customBootstrap, customHttp3, keyInput) { prefs.resolve() }
-    val canConnect = selectedProvider.url.toHttpUrlOrNull()?.isHttps == true
+    val isCustomServer = selected.startsWith("custom:")
+    val canConnect = true
+    val selectedProvider = remember(selected, customServers) { prefs.resolve() }
 
-    // Picking a server never touches a live connection; switching is an explicit action
-    val pendingSwitch = active?.let { it != selectedProvider && canConnect } == true
-    var busy by rememberVpnBusy(active)
 
     fun select(id: String) {
         selected = id
@@ -150,59 +145,83 @@ fun SettingsScreen(
                     }
                 }
             }
-            ListDivider()
-            ServerRow(
-                title = stringResource(R.string.custom),
-                subtitle = if (customUrl.trim() == "https://" || customUrl.isBlank()) "DNS-over-HTTPS (RFC 8484)" else hostOf(customUrl),
-                selected = isCustom,
-                onClick = { select(Providers.CUSTOM_ID) },
-            )
-            AnimatedVisibility(visible = isCustom, enter = Motion.expandIn, exit = Motion.collapseOut) {
-                Column(
-                    Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    OutlinedTextField(
-                        value = customUrl,
-                        onValueChange = { customUrl = it; prefs.customUrl = it },
-                        label = { Text(stringResource(R.string.custom_url)) },
-                        singleLine = true,
-                        isError = !customValid,
-                        shape = RoundedCornerShape(14.dp),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Next),
-                        modifier = Modifier.fillMaxWidth(),
+        }
+
+        // Custom servers section
+        if (customServers.isNotEmpty()) {
+            SectionLabel(stringResource(R.string.custom_servers), Modifier.padding(top = 8.dp))
+            Column(Modifier.fillMaxWidth().appCard()) {
+                customServers.forEachIndexed { index, server ->
+                    if (index > 0) ListDivider()
+
+                    val isExpanded = expandedServerId == server.id
+                    val isSelected = selected == "custom:${server.id}"
+
+                    CustomServerRow(
+                        server = server,
+                        selected = isSelected,
+                        onClick = {
+                            // Only toggle expansion, no auto-select
+                            expandedServerId = if (isExpanded) null else server.id
+                        },
                     )
-                    if (!customValid) {
-                        Text(stringResource(R.string.invalid_url), color = Palette.Blocked, fontSize = 12.sp)
-                    }
-                    OutlinedTextField(
-                        value = customBootstrap,
-                        onValueChange = { customBootstrap = it; prefs.customBootstrap = it },
-                        label = { Text(stringResource(R.string.custom_bootstrap)) },
-                        singleLine = true,
-                        shape = RoundedCornerShape(14.dp),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .toggleable(
-                                value = customHttp3,
-                                role = Role.Switch,
-                                onValueChange = { customHttp3 = it; prefs.customHttp3 = it },
-                            )
-                            .padding(vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Column(Modifier.weight(1f)) {
-                            Text(stringResource(R.string.http3), color = Palette.Fg, fontSize = 15.sp)
-                            Text(stringResource(R.string.http3_note), color = Palette.Fg3, fontSize = 12.sp)
-                        }
-                        Spacer(Modifier.width(12.dp))
-                        AppSwitch(checked = customHttp3, onCheckedChange = null)
+
+                    AnimatedVisibility(visible = isExpanded, enter = Motion.expandIn, exit = Motion.collapseOut) {
+                        CustomServerEditForm(
+                            server = server,
+                            isSelected = isSelected,
+                            prefs = prefs,
+                            onUpdate = { updated ->
+                                prefs.updateCustomServer(server.id, updated)
+                                customServers = prefs.customServers
+                            },
+                            onDelete = {
+                                prefs.deleteCustomServer(server.id)
+                                customServers = prefs.customServers
+                                selected = prefs.providerId
+                                expandedServerId = null
+                            },
+                            onSelect = {
+                                select("custom:${server.id}")
+                            },
+                        )
                     }
                 }
+                ListDivider()
+                AddCustomServerRow(
+                    onClick = {
+                        val newServer = CustomDohServer.create(
+                            name = context.getString(R.string.default_custom_server_name, customServers.size + 1),
+                            url = "https://",
+                            bootstrap = emptyList(),
+                            http3 = false
+                        )
+                        prefs.addCustomServer(newServer)
+                        customServers = prefs.customServers
+                        expandedServerId = newServer.id
+                    }
+                )
+            }
+        } else {
+            // Show "Add server" button when no custom servers
+            OutlinedButton(
+                onClick = {
+                    val newServer = CustomDohServer.create(
+                        name = context.getString(R.string.default_custom_server_name, 1),
+                        url = "https://",
+                        bootstrap = emptyList(),
+                        http3 = false
+                    )
+                    prefs.addCustomServer(newServer)
+                    customServers = prefs.customServers
+                    expandedServerId = newServer.id
+                },
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+            ) {
+                Icon(painterResource(R.drawable.ic_add), contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(stringResource(R.string.add_custom_server))
             }
         }
 
@@ -218,32 +237,6 @@ fun SettingsScreen(
                 Icon(painterResource(R.drawable.ic_speed), contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
                 Text(stringResource(if (testing) R.string.testing else R.string.test), maxLines = 1)
-            }
-
-            // The button keeps its label while it animates out
-            val switchName = rememberLast(if (pendingSwitch) selectedProvider.displayName(context) else null).orEmpty()
-            AnimatedVisibility(visible = pendingSwitch, modifier = Modifier.weight(1f)) {
-                Button(
-                    onClick = {
-                        if (!busy) {
-                            busy = true
-                            sendAction(context, DohVpnService.ACTION_START)
-                        }
-                    },
-                    enabled = !busy,
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp),
-                ) {
-                    Icon(painterResource(R.drawable.ic_swap), contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        stringResource(R.string.switch_to, switchName),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
             }
         }
 
@@ -444,5 +437,207 @@ private fun NavRow(@DrawableRes icon: Int, title: String, subtitle: String, onCl
             Text(subtitle, color = Palette.Fg3, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         Chevron()
+    }
+}
+@Composable
+private fun CustomServerRow(
+    server: CustomDohServer,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    val highlight by animateColorAsState(
+        if (selected) Palette.Accent.copy(alpha = 0.06f) else Color.Transparent,
+        animationSpec = Motion.color,
+        label = "highlight",
+    )
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .drawBehind { drawRect(highlight) }
+            .selectable(selected = selected, onClick = onClick, role = Role.RadioButton)
+            .heightIn(min = 60.dp)
+            .padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                server.name,
+                color = Palette.Fg,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            val subtitle = hostOf(server.url) + if (server.http3) " · HTTP/3" else ""
+            Text(subtitle, color = Palette.Fg3, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        Spacer(Modifier.width(4.dp))
+        if (selected) {
+            Icon(
+                painterResource(R.drawable.ic_check),
+                contentDescription = null,
+                tint = Palette.Accent,
+                modifier = Modifier.size(22.dp),
+            )
+        } else {
+            Spacer(Modifier.size(22.dp))
+        }
+        Spacer(Modifier.width(6.dp))
+    }
+}
+
+@Composable
+private fun AddCustomServerRow(onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .heightIn(min = 56.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            painterResource(R.drawable.ic_add),
+            contentDescription = null,
+            tint = Palette.Accent,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(Modifier.width(12.dp))
+        Text(
+            stringResource(R.string.add_custom_server),
+            color = Palette.Accent,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Medium,
+        )
+    }
+}
+
+@Composable
+private fun CustomServerEditForm(
+    server: CustomDohServer,
+    isSelected: Boolean,
+    prefs: Prefs,
+    onUpdate: (CustomDohServer) -> Unit,
+    onDelete: () -> Unit,
+    onSelect: () -> Unit,
+) {
+    var name by remember(server) { mutableStateOf(server.name) }
+    var url by remember(server) { mutableStateOf(server.url) }
+    var bootstrap by remember(server) { mutableStateOf(server.bootstrap.joinToString(", ")) }
+    var http3 by remember(server) { mutableStateOf(server.http3) }
+
+    val urlValid = remember(url) { url.trim().toHttpUrlOrNull()?.isHttps == true }
+
+    // Auto-save on changes
+    LaunchedEffect(name, url, bootstrap, http3) {
+        if (urlValid && name.isNotBlank()) {
+            val updated = CustomDohServer(
+                id = server.id,
+                name = name.trim(),
+                url = url.trim(),
+                bootstrap = parseIps(bootstrap),
+                http3 = http3
+            )
+            onUpdate(updated)
+        }
+    }
+
+    Column(
+        Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        OutlinedTextField(
+            value = name,
+            onValueChange = { name = it },
+            label = { Text(stringResource(R.string.server_name)) },
+            singleLine = true,
+            shape = RoundedCornerShape(14.dp),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        OutlinedTextField(
+            value = url,
+            onValueChange = { url = it },
+            label = { Text(stringResource(R.string.custom_url)) },
+            singleLine = true,
+            isError = !urlValid,
+            shape = RoundedCornerShape(14.dp),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Next),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        if (!urlValid) {
+            Text(stringResource(R.string.invalid_url), color = Palette.Blocked, fontSize = 12.sp)
+        }
+
+        OutlinedTextField(
+            value = bootstrap,
+            onValueChange = { bootstrap = it },
+            label = { Text(stringResource(R.string.custom_bootstrap)) },
+            singleLine = true,
+            shape = RoundedCornerShape(14.dp),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done),
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .toggleable(
+                    value = http3,
+                    role = Role.Switch,
+                    onValueChange = { http3 = it },
+                )
+                .padding(vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.http3), color = Palette.Fg, fontSize = 15.sp)
+                Text(stringResource(R.string.http3_note), color = Palette.Fg3, fontSize = 12.sp)
+            }
+            Spacer(Modifier.width(12.dp))
+            AppSwitch(checked = http3, onCheckedChange = null)
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // Show "Switch" button only when server is NOT selected
+            if (!isSelected) {
+                Button(
+                    onClick = onSelect,
+                    enabled = urlValid,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.weight(1f).height(44.dp),
+                ) {
+                    Icon(painterResource(R.drawable.ic_swap), contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        stringResource(R.string.switch_to, name.trim()),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+
+            // Delete button - always visible, big and clear
+            OutlinedButton(
+                onClick = onDelete,
+                shape = RoundedCornerShape(12.dp),
+                modifier = if (isSelected) Modifier.fillMaxWidth().height(44.dp) else Modifier.weight(1f).height(44.dp),
+            ) {
+                Icon(
+                    painterResource(R.drawable.ic_delete),
+                    contentDescription = null,
+                    tint = Palette.Blocked,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    stringResource(R.string.delete_server),
+                    color = Palette.Blocked,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
     }
 }

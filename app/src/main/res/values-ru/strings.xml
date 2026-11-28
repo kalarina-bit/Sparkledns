@@ -131,6 +131,12 @@
     <string name="turn_on">Включить</string>
     <string name="downloading">Загрузка…</string>
     <string name="change_server">Сменить сервер</string>
+    <string name="custom_servers">Собственные сервера</string>
+    <string name="add_custom_server">Добавить сервер</string>
+    <string name="edit_custom_server">Редактировать сервер</string>
+    <string name="server_name">Название сервера</string>
+    <string name="delete_server">Удалить сервер</string>
+    <string name="default_custom_server_name">Свой сервер %d</string>
     <string name="alert_channel">Предупреждения о защите</string>
     <string name="alert_stopped_title">Защита DNS отключена</string>
     <string name="alert_stopped_text">Туннель перестал работать, DNS больше не шифруется. Откройте SparkleDNS, чтобы подключиться снова.</string>
